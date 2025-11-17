@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "gridjs": "^6.2.0",
     "gridjs-react": "^6.1.1",
     "react": "^19.2.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
