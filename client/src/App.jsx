@@ -5,7 +5,7 @@ export default function App() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>Hello World</h1>
+      <h1>Vice-Principal side</h1>
       
       {/* Debug info */}
       <div style={{ background: '#f0f0f0', padding: 10, marginBottom: 20 }}>
