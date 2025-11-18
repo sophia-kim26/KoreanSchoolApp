@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import GridTable from "./pages/Grid.jsx";
-import Chart from "./pages/Chart.jsx";
-import Choices from "./pages/Choice.jsx"
+import GridTable from "./Grid.jsx";
+import Chart from "./Chart.jsx";
+import Choices from "./Choice.jsx"
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <h1>Hello world</h1>
