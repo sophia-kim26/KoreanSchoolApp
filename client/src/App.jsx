@@ -1,21 +1,32 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import TeacherLogin from "./pages/VPLogin";
-import StudentLogin from "./pages/TALogin";
-import TeacherDashboard from "./pages/VPDashboard";
-import StudentDashboard from "./pages/TADashboard";
-import { useEffect, useState } from 'react';
+import VPLogin from "./pages/VPLogin";
+import TALogin from "./pages/TALogin";
+import VPDashboard from "./pages/VPDashboard";
+import TADashboard from "./pages/TADashboard";
+import GridTable from "./pages/Grid.jsx";
+import Chart from "./pages/Chart.jsx";
+
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/teacher/login" element={<TeacherLogin />} />
-        <Route path="/student/login" element={<StudentLogin />} />
-        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/" element={
+          <div>
+            <h1>Hello world</h1>
+            <h2>Grid.js example</h2>
+            <GridTable />
+            <h2>Chart.js example</h2>
+            <Chart />
+            <h2>Log in Screens</h2>
+            <Home />
+          </div>
+        } />
+        <Route path="/vp/login" element={<VPLogin />} />
+        <Route path="/ta/login" element={<TALogin />} />
+        <Route path="/vp/dashboard" element={<VPDashboard />} />
+        <Route path="/ta/dashboard" element={<TADashboard />} />
       </Routes>
     </BrowserRouter>
   );

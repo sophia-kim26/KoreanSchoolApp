@@ -1,7 +1,9 @@
 import { SignedIn, SignedOut, SignInButton, SignOutButton, UserButton, useAuth } from "@clerk/clerk-react";
 
-export default function App() {
+export default function VPLogin() {
+    console.log('🔵 VPLogin component rendering!');
     const { isLoaded, userId } = useAuth();
+    console.log('🔵 VPLogin auth state:', { isLoaded, userId });
 
     return (
         <div style={{ padding: 20 }}>
