@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.56.0",
     "chart.js": "^4.5.1",
     "gridjs": "^6.2.0",
     "gridjs-react": "^6.1.1",

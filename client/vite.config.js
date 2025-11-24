@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // Add this to handle client-side routing
+    proxy: {
+      // This isn't needed for routing, but I'm showing the structure
+    }
+  },
+  // This is important - but might not work in dev server
+  // You may need the historyApiFallback approach below instead
 })

@@ -1,14 +1,17 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function MyComponent() {
+  const navigate = useNavigate();
+
   const handleClickButton1 = () => {
     console.log('VP Button Clicked');
-    // Add your specific logic for button 1 here
+    navigate('/vp/login');
   };
 
   const handleClickButton2 = () => {
     console.log('TA Button Clicked');
-    // Add your specific logic for button 2 here
+    navigate('/ta/login');
   };
 
   return (
