@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-function MyComponent() {
+function Home() {
   const navigate = useNavigate();
 
   const handleClickButton1 = () => {
@@ -16,11 +16,10 @@ function MyComponent() {
 
   return (
     <div>
-      <button onClick={handleVPButton}>
+      <button onClick={handleClickButton1}>
         Vice Principal
-      </button>f
-      {showVPLogin && <VPLogin />}
-
+      </button>
+      
       <button onClick={handleClickButton2}>
         Teacher Assistants
       </button>
@@ -28,5 +27,4 @@ function MyComponent() {
   );
 }
 
-export default MyComponent;
-
+export default Home;

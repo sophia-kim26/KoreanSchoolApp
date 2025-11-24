@@ -32,22 +32,22 @@ export default function App() {
   );
 }
 
-function App() {
-  const [data, setData] = useState([]);
+// function App() {
+//   const [data, setData] = useState([]);
 
-  useEffect(() => {
-    fetch('http://localhost:3001/api/data')
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error);
-  }, []);
+//   useEffect(() => {
+//     fetch('http://localhost:3001/api/data')
+//       .then(res => res.json())
+//       .then(setData)
+//       .catch(console.error);
+//   }, []);
 
-  return (
-    <div>
-      <h1>Data from Neon DB</h1>
-      {data.map(item => (
-        <div key={item.id}>{item.name}</div>
-      ))}
-    </div>
-  );
-}
+//   return (
+//     <div>
+//       <h1>Data from Neon DB</h1>
+//       {data.map(item => (
+//         <div key={item.id}>{item.name}</div>
+//       ))}
+//     </div>
+//   );
+// }
