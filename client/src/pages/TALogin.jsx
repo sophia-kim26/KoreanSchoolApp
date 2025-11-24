@@ -105,36 +105,6 @@ export default function TALogin() {
     }
     };
 
-  // Add note (example of user data)
-    const addNote = (noteText) => {
-    if (!currentUser) return;
-    
-    const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    const updatedUser = { ...currentUser };
-    updatedUser.data.notes.push({
-        id: Date.now(),
-        text: noteText,
-        timestamp: new Date().toISOString()
-    });
-    
-    accounts[currentUser.pin] = updatedUser;
-    localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-    setCurrentUser(updatedUser);
-    };
-
-  // Delete note
-    const deleteNote = (noteId) => {
-    if (!currentUser) return;
-    
-    const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    const updatedUser = { ...currentUser };
-    updatedUser.data.notes = updatedUser.data.notes.filter(note => note.id !== noteId);
-    
-    accounts[currentUser.pin] = updatedUser;
-    localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-    setCurrentUser(updatedUser);
-    };
-
   // Logout
     const handleLogout = () => {
     setCurrentUser(null);
@@ -265,43 +235,6 @@ export default function TALogin() {
                     {new Date(currentUser?.createdAt).toLocaleDateString()}
                 </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Notes:</span>
-                <span className="font-medium">{currentUser?.data.notes.length}</span>
-                </div>
-            </div>
-
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-gray-800">Your Notes</h2>
-                <button
-                    onClick={() => {
-                    const text = prompt('Enter note:');
-                    if (text) addNote(text);
-                    }}
-                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
-                >
-                    + Add Note
-                </button>
-                </div>
-                    
-                {currentUser?.data.notes.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">No notes yet</p>
-                ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {currentUser?.data.notes.map(note => (
-                    <div key={note.id} className="bg-white border border-gray-200 rounded p-3 flex justify-between items-start gap-2">
-                        <p className="text-sm text-gray-700 flex-1">{note.text}</p>
-                        <button
-                        onClick={() => deleteNote(note.id)}
-                        className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                        Delete
-                        </button>
-                    </div>
-                    ))}
-                </div>
-                )}
             </div>
 
             <button
