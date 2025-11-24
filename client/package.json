@@ -7,11 +7,20 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server.js"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@clerk/clerk-react": "^5.56.0",
+=======
+    "@clerk/clerk-react": "^5.56.2",
+    "@neondatabase/serverless": "^1.0.2",
+>>>>>>> 3c610e3d8bc76129ae4c170d8917fbc35c609601
     "chart.js": "^4.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "gridjs": "^6.2.0",
     "gridjs-react": "^6.1.1",
     "react": "^19.2.0",
