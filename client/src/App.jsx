@@ -1,20 +1,13 @@
 // App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-<<<<<<< HEAD
 import VPLogin from "./pages/VPLogin";
 import TALogin from "./pages/TALogin";
 import VPDashboard from "./pages/VPDashboard";
 import TADashboard from "./pages/TADashboard";
 import GridTable from "./pages/Grid.jsx";
 import Chart from "./pages/Chart.jsx";
-=======
-import TeacherLogin from "./pages/VPLogin";
-import StudentLogin from "./pages/TALogin";
-import TeacherDashboard from "./pages/VPDashboard";
-import StudentDashboard from "./pages/TADashboard";
-import { useEffect, useState } from 'react';
->>>>>>> 3c610e3d8bc76129ae4c170d8917fbc35c609601
+
 
 export default function App() {
   return (
