@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const sql = neon(process.env.VITE_DATABASE_URL);
+const sql = neon(process.env.DATABASE_URL);
 
 app.use(cors());
 app.use(express.json());
