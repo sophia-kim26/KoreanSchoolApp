@@ -26,7 +26,11 @@ export default function App() {
         <Route path="/vp/login" element={<VPLogin />} />
         <Route path="/ta/login" element={<TALogin />} />
         <Route path="/vp/dashboard" element={<VPDashboard />} />
-        <Route path="/ta/dashboard" element={<TADashboard />} />
+        {/* i put this here for now. you can change the number inside the brackets to load ta/dashboard for specific ta_id
+        but later we need a way to get the
+        ta_id after a ta logs in so we can load the
+        dashboard / timesheet spectific to that ta */}
+        <Route path="/ta/dashboard" element={<TADashboard taId={0} />} />
       </Routes>
     </BrowserRouter>
   );
