@@ -164,7 +164,6 @@ export default function TALogin() {
                                 <Lock className="w-8 h-8 text-blue-600" />
                             </div>
                             <h1 className="text-3xl font-bold text-gray-800">TA PIN Authentication</h1>
-                            <p className="text-gray-600 mt-2">Anonymous accounts with unique PINs</p>
                         </div>
 
                         <div className="space-y-3">
@@ -186,15 +185,6 @@ export default function TALogin() {
                                 <Lock className="w-5 h-5" />
                                 Sign In with PIN
                             </button>
-                        </div>
-
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-                            <p className="font-semibold mb-1">How it works:</p>
-                            <ul className="space-y-1 list-disc list-inside">
-                                <li>Create account → Get random 6-digit PIN</li>
-                                <li>Your PIN is your account (no email needed)</li>
-                                <li>Save your PIN securely - no recovery option</li>
-                            </ul>
                         </div>
                     </div>
                 )}
