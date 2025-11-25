@@ -11,7 +11,7 @@ const sql = neon(process.env.DATABASE_URL);
 app.use(cors());
 app.use(express.json());
 
-// Example route - get all records from a table
+// Example route - get all records from table ta_list
 app.get('/api/data', async (req, res) => {
   try {
     const result = await sql`SELECT * FROM ta_list`;
@@ -21,13 +21,12 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
-// Example route - create a record
 app.post('/api/data', async (req, res) => {
   try {
-    const { TA_id, fri_sat_both } = req.body;
+    const { id, first_name, last_name, ta_code, email, session_day, google_id, is_active, created_at, shifts } = req.body;
     const result = await sql`
-      INSERT INTO ta_list (ta_id, fri_sat_both) 
-      VALUES (${TA_id}, ${fri_sat_both}) 
+      INSERT INTO ta_list (id, first_name, last_name, ta_code, email, session_day, google_id, is_active, created_at, shifts) 
+      VALUES (${id}, ${first_name}, ${last_name}, ${ta_code}, ${email}, ${session_day}, ${google_id}, ${is_active}, ${created_at}, ${shifts}) 
       RETURNING *
     `;
     res.json(result);
@@ -35,6 +34,31 @@ app.post('/api/data', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// shifts table
+app.get('/api/shifts', async (req, res) => {
+  try {
+    const result = await sql`SELECT * FROM shifts`;
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/shifts', async (req, res) => {
+  try {
+    const { id, ta_id, clock_in, clock_out, was_manual, notes, TA } = req.body;
+    const result = await sql`
+      INSERT INTO shifts (id, ta_id, clock_in, clock_out, was_manual, notes, TA)
+      VALUES (${id}, ${ta_id}, ${clock_in}, ${clock_out}, ${was_manual}, ${notes}, ${TA})
+      RETURNING *
+    `;
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 const PORT = 3001;
 app.listen(PORT, () => {

@@ -13,7 +13,7 @@ function VPDashboard() {
   }, []);
 
   // Transform your data into an array of arrays for Grid.js
-  const gridData = data.map(row => [row.ta_id, row.fri_sat_both]);
+  const gridData = data.map(row => [row.id, row.first_name, row.last_name, row.ta_code, row.email, row.session_day, row.google_id, row.is_active]);
 
   return (
     <div>
@@ -24,7 +24,7 @@ function VPDashboard() {
       ) : (
         <Grid
           data={gridData}
-          columns={["ta_id", "fri_sat_both"]}
+          columns={["id", "first_name", "last_name", "ta_code", "email", "session_day", "google_id", "is_active"]}
           search={true}
           pagination={{ enabled: true, limit: 10 }}
         />
