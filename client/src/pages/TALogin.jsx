@@ -160,9 +160,6 @@ export default function TALogin() {
                 {authState === 'home' && (
                     <div className="space-y-6">
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                                <Lock className="w-8 h-8 text-blue-600" />
-                            </div>
                             <h1 className="text-3xl font-bold text-gray-800">TA PIN Authentication</h1>
                         </div>
 
@@ -171,7 +168,6 @@ export default function TALogin() {
                                 onClick={handleCreateAccount}
                                 className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                             >
-                                <RefreshCw className="w-5 h-5" />
                                 Create New Account
                             </button>
 
@@ -182,7 +178,6 @@ export default function TALogin() {
                                 }}
                                 className="w-full bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
                             >
-                                <Lock className="w-5 h-5" />
                                 Sign In with PIN
                             </button>
                         </div>
@@ -192,9 +187,6 @@ export default function TALogin() {
                 {authState === 'enterPin' && (
                     <div className="space-y-6">
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                                <Lock className="w-8 h-8 text-blue-600" />
-                            </div>
                             <h1 className="text-2xl font-bold text-gray-800">Enter Your PIN</h1>
                             <p className="text-gray-600 mt-2">Enter your 6-digit PIN to access your account</p>
                         </div>
@@ -203,7 +195,6 @@ export default function TALogin() {
 
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                                <XCircle className="w-4 h-4" />
                                 {error}
                             </div>
                         )}
@@ -220,9 +211,6 @@ export default function TALogin() {
                 {authState === 'authenticated' && (
                     <div className="space-y-6">
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                                <CheckCircle className="w-8 h-8 text-green-600" />
-                            </div>
                             <h1 className="text-2xl font-bold text-gray-800">Redirecting...</h1>
                             <p className="text-gray-600 mt-2">Taking you to your dashboard</p>
                         </div>
@@ -234,9 +222,6 @@ export default function TALogin() {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
                         <div className="text-center space-y-4">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-2">
-                                <CheckCircle className="w-8 h-8 text-green-600" />
-                            </div>
                             <h2 className="text-2xl font-bold text-gray-800">Account Created!</h2>
                             <p className="text-gray-600">Your unique PIN is:</p>
 
@@ -250,12 +235,10 @@ export default function TALogin() {
                                 >
                                     {copied ? (
                                         <>
-                                            <Check className="w-4 h-4 text-green-600" />
                                             <span className="text-green-600">Copied!</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Copy className="w-4 h-4" />
                                             Copy PIN
                                         </>
                                     )}
