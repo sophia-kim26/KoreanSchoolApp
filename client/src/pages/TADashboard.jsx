@@ -1,3 +1,7 @@
 export default function TADashboard() {
-  return <div>TA Dashboard</div>
+  return (
+    <div>
+      <h1>TA Dashboard</h1>
+    </div>
+  );
 }

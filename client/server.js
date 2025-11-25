@@ -14,7 +14,7 @@ app.use(express.json());
 // Example route - get all records from a table
 app.get('/api/data', async (req, res) => {
   try {
-    const result = await sql`SELECT * FROM your_table_name`;
+    const result = await sql`SELECT * FROM ta_list`;
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,10 +24,10 @@ app.get('/api/data', async (req, res) => {
 // Example route - create a record
 app.post('/api/data', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { TA_id, fri_sat_both } = req.body;
     const result = await sql`
-      INSERT INTO your_table_name (name, email) 
-      VALUES (${name}, ${email}) 
+      INSERT INTO ta_list (ta_id, fri_sat_both) 
+      VALUES (${TA_id}, ${fri_sat_both}) 
       RETURNING *
     `;
     res.json(result);
