@@ -304,10 +304,8 @@ export default function TALogin() {
                                     onChange={(e) => setSessionDay(e.target.value)}
                                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                                 >
-                                    <option value="Monday">Monday</option>
-                                    <option value="Tuesday">Tuesday</option>
-                                    <option value="Wednesday">Wednesday</option>
-                                    <option value="Thursday">Thursday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Both">Both</option>
                                     <option value="Friday">Friday</option>
                                 </select>
                             </div>
