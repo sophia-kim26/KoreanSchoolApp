@@ -245,15 +245,6 @@ export default function TALogin() {
                                 </button>
                             </div>
 
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 text-left">
-                                <p className="font-semibold mb-1">⚠️ Important:</p>
-                                <ul className="space-y-1 list-disc list-inside">
-                                    <li>Save this PIN securely</li>
-                                    <li>There is no way to recover it</li>
-                                    <li>Anyone with this PIN can access your account</li>
-                                </ul>
-                            </div>
-
                             <div className="space-y-2 pt-2">
                                 <button
                                     onClick={handleGoToSignIn}
