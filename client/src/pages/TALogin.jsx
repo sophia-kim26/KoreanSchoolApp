@@ -14,6 +14,30 @@ export default function TALogin() {
     
     const pinRefs = useRef([]);
 
+    // Sign out on fresh page load (not refreshes)
+    useEffect(() => {
+        const wasOpen = sessionStorage.getItem('appWasOpen');
+        
+        if (!wasOpen && userId) {
+            // App was closed and reopened - sign out
+            signOut();
+        } else {
+            // Mark app as open
+            sessionStorage.setItem('appWasOpen', 'true');
+        }
+
+        // Clean up on unload
+        const handleBeforeUnload = () => {
+            sessionStorage.removeItem('appWasOpen');
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [userId, signOut]);
+
     // Generate random 6-digit PIN
     const generatePin = () => {
         return Math.floor(100000 + Math.random() * 900000).toString();
