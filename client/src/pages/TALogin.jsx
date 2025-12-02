@@ -11,6 +11,10 @@ export default function TALogin() {
     const [showNewPin, setShowNewPin] = useState(false);
     const [newlyCreatedPin, setNewlyCreatedPin] = useState('');
     const [copied, setCopied] = useState(false);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+
     
     const pinRefs = useRef([]);
 
@@ -20,26 +24,31 @@ export default function TALogin() {
     };
 
     // Create new account with random PIN
+    // const handleCreateAccount = () => {
+    //     const newPin = generatePin();
+    //     const newUser = {
+    //         pin: newPin,
+    //         id: `user_${Date.now()}`,
+    //         createdAt: new Date().toISOString(),
+    //         data: {
+    //             notes: [],
+    //             preferences: {}
+    //         }
+    //     };
+        
+    //     // Get existing accounts
+    //     const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
+    //     accounts[newPin] = newUser;
+    //     localStorage.setItem('pin_accounts', JSON.stringify(accounts));
+        
+    //     setNewlyCreatedPin(newPin);
+    //     setShowNewPin(true);
+    // };
+
     const handleCreateAccount = () => {
-        const newPin = generatePin();
-        const newUser = {
-            pin: newPin,
-            id: `user_${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            data: {
-                notes: [],
-                preferences: {}
-            }
-        };
-        
-        // Get existing accounts
-        const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-        accounts[newPin] = newUser;
-        localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-        
-        setNewlyCreatedPin(newPin);
-        setShowNewPin(true);
-    };
+    setAuthState('createAccountForm');
+};
+
 
     const handleCopyPin = () => {
         navigator.clipboard.writeText(newlyCreatedPin);
@@ -134,6 +143,37 @@ export default function TALogin() {
         }
     }, [pin]);
 
+
+    const handleSubmitNewAccount = () => {
+    if (!firstName || !lastName || !email) return;
+
+    const newPin = generatePin();
+    const newUser = {
+        pin: newPin,
+        id: `user_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        firstName,
+        lastName,
+        email,
+        data: { notes: [], preferences: {} }
+    };
+
+    const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
+    accounts[newPin] = newUser;
+    localStorage.setItem('pin_accounts', JSON.stringify(accounts));
+
+    setNewlyCreatedPin(newPin);
+    setShowNewPin(true);
+    setAuthState('home');
+
+    // Clear form
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+};
+
+
+
     const PinInput = ({ autoFocus = false }) => (
         <div className="flex gap-2 justify-center">
             {pin.map((digit, index) => (
@@ -183,6 +223,55 @@ export default function TALogin() {
                         </div>
                     </div>
                 )}
+
+                {authState === 'createAccountForm' && (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-800">Create New Account</h1>
+                            <p className="text-gray-600 mt-2">Enter your details to generate a PIN</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="First Name"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Last Name"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                            />
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleSubmitNewAccount}
+
+                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition"
+                        >
+                            Submit
+                        </button>
+
+                        <button
+                            onClick={() => setAuthState('home')}
+                            className="w-full text-gray-600 text-sm hover:text-gray-800"
+                        >
+                            ← Back to Home
+                        </button>
+                    </div>
+                )}
+
 
                 {authState === 'enterPin' && (
                     <div className="space-y-6">
