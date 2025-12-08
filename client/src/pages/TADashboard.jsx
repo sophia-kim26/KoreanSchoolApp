@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 function TADashboard({ taId }) {
   const [data, setData] = useState([]);
   const navigate = useNavigate();
-
+  const [clockedIn, setClockedIn] = useState(false);
+ 
   // Check authentication on mount
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem('current_ta_user') || 'null');
@@ -43,9 +44,33 @@ function TADashboard({ taId }) {
     ? `${taData[0].first_name} ${taData[0].last_name}`
     : "Unknown";
 
+
+  // clock in and clock out functions
+  const clockIn = () => {
+    console.log("Clock In pressed");
+    setClockedIn(true);
+    // Add your API call here
+  };
+
+  const clockOut = () => {
+    console.log("Clock Out pressed");
+    setClockedIn(false);
+    // Add your API call here
+  };
+
   return (
     <div>
       <h1>TA Dashboard - Timesheet for {taName}</h1>
+
+      {/* --- NEW BUTTONS --- */}
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={clockIn} style={{ marginRight: "10px" }} disabled={clockedIn}>
+          Clock In
+        </button>
+        <button onClick={clockOut} disabled={!clockedIn}>
+          Clock Out
+        </button>
+      </div>
 
       {taData.length === 0 ? (
         <p>No data found.</p>
