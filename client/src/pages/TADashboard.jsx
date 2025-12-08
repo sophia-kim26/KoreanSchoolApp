@@ -10,7 +10,7 @@ function TADashboard({ taId }) {
  
   // Check authentication on mount
   useEffect(() => {
-    const user = JSON.parse(sessionStorage.getItem('current_ta_user') || 'null');
+    const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
     if (!user) {
       navigate('/ta/login');
       return;
