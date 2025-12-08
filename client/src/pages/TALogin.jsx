@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check } from 'lucide-react';
 
 export default function TALogin() {
+<<<<<<< Updated upstream
+=======
+    const navigate = useNavigate();
+>>>>>>> Stashed changes
     const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
     const [pin, setPin] = useState(['', '', '', '', '', '']);
     const [currentUser, setCurrentUser] = useState(null);
@@ -20,6 +24,7 @@ export default function TALogin() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
 
+<<<<<<< Updated upstream
     // Create new account with form data
     const handleCreateAccount = () => {
         setAuthState('createAccountForm');
@@ -52,6 +57,11 @@ export default function TALogin() {
         setLastName('');
         setEmail('');
     };
+=======
+    const handleCreateAccount = () => {
+        setAuthState('createAccountForm');
+    };
+>>>>>>> Stashed changes
 
     const handleCopyPin = () => {
         navigator.clipboard.writeText(newlyCreatedPin);
@@ -104,10 +114,10 @@ export default function TALogin() {
     };
 
     // Verify PIN and redirect to dashboard
-    const handleVerifyPin = () => {
+    const handleVerifyPin = async () => {
         const pinString = pin.join('');
-        const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
         
+<<<<<<< Updated upstream
         if (accounts[pinString]) {
             setCurrentUser(accounts[pinString]);
             // Store current user in sessionStorage (clears on window close, persists on refresh)
@@ -120,8 +130,39 @@ export default function TALogin() {
             }, 500);
         } else {
             setError('Invalid PIN. Please try again.');
+=======
+        try {
+            const response = await fetch('http://localhost:3001/api/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ta_code: pinString
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setCurrentUser(data.ta);
+                // Store current user in localStorage for the dashboard to access
+                localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
+                setAuthState('authenticated');
+                setError('');
+                // Redirect to TA Dashboard after a brief moment
+                setTimeout(() => {
+                    navigate('/ta/dashboard');
+                }, 500);
+            } else {
+                setError(data.error || 'Invalid PIN. Please try again.');
+                setPin(['', '', '', '', '', '']);
+                setTimeout(() => pinRefs.current[0]?.focus(), 100);
+            }
+        } catch (error) {
+            setError('Failed to sign in. Please try again.');
+>>>>>>> Stashed changes
             setPin(['', '', '', '', '', '']);
             setTimeout(() => pinRefs.current[0]?.focus(), 100);
+            console.error('Error signing in:', error);
         }
     };
 
@@ -146,6 +187,51 @@ export default function TALogin() {
         }
     }, [pin]);
 
+<<<<<<< Updated upstream
+=======
+    const handleSubmitNewAccount = async () => {
+        if (!firstName || !lastName || !email) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        const newPin = generatePin();
+
+        try {
+            const response = await fetch('http://localhost:3001/api/create-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    ta_code: newPin,
+                    session_day: ''
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setNewlyCreatedPin(newPin);
+                setShowNewPin(true);
+                setAuthState('home');
+                setError('');
+                
+                // Clear form
+                setFirstName('');
+                setLastName('');
+                setEmail('');
+            } else {
+                setError(data.error || 'Failed to create account');
+            }
+        } catch (error) {
+            setError('Failed to create account. Please try again.');
+            console.error('Error creating account:', error);
+        }
+    };
+
+>>>>>>> Stashed changes
     const PinInput = ({ autoFocus = false }) => (
         <div className="flex gap-2 justify-center">
             {pin.map((digit, index) => (
@@ -203,6 +289,12 @@ export default function TALogin() {
                             <p className="text-gray-600 mt-2">Enter your details to generate a PIN</p>
                         </div>
 
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             <input
                                 type="text"
@@ -229,8 +321,12 @@ export default function TALogin() {
 
                         <button
                             onClick={handleSubmitNewAccount}
+<<<<<<< Updated upstream
                             disabled={!firstName || !lastName || !email}
                             className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+=======
+                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition"
+>>>>>>> Stashed changes
                         >
                             Submit
                         </button>

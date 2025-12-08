@@ -74,6 +74,64 @@ app.post('/api/shifts', async (req, res) => {
 });
 
 
+// Create new TA account
+app.post('/api/create-account', async (req, res) => {
+  try {
+    const { first_name, last_name, email, ta_code, session_day } = req.body;
+    
+    // Check if email already exists
+    const existing = await sql`SELECT * FROM ta_list WHERE email = ${email}`;
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Account already exists with this email' });
+    }
+    
+    // Check if ta_code already exists (shouldn't happen with random generation, but just in case)
+    const existingCode = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
+    if (existingCode.length > 0) {
+      return res.status(400).json({ error: 'PIN already exists, please try again' });
+    }
+    
+    // Insert new TA with is_active = true by default
+    const result = await sql`
+      INSERT INTO ta_list (first_name, last_name, email, ta_code, session_day, is_active, created_at) 
+      VALUES (${first_name}, ${last_name}, ${email}, ${ta_code}, ${session_day}, true, NOW()) 
+      RETURNING *
+    `;
+    
+    res.json({ 
+      success: true, 
+      ta: result[0],
+      message: 'Account created successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sign in with PIN
+app.post('/api/signin', async (req, res) => {
+  try {
+    const { ta_code } = req.body;
+    
+    const result = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Invalid PIN' });
+    }
+    
+    // Check if account is active
+    if (!result[0].is_active) {
+      return res.status(403).json({ error: 'Account is inactive. Please contact administrator.' });
+    }
+    
+    res.json({ 
+      success: true, 
+      ta: result[0] 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 const PORT = 3001;
 app.listen(PORT, () => {
