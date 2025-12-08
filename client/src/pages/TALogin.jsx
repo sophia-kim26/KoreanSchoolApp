@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 export default function TALogin() {
-    const navigate = useNavigate();
     const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated
     const [pin, setPin] = useState(['', '', '', '', '', '']);
     const [currentUser, setCurrentUser] = useState(null);
@@ -13,30 +11,6 @@ export default function TALogin() {
     const [copied, setCopied] = useState(false);
     
     const pinRefs = useRef([]);
-
-    // Sign out on fresh page load (not refreshes)
-    useEffect(() => {
-        const wasOpen = sessionStorage.getItem('appWasOpen');
-        
-        if (!wasOpen && userId) {
-            // App was closed and reopened - sign out
-            signOut();
-        } else {
-            // Mark app as open
-            sessionStorage.setItem('appWasOpen', 'true');
-        }
-
-        // Clean up on unload
-        const handleBeforeUnload = () => {
-            sessionStorage.removeItem('appWasOpen');
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [userId, signOut]);
 
     // Generate random 6-digit PIN
     const generatePin = () => {
@@ -56,7 +30,7 @@ export default function TALogin() {
             }
         };
         
-        // Get existing accounts
+        // Get existing accounts (still use localStorage for permanent account storage)
         const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
         accounts[newPin] = newUser;
         localStorage.setItem('pin_accounts', JSON.stringify(accounts));
@@ -122,13 +96,13 @@ export default function TALogin() {
         
         if (accounts[pinString]) {
             setCurrentUser(accounts[pinString]);
-            // Store current user in localStorage for the dashboard to access
-            localStorage.setItem('current_ta_user', JSON.stringify(accounts[pinString]));
+            // Store current user in sessionStorage (clears on window close, persists on refresh)
+            sessionStorage.setItem('current_ta_user', JSON.stringify(accounts[pinString]));
             setAuthState('authenticated');
             setError('');
             // Redirect to TA Dashboard after a brief moment
             setTimeout(() => {
-                navigate('/ta/dashboard');
+                window.location.href = '/ta/dashboard';
             }, 500);
         } else {
             setError('Invalid PIN. Please try again.');
@@ -143,7 +117,7 @@ export default function TALogin() {
         setPin(['', '', '', '', '', '']);
         setAuthState('home');
         setError('');
-        localStorage.removeItem('current_ta_user');
+        sessionStorage.removeItem('current_ta_user');
     };
 
     const handleBackToHome = () => {
