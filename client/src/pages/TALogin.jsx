@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check } from 'lucide-react';
 
 export default function TALogin() {
-    const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated
+    const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
     const [pin, setPin] = useState(['', '', '', '', '', '']);
     const [currentUser, setCurrentUser] = useState(null);
     const [error, setError] = useState('');
@@ -12,7 +12,6 @@ export default function TALogin() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
-
     
     const pinRefs = useRef([]);
 
@@ -21,36 +20,38 @@ export default function TALogin() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
 
-    // Create new account with random PIN
-    // const handleCreateAccount = () => {
-    //     const newPin = generatePin();
-    //     const newUser = {
-    //         pin: newPin,
-    //         id: `user_${Date.now()}`,
-    //         createdAt: new Date().toISOString(),
-    //         data: {
-    //             notes: [],
-    //             preferences: {}
-    //         }
-    //     };
-        
-        // Get existing accounts (still use localStorage for permanent account storage)
+    // Create new account with form data
+    const handleCreateAccount = () => {
+        setAuthState('createAccountForm');
+    };
+
+    const handleSubmitNewAccount = () => {
+        if (!firstName || !lastName || !email) return;
+
+        const newPin = generatePin();
+        const newUser = {
+            pin: newPin,
+            id: `user_${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            firstName,
+            lastName,
+            email,
+            data: { notes: [], preferences: {} }
+        };
+
         const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
         accounts[newPin] = newUser;
         localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-    //     // Get existing accounts
-    //     const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    //     accounts[newPin] = newUser;
-    //     localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-        
-    //     setNewlyCreatedPin(newPin);
-    //     setShowNewPin(true);
-    // };
 
-    const handleCreateAccount = () => {
-    setAuthState('createAccountForm');
-};
+        setNewlyCreatedPin(newPin);
+        setShowNewPin(true);
+        setAuthState('home');
 
+        // Clear form
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+    };
 
     const handleCopyPin = () => {
         navigator.clipboard.writeText(newlyCreatedPin);
@@ -145,37 +146,6 @@ export default function TALogin() {
         }
     }, [pin]);
 
-
-    const handleSubmitNewAccount = () => {
-    if (!firstName || !lastName || !email) return;
-
-    const newPin = generatePin();
-    const newUser = {
-        pin: newPin,
-        id: `user_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        firstName,
-        lastName,
-        email,
-        data: { notes: [], preferences: {} }
-    };
-
-    const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    accounts[newPin] = newUser;
-    localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-
-    setNewlyCreatedPin(newPin);
-    setShowNewPin(true);
-    setAuthState('home');
-
-    // Clear form
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-};
-
-
-
     const PinInput = ({ autoFocus = false }) => (
         <div className="flex gap-2 justify-center">
             {pin.map((digit, index) => (
@@ -239,28 +209,28 @@ export default function TALogin() {
                                 placeholder="First Name"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
                             />
                             <input
                                 type="text"
                                 placeholder="Last Name"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
                             />
                             <input
                                 type="email"
                                 placeholder="Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
                             />
                         </div>
 
                         <button
                             onClick={handleSubmitNewAccount}
-
-                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition"
+                            disabled={!firstName || !lastName || !email}
+                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             Submit
                         </button>
@@ -273,7 +243,6 @@ export default function TALogin() {
                         </button>
                     </div>
                 )}
-
 
                 {authState === 'enterPin' && (
                     <div className="space-y-6">
@@ -326,14 +295,20 @@ export default function TALogin() {
                                 >
                                     {copied ? (
                                         <>
+                                            <Check className="w-4 h-4" />
                                             <span className="text-green-600">Copied!</span>
                                         </>
                                     ) : (
                                         <>
+                                            <Copy className="w-4 h-4" />
                                             Copy PIN
                                         </>
                                     )}
                                 </button>
+                            </div>
+
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                                ⚠️ Save this PIN! You'll need it to sign in.
                             </div>
 
                             <div className="space-y-2 pt-2">
