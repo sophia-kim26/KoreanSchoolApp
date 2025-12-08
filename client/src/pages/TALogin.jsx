@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function TALogin() {
-<<<<<<< Updated upstream
-=======
     const navigate = useNavigate();
->>>>>>> Stashed changes
     const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
     const [pin, setPin] = useState(['', '', '', '', '', '']);
     const [currentUser, setCurrentUser] = useState(null);
@@ -24,44 +22,9 @@ export default function TALogin() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
 
-<<<<<<< Updated upstream
-    // Create new account with form data
     const handleCreateAccount = () => {
         setAuthState('createAccountForm');
     };
-
-    const handleSubmitNewAccount = () => {
-        if (!firstName || !lastName || !email) return;
-
-        const newPin = generatePin();
-        const newUser = {
-            pin: newPin,
-            id: `user_${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            firstName,
-            lastName,
-            email,
-            data: { notes: [], preferences: {} }
-        };
-
-        const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-        accounts[newPin] = newUser;
-        localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-
-        setNewlyCreatedPin(newPin);
-        setShowNewPin(true);
-        setAuthState('home');
-
-        // Clear form
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-    };
-=======
-    const handleCreateAccount = () => {
-        setAuthState('createAccountForm');
-    };
->>>>>>> Stashed changes
 
     const handleCopyPin = () => {
         navigator.clipboard.writeText(newlyCreatedPin);
@@ -117,20 +80,6 @@ export default function TALogin() {
     const handleVerifyPin = async () => {
         const pinString = pin.join('');
         
-<<<<<<< Updated upstream
-        if (accounts[pinString]) {
-            setCurrentUser(accounts[pinString]);
-            // Store current user in sessionStorage (clears on window close, persists on refresh)
-            sessionStorage.setItem('current_ta_user', JSON.stringify(accounts[pinString]));
-            setAuthState('authenticated');
-            setError('');
-            // Redirect to TA Dashboard after a brief moment
-            setTimeout(() => {
-                window.location.href = '/ta/dashboard';
-            }, 500);
-        } else {
-            setError('Invalid PIN. Please try again.');
-=======
         try {
             const response = await fetch('http://localhost:3001/api/signin', {
                 method: 'POST',
@@ -159,7 +108,6 @@ export default function TALogin() {
             }
         } catch (error) {
             setError('Failed to sign in. Please try again.');
->>>>>>> Stashed changes
             setPin(['', '', '', '', '', '']);
             setTimeout(() => pinRefs.current[0]?.focus(), 100);
             console.error('Error signing in:', error);
@@ -172,7 +120,7 @@ export default function TALogin() {
         setPin(['', '', '', '', '', '']);
         setAuthState('home');
         setError('');
-        sessionStorage.removeItem('current_ta_user');
+        localStorage.removeItem('current_ta_user');
     };
 
     const handleBackToHome = () => {
@@ -187,8 +135,6 @@ export default function TALogin() {
         }
     }, [pin]);
 
-<<<<<<< Updated upstream
-=======
     const handleSubmitNewAccount = async () => {
         if (!firstName || !lastName || !email) {
             setError('Please fill in all fields');
@@ -231,7 +177,6 @@ export default function TALogin() {
         }
     };
 
->>>>>>> Stashed changes
     const PinInput = ({ autoFocus = false }) => (
         <div className="flex gap-2 justify-center">
             {pin.map((digit, index) => (
@@ -301,32 +246,27 @@ export default function TALogin() {
                                 placeholder="First Name"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
                             <input
                                 type="text"
                                 placeholder="Last Name"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
                             <input
                                 type="email"
                                 placeholder="Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full border-2 border-gray-300 p-3 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
                         </div>
 
                         <button
                             onClick={handleSubmitNewAccount}
-<<<<<<< Updated upstream
-                            disabled={!firstName || !lastName || !email}
-                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-=======
                             className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition"
->>>>>>> Stashed changes
                         >
                             Submit
                         </button>
@@ -401,10 +341,6 @@ export default function TALogin() {
                                         </>
                                     )}
                                 </button>
-                            </div>
-
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                                ⚠️ Save this PIN! You'll need it to sign in.
                             </div>
 
                             <div className="space-y-2 pt-2">
