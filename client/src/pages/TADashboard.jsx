@@ -7,6 +7,13 @@ function TADashboard() {
   const [data, setData] = useState([]);
   const navigate = useNavigate();
   const [clockedIn, setClockedIn] = useState(false);
+
+  // for marking time
+  const now = new Date();  
+  const [clockInTime, setClockInTime] = useState(null);
+  const [clockOutTime, setClockOutTime] = useState(null);
+  const [elapsed, setElapsed] = useState(null);
+ 
   const [currentUser, setCurrentUser] = useState(null);
 
   // Check authentication on mount
@@ -52,13 +59,27 @@ function TADashboard() {
   const clockIn = () => {
     console.log("Clock In pressed");
     setClockedIn(true);
-    // Add your API call here
+    
+    setClockInTime(now);
+    setClockOutTime(null);
+    setElapsed(null);
   };
 
   const clockOut = () => {
     console.log("Clock Out pressed");
     setClockedIn(false);
-    // Add your API call here
+    
+    setClockOutTime(now);
+    if (clockInTime) {
+      const diffMins = now - clockInTime;
+      const totalMinutes = Math.floor(diffMins / 1000 / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      setElapsed({ hours, minutes });
+
+      console.log(`Elapsed time: ${hours} hours and ${minutes} minutes`);
+    }
   };
 
   return (
@@ -74,6 +95,21 @@ function TADashboard() {
           Clock Out
         </button>
       </div>
+
+      <div style={{ marginBottom: "20px", fontSize: "18px" }}>
+        {clockInTime && (
+          <p><strong>Clocked In:</strong> {clockInTime.toLocaleString()}</p>
+        )}
+
+        {clockOutTime && (
+          <p><strong>Clocked Out:</strong> {clockOutTime.toLocaleString()}</p>
+        )}
+
+        {elapsed && (
+         <p><strong>Total Time Worked:</strong> {elapsed.hours} hours and {elapsed.minutes} minutes</p>
+      )}
+      </div>
+
 
       {taData.length === 0 ? (
         <p>No data found.</p>
