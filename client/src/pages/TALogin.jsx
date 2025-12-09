@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function TALogin() {
     const navigate = useNavigate();
-    const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated
+    const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
     const [pin, setPin] = useState(['', '', '', '', '', '']);
     const [currentUser, setCurrentUser] = useState(null);
     const [error, setError] = useState('');
@@ -14,7 +14,6 @@ export default function TALogin() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
-
     
     const pinRefs = useRef([]);
 
@@ -23,32 +22,9 @@ export default function TALogin() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
 
-    // Create new account with random PIN
-    // const handleCreateAccount = () => {
-    //     const newPin = generatePin();
-    //     const newUser = {
-    //         pin: newPin,
-    //         id: `user_${Date.now()}`,
-    //         createdAt: new Date().toISOString(),
-    //         data: {
-    //             notes: [],
-    //             preferences: {}
-    //         }
-    //     };
-        
-    //     // Get existing accounts
-    //     const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    //     accounts[newPin] = newUser;
-    //     localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-        
-    //     setNewlyCreatedPin(newPin);
-    //     setShowNewPin(true);
-    // };
-
     const handleCreateAccount = () => {
-    setAuthState('createAccountForm');
-};
-
+        setAuthState('createAccountForm');
+    };
 
     const handleCopyPin = () => {
         navigator.clipboard.writeText(newlyCreatedPin);
@@ -101,24 +77,40 @@ export default function TALogin() {
     };
 
     // Verify PIN and redirect to dashboard
-    const handleVerifyPin = () => {
+    const handleVerifyPin = async () => {
         const pinString = pin.join('');
-        const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
         
-        if (accounts[pinString]) {
-            setCurrentUser(accounts[pinString]);
-            // Store current user in localStorage for the dashboard to access
-            localStorage.setItem('current_ta_user', JSON.stringify(accounts[pinString]));
-            setAuthState('authenticated');
-            setError('');
-            // Redirect to TA Dashboard after a brief moment
-            setTimeout(() => {
-                navigate('/ta/dashboard');
-            }, 500);
-        } else {
-            setError('Invalid PIN. Please try again.');
+        try {
+            const response = await fetch('http://localhost:3001/api/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ta_code: pinString
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setCurrentUser(data.ta);
+                // Store current user in localStorage for the dashboard to access
+                localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
+                setAuthState('authenticated');
+                setError('');
+                // Redirect to TA Dashboard after a brief moment
+                setTimeout(() => {
+                    navigate('/ta/dashboard');
+                }, 500);
+            } else {
+                setError(data.error || 'Invalid PIN. Please try again.');
+                setPin(['', '', '', '', '', '']);
+                setTimeout(() => pinRefs.current[0]?.focus(), 100);
+            }
+        } catch (error) {
+            setError('Failed to sign in. Please try again.');
             setPin(['', '', '', '', '', '']);
             setTimeout(() => pinRefs.current[0]?.focus(), 100);
+            console.error('Error signing in:', error);
         }
     };
 
@@ -143,36 +135,47 @@ export default function TALogin() {
         }
     }, [pin]);
 
+    const handleSubmitNewAccount = async () => {
+        if (!firstName || !lastName || !email) {
+            setError('Please fill in all fields');
+            return;
+        }
 
-    const handleSubmitNewAccount = () => {
-    if (!firstName || !lastName || !email) return;
+        const newPin = generatePin();
 
-    const newPin = generatePin();
-    const newUser = {
-        pin: newPin,
-        id: `user_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        firstName,
-        lastName,
-        email,
-        data: { notes: [], preferences: {} }
+        try {
+            const response = await fetch('http://localhost:3001/api/create-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    ta_code: newPin,
+                    session_day: ''
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setNewlyCreatedPin(newPin);
+                setShowNewPin(true);
+                setAuthState('home');
+                setError('');
+                
+                // Clear form
+                setFirstName('');
+                setLastName('');
+                setEmail('');
+            } else {
+                setError(data.error || 'Failed to create account');
+            }
+        } catch (error) {
+            setError('Failed to create account. Please try again.');
+            console.error('Error creating account:', error);
+        }
     };
-
-    const accounts = JSON.parse(localStorage.getItem('pin_accounts') || '{}');
-    accounts[newPin] = newUser;
-    localStorage.setItem('pin_accounts', JSON.stringify(accounts));
-
-    setNewlyCreatedPin(newPin);
-    setShowNewPin(true);
-    setAuthState('home');
-
-    // Clear form
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-};
-
-
 
     const PinInput = ({ autoFocus = false }) => (
         <div className="flex gap-2 justify-center">
@@ -231,6 +234,12 @@ export default function TALogin() {
                             <p className="text-gray-600 mt-2">Enter your details to generate a PIN</p>
                         </div>
 
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             <input
                                 type="text"
@@ -257,7 +266,6 @@ export default function TALogin() {
 
                         <button
                             onClick={handleSubmitNewAccount}
-
                             className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition"
                         >
                             Submit
@@ -271,7 +279,6 @@ export default function TALogin() {
                         </button>
                     </div>
                 )}
-
 
                 {authState === 'enterPin' && (
                     <div className="space-y-6">
@@ -324,10 +331,12 @@ export default function TALogin() {
                                 >
                                     {copied ? (
                                         <>
+                                            <Check className="w-4 h-4" />
                                             <span className="text-green-600">Copied!</span>
                                         </>
                                     ) : (
                                         <>
+                                            <Copy className="w-4 h-4" />
                                             Copy PIN
                                         </>
                                     )}
