@@ -44,6 +44,13 @@ function VPDashboard() {
     }));
   };
 
+  const handleSessionDaySelect = (day) => {
+    setFormData(prev => ({
+      ...prev,
+      session_day: day
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -205,13 +212,61 @@ function VPDashboard() {
               </div>
               <div style={{ marginBottom: 15 }}>
                 <label style={{ display: 'block', marginBottom: 5 }}>Session Day:</label>
-                <input
-                  type="text"
-                  name="session_day"
-                  value={formData.session_day}
-                  onChange={handleInputChange}
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Friday')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Friday' ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 5,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Friday' ? 'bold' : 'normal'
+                    }}
+                  >
+                    Friday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Saturday')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Saturday' ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 5,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Saturday' ? 'bold' : 'normal'
+                    }}
+                  >
+                    Saturday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Both')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Both' ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 5,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Both' ? 'bold' : 'normal'
+                    }}
+                  >
+                    Both
+                  </button>
+                </div>
+                {formData.session_day && (
+                  <p style={{ marginTop: 5, fontSize: 14, color: '#059669' }}>
+                    Selected: {formData.session_day}
+                  </p>
+                )}
               </div>
               <div style={{ marginBottom: 15 }}>
                 <label style={{ display: 'block', marginBottom: 5 }}>Google ID:</label>
