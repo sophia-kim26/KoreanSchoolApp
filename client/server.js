@@ -14,7 +14,7 @@ app.use(express.json());
 // Example route - get all records from table ta_list
 app.get('/api/data', async (req, res) => {
   try {
-    const result = await sql`SELECT * FROM ta_list`;
+    const result = await sql`SELECT * FROM ta_list ORDER BY id ASC`;
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
