@@ -68,9 +68,13 @@ function TADashboard({ taId }) {
     setClockOutTime(now);
     if (clockInTime) {
       const diffMins = now - clockInTime;
-      const diffHrs = (diffMins / 1000 / 60 / 60).toFixed(2);
-      setElapsed(diffHrs);
-      console.log(`Elapsed time: ${diffHrs} hours`);
+      const totalMinutes = Math.floor(diffMins / 1000 / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      setElapsed({ hours, minutes });
+
+      console.log(`Elapsed time: ${hours} hours and ${minutes} minutes`);
     }
   };
 
@@ -98,8 +102,8 @@ function TADashboard({ taId }) {
         )}
 
         {elapsed && (
-          <p><strong>Total Time Worked:</strong> {elapsed} hours</p>
-        )}
+         <p><strong>Total Time Worked:</strong> {elapsed.hours} hours and {elapsed.minutes} minutes</p>
+      )}
       </div>
 
 
