@@ -14,6 +14,7 @@ export default function TALogin() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
+    const [sessionDay, setSessionDay] = useState('');
     
     const pinRefs = useRef([]);
 
@@ -136,7 +137,7 @@ export default function TALogin() {
     }, [pin]);
 
     const handleSubmitNewAccount = async () => {
-        if (!firstName || !lastName || !email) {
+        if (!firstName || !lastName || !email || !sessionDay) {
             setError('Please fill in all fields');
             return;
         }
@@ -152,7 +153,7 @@ export default function TALogin() {
                     last_name: lastName,
                     email: email,
                     ta_code: newPin,
-                    session_day: ''
+                    session_day: sessionDay
                 })
             });
 
@@ -168,6 +169,7 @@ export default function TALogin() {
                 setFirstName('');
                 setLastName('');
                 setEmail('');
+                setSessionDay('');
             } else {
                 setError(data.error || 'Failed to create account');
             }
@@ -262,6 +264,16 @@ export default function TALogin() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
+                            <select
+                                value={sessionDay}
+                                onChange={(e) => setSessionDay(e.target.value)}
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-700"
+                            >
+                                <option value="">Select Session Day</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                                <option value="Both">Both</option>
+                            </select>
                         </div>
 
                         <button

@@ -3,7 +3,7 @@ import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
 import { useNavigate } from "react-router-dom";
 
-function TADashboard({ taId }) {
+function TADashboard() {
   const [data, setData] = useState([]);
   const navigate = useNavigate();
   const [clockedIn, setClockedIn] = useState(false);
@@ -14,6 +14,8 @@ function TADashboard({ taId }) {
   const [clockOutTime, setClockOutTime] = useState(null);
   const [elapsed, setElapsed] = useState(null);
  
+  const [currentUser, setCurrentUser] = useState(null);
+
   // Check authentication on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
@@ -21,6 +23,7 @@ function TADashboard({ taId }) {
       navigate('/ta/login');
       return;
     }
+    setCurrentUser(user);
   }, [navigate]);
 
   // Fetch shifts data
@@ -31,8 +34,10 @@ function TADashboard({ taId }) {
       .catch(err => console.error(err));
   }, []);
 
-  // Filter rows for the given TA ID
-  const taData = data.filter(row => row.ta_id === taId);
+  // Filter rows for the current user's TA ID
+  const taData = currentUser 
+    ? data.filter(row => row.ta_id === currentUser.id)
+    : [];
 
   // Map filtered rows for Grid.js
   const gridData = taData.map(row => [
@@ -45,11 +50,10 @@ function TADashboard({ taId }) {
     row.notes,
   ]);
 
-  // Get TA full name for header
-  const taName = taData.length > 0
-    ? `${taData[0].first_name} ${taData[0].last_name}`
+  // Get TA full name from currentUser
+  const taName = currentUser
+    ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
-
 
   // clock in and clock out functions
   const clockIn = () => {
