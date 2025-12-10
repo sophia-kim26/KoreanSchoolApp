@@ -219,8 +219,8 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Friday' ? 'white' : '#374151',
+                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e4c7e2ff',
+                      color: formData.session_day === 'Friday' ? 'white' : '#000000ff',
                       border: 'none',
                       borderRadius: 5,
                       cursor: 'pointer',
@@ -235,8 +235,8 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Saturday' ? 'white' : '#374151',
+                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#b4c8f4ff',
+                      color: formData.session_day === 'Saturday' ? 'white' : '#000000ff',
                       border: 'none',
                       borderRadius: 5,
                       cursor: 'pointer',
@@ -251,8 +251,8 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Both' ? 'white' : '#374151',
+                      background: formData.session_day === 'Both' ? '#2563eb' : '#a8e2b4ff',
+                      color: formData.session_day === 'Both' ? 'white' : '#000000ff',
                       border: 'none',
                       borderRadius: 5,
                       cursor: 'pointer',
