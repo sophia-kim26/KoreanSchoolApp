@@ -41,7 +41,7 @@ function VPDashboard() {
   const handleSignOut = () => {
     logout({ 
       logoutParams: { 
-        returnTo: window.location.origin + '/vp/login' 
+        returnTo: window.location.origin
       } 
     });
   };
