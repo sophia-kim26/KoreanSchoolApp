@@ -11,10 +11,22 @@ const sql = neon(process.env.DATABASE_URL);
 app.use(cors());
 app.use(express.json());
 
-// Example route - get all records from table ta_list
+// Modified route - get all TAs with attendance status
 app.get('/api/data', async (req, res) => {
   try {
-    const result = await sql`SELECT * FROM ta_list ORDER BY id ASC`;
+    const result = await sql`
+      SELECT 
+        ta_list.*,
+        CASE 
+          WHEN shifts.id IS NOT NULL THEN 'Present'
+          ELSE 'Absent'
+        END as attendance
+      FROM ta_list
+      LEFT JOIN shifts 
+        ON ta_list.id = shifts.ta_id 
+        AND DATE(shifts.clock_in) = CURRENT_DATE
+      ORDER BY ta_list.id ASC
+    `;
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,10 +35,10 @@ app.get('/api/data', async (req, res) => {
 
 app.post('/api/data', async (req, res) => {
   try {
-    const { id, first_name, last_name, ta_code, email, session_day, google_id, is_active, created_at, shifts } = req.body;
+    const { first_name, last_name, ta_code, email, session_day, google_id, is_active } = req.body;
     const result = await sql`
       INSERT INTO ta_list (first_name, last_name, ta_code, email, session_day, google_id, is_active, created_at) 
-      VALUES (${first_name}, ${last_name}, ${ta_code}, ${email}, ${session_day}, ${google_id}, ${is_active}, ${created_at}) 
+      VALUES (${first_name}, ${last_name}, ${ta_code}, ${email}, ${session_day}, ${google_id}, ${is_active}, NOW()) 
       RETURNING *
     `;
     res.json(result);
@@ -51,6 +63,7 @@ app.get('/api/shifts', async (req, res) => {
       FROM shifts
       JOIN ta_list
         ON shifts.ta_id = ta_list.id
+      ORDER BY shifts.clock_in DESC
     `;
     res.json(result);
   } catch (error) {
@@ -73,7 +86,6 @@ app.post('/api/shifts', async (req, res) => {
   }
 });
 
-
 // Create new TA account
 app.post('/api/create-account', async (req, res) => {
   try {
@@ -85,7 +97,7 @@ app.post('/api/create-account', async (req, res) => {
       return res.status(400).json({ error: 'Account already exists with this email' });
     }
     
-    // Check if ta_code already exists (shouldn't happen with random generation, but just in case)
+    // Check if ta_code already exists
     const existingCode = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
     if (existingCode.length > 0) {
       return res.status(400).json({ error: 'PIN already exists, please try again' });
@@ -112,7 +124,6 @@ app.post('/api/create-account', async (req, res) => {
 app.post('/api/signin', async (req, res) => {
   try {
     const { ta_code } = req.body;
-    
     const result = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
     
     if (result.length === 0) {

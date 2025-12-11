@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
+import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
 import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
@@ -57,7 +58,6 @@ function VPDashboard() {
       });
 
       if (response.ok) {
-        // Reset form and close modal
         setFormData({
           first_name: "",
           last_name: "",
@@ -68,7 +68,6 @@ function VPDashboard() {
           is_active: true
         });
         setShowModal(false);
-        // Refresh the data
         fetchData();
       } else {
         alert("Failed to add new TA");
@@ -79,8 +78,18 @@ function VPDashboard() {
     }
   };
 
-  // Transform your data into an array of arrays for Grid.js
-  const gridData = data.map(row => [row.id, row.first_name, row.last_name, row.ta_code, row.email, row.session_day, row.google_id, row.is_active]);
+  // Transform data for Grid.js with attendance column
+  const gridData = data.map(row => [
+    row.id, 
+    row.first_name, 
+    row.last_name, 
+    row.ta_code, 
+    row.email, 
+    row.session_day, 
+    row.google_id, 
+    row.is_active,
+    row.attendance
+  ]);
 
   return (
     <div style={{ padding: 20 }}>
@@ -130,9 +139,32 @@ function VPDashboard() {
       ) : (
         <Grid
           data={gridData}
-          columns={["id", "first_name", "last_name", "ta_code", "email", "session_day", "google_id", "is_active"]}
+          columns={[
+            "ID",
+            "First Name", 
+            "Last Name", 
+            "TA Code", 
+            "Email", 
+            "Session Day", 
+            "Google ID", 
+            "Active",
+            {
+              name: "Attendance",
+              formatter: (cell) => h('span', {
+                style: `
+                  padding: 4px 12px;
+                  border-radius: 12px;
+                  font-weight: 600;
+                  font-size: 12px;
+                  background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                  color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                `
+              }, cell)
+            }
+          ]}
           search={true}
           pagination={{ enabled: true, limit: 10 }}
+          sort={true}
         />
       )}
 
