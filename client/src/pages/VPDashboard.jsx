@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
-import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 
 function VPDashboard() {
@@ -16,13 +16,19 @@ function VPDashboard() {
     google_id: "",
     is_active: true
   });
-  const { isLoaded, userId } = useAuth();
-  const { signOut } = useClerk();
+  const { isLoading, isAuthenticated, user, logout } = useAuth0();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/vp/login');
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   const fetchData = () => {
     fetch("http://localhost:3001/api/data")
@@ -31,9 +37,13 @@ function VPDashboard() {
       .catch(err => console.error(err));
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/vp/login');
+  // for changing ta stuff
+  const handleSignOut = () => {
+    logout({ 
+      logoutParams: { 
+        returnTo: window.location.origin + '/vp/login' 
+      } 
+    });
   };
 
   const handleInputChange = (e) => {
@@ -47,6 +57,7 @@ function VPDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // sending the data when form is submitted
     try {
       const response = await fetch("http://localhost:3001/api/data", {
         method: "POST",
@@ -82,15 +93,23 @@ function VPDashboard() {
   // Transform your data into an array of arrays for Grid.js
   const gridData = data.map(row => [row.id, row.first_name, row.last_name, row.ta_code, row.email, row.session_day, row.google_id, row.is_active]);
 
+  // Show loading state
+  if (isLoading) {
+    return <div style={{ padding: 20 }}>Loading...</div>;
+  }
+
+  // Show access denied if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: 20 }}>
+        <h1>Access Denied</h1>
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 20 }}>
-    <SignedOut>
-      <h1>Access Denied</h1>
-      <p>Please sign in to access the VP Dashboard</p>
-      <SignInButton mode="modal" />
-    </SignedOut>
-
-    <SignedIn>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -123,7 +142,7 @@ function VPDashboard() {
         </div>
       </div>
 
-      <p style={{ marginBottom: 20 }}>Logged in as: {userId}</p>
+      <p style={{ marginBottom: 20 }}>Logged in as: {user?.email || user?.name}</p>
       
       {data.length === 0 ? (
         <p>No data found.</p>
@@ -267,7 +286,6 @@ function VPDashboard() {
           </div>
         </div>
       )}
-      </SignedIn>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./pages/Home";
 import VPLogin from "./pages/VPLogin";
 import TALogin from "./pages/TALogin";
@@ -14,8 +14,9 @@ export default function App() {
       domain={import.meta.env.VITE_AUTH0_DOMAIN}
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
       authorizationParams={{
-        redirect_uri: window.location.origin + '/vp/dashboard'
+        redirect_uri: window.location.origin
       }}
+      cacheLocation="localstorage"
     >
       <BrowserRouter>
         <Routes>

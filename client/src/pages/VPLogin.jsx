@@ -1,22 +1,13 @@
-import { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function VPLogin() {
     const { isLoading, isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
     const navigate = useNavigate();
 
-    // Sign out on fresh page load (not refreshes)
     useEffect(() => {
-        const wasOpen = sessionStorage.getItem('appWasOpen');
-        
-        if (!wasOpen && isAuthenticated) {
-            // App was closed and reopened - sign out
-            logout({ logoutParams: { returnTo: window.location.origin } });
-        } else {
-            // Mark app as open
-            sessionStorage.setItem('appWasOpen', 'true');
-        }
+        sessionStorage.setItem('appWasOpen', 'true');
 
         // Clean up on unload
         const handleBeforeUnload = () => {
@@ -28,7 +19,7 @@ export default function VPLogin() {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [isAuthenticated, logout]);
+    }, []);
 
     // Redirect to dashboard when user signs in
     useEffect(() => {
@@ -38,7 +29,11 @@ export default function VPLogin() {
     }, [isLoading, isAuthenticated, navigate]);
 
     const handleLogin = () => {
-        loginWithRedirect();
+        loginWithRedirect({
+            authorizationParams: {
+                redirect_uri: window.location.origin + '/vp/login'
+            }
+        });
     };
 
     return (
