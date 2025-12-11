@@ -1,23 +1,13 @@
-import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 export default function VPLogin() {
-    const { isLoaded, userId } = useAuth();
-    const { signOut } = useClerk();
+    const { isLoading, isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
     const navigate = useNavigate();
 
-    // Sign out on fresh page load (not refreshes)
     useEffect(() => {
-        const wasOpen = sessionStorage.getItem('appWasOpen');
-        
-        if (!wasOpen && userId) {
-            // App was closed and reopened - sign out
-            signOut();
-        } else {
-            // Mark app as open
-            sessionStorage.setItem('appWasOpen', 'true');
-        }
+        sessionStorage.setItem('appWasOpen', 'true');
 
         // Clean up on unload
         const handleBeforeUnload = () => {
@@ -29,27 +19,41 @@ export default function VPLogin() {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [userId, signOut]);
+    }, []);
 
     // Redirect to dashboard when user signs in
     useEffect(() => {
-        if (isLoaded && userId) {
+        if (!isLoading && isAuthenticated) {
             navigate('/vp/dashboard');
         }
-    }, [isLoaded, userId, navigate]);
+    }, [isLoading, isAuthenticated, navigate]);
+
+    const handleLogin = () => {
+        loginWithRedirect({
+            authorizationParams: {
+                redirect_uri: window.location.origin + '/vp/login'
+            }
+        });
+    };
 
     return (
         <div style={{ padding: 20 }}>
             <h1>Vice-Principal Login</h1>
             
-            <SignedOut>
-                <p>Please sign in to continue</p>
-                <SignInButton mode="modal" />
-            </SignedOut>
+            {!isAuthenticated && !isLoading && (
+                <>
+                    <p>Please sign in to continue</p>
+                    <button onClick={handleLogin}>Sign In</button>
+                </>
+            )}
 
-            <SignedIn>
+            {isAuthenticated && (
                 <p>Redirecting to dashboard...</p>
-            </SignedIn>
+            )}
+
+            {isLoading && (
+                <p>Loading...</p>
+            )}
         </div>
     );
 }
