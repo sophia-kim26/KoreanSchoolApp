@@ -1,6 +1,8 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import './style/VPLoginCSS.css'
+import logo from '../assets/logo.png';
 
 export default function VPLogin() {
     const { isLoading, isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
@@ -38,6 +40,10 @@ export default function VPLogin() {
 
     return (
         <div style={{ padding: 20 }}>
+            <div className="logo">
+                <img src={logo} alt="Logo" />
+            </div>
+            
             <h1>Vice-Principal Login</h1>
             
             {!isAuthenticated && !isLoading && (
