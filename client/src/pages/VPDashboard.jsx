@@ -34,7 +34,16 @@ function VPDashboard() {
   const fetchData = () => {
     fetch("http://localhost:3001/api/data")
       .then(res => res.json())
-      .then(json => setData(json))
+      .then(json => {
+        // Sort: active TAs by ID ascending, then inactive TAs at bottom
+        const sorted = json.sort((a, b) => {
+          if (a.is_active === b.is_active) {
+            return a.id - b.id; // Ascending ID
+          }
+          return b.is_active - a.is_active; // Active first
+        });
+        setData(sorted);
+      })
       .catch(err => console.error(err));
   };
 
@@ -94,7 +103,50 @@ function VPDashboard() {
     }
   };
 
-  // Transform data for Grid.js with attendance column
+  // Toggle attendance
+  const toggleAttendance = async (taId, currentAttendance) => {
+    try {
+      if (currentAttendance === 'Present') {
+        // Clock out - remove the shift
+        await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
+          method: 'POST'
+        });
+      } else {
+        // Clock in - create a shift
+        await fetch('http://localhost:3001/api/attendance/clock-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ta_id: taId })
+        });
+      }
+      fetchData(); // Refresh data
+    } catch (err) {
+      console.error(err);
+      alert('Error updating attendance');
+    }
+  };
+
+  // Deactivate TA
+  const deactivateTA = async (taId) => {
+    if (!confirm('Are you sure you want to deactivate this TA?')) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/ta/${taId}/deactivate`, {
+        method: 'PATCH'
+      });
+      
+      if (response.ok) {
+        fetchData();
+      } else {
+        alert('Failed to deactivate TA');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deactivating TA');
+    }
+  };
+
+  // Transform data for Grid.js
   const gridData = data.map(row => [
     row.id, 
     row.first_name, 
@@ -104,15 +156,15 @@ function VPDashboard() {
     row.session_day, 
     row.google_id, 
     row.is_active,
-    row.attendance
+    row.total_hours || '0.00',
+    row.attendance,
+    row.id // for the actions column
   ]);
 
-  // Show loading state
   if (isLoading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
 
-  // Show access denied if not authenticated
   if (!isAuthenticated) {
     return (
       <div style={{ padding: 20 }}>
@@ -189,19 +241,52 @@ function VPDashboard() {
                 formatter: (cell) => cell ? 'Yes' : 'No'
               },
               {
+                name: "Total Hours",
+                width: '100px',
+                formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
+              },
+              {
                 name: "Attendance",
                 width: '120px',
-                formatter: (cell) => h('span', {
-                  style: `
-                    display: inline-block;
-                    padding: 6px 16px;
-                    border-radius: 4px;
-                    font-weight: 500;
-                    font-size: 13px;
-                    background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                    color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                  `
-                }, cell || 'Absent')
+                formatter: (cell, row) => {
+                  const taId = row.cells[0].data;
+                  return h('button', {
+                    style: `
+                      display: inline-block;
+                      padding: 6px 16px;
+                      border-radius: 4px;
+                      font-weight: 500;
+                      font-size: 13px;
+                      background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                      color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                      border: none;
+                      cursor: pointer;
+                      transition: opacity 0.2s;
+                    `,
+                    onmouseover: function() { this.style.opacity = '0.8'; },
+                    onmouseout: function() { this.style.opacity = '1'; },
+                    onclick: () => toggleAttendance(taId, cell)
+                  }, cell || 'Absent');
+                }
+              },
+              {
+                name: "Actions",
+                width: '100px',
+                formatter: (cell) => {
+                  return h('button', {
+                    style: `
+                      padding: 6px 12px;
+                      background-color: #ef4444;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 12px;
+                      font-weight: 500;
+                    `,
+                    onclick: () => deactivateTA(cell)
+                  }, 'Remove');
+                }
               }
             ]}
             search={true}
@@ -380,7 +465,7 @@ function VPDashboard() {
                       flex: 1,
                       padding: '10px',
                       background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Both' ? 'white' : '#374151',
+                      color: formData.session_day === 'Both' ? 'white' : '#374141',
                       border: 'none',
                       borderRadius: 6,
                       cursor: 'pointer',
