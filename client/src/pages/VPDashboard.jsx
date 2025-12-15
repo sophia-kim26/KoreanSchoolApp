@@ -38,7 +38,6 @@ function VPDashboard() {
       .catch(err => console.error(err));
   };
 
-  // for changing ta stuff
   const handleSignOut = () => {
     logout({ 
       logoutParams: { 
@@ -65,7 +64,6 @@ function VPDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // sending the data when form is submitted
     try {
       const response = await fetch("http://localhost:3001/api/data", {
         method: "POST",
@@ -125,19 +123,21 @@ function VPDashboard() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1>VP Dashboard - TA List</h1>
+    <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button 
             onClick={() => setShowModal(true)}
             style={{ 
-              padding: '10px 20px', 
+              padding: '12px 24px', 
               background: '#16a34a', 
               color: 'white', 
               border: 'none', 
-              borderRadius: 5,
-              cursor: 'pointer'
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Add New TA
@@ -145,12 +145,14 @@ function VPDashboard() {
           <button 
             onClick={handleSignOut}
             style={{ 
-              padding: '10px 20px', 
+              padding: '12px 24px', 
               background: '#dc2626', 
               color: 'white', 
               border: 'none', 
-              borderRadius: 5,
-              cursor: 'pointer'
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Sign Out
@@ -158,40 +160,74 @@ function VPDashboard() {
         </div>
       </div>
 
-      <p style={{ marginBottom: 20 }}>Logged in as: {user?.email || user?.name}</p>
+      <p style={{ marginBottom: 30, color: '#374151', fontSize: '14px' }}>
+        Logged in as: {user?.email || user?.name}
+      </p>
       
       {data.length === 0 ? (
         <p>No data found.</p>
       ) : (
-        <Grid
-          data={gridData}
-          columns={[
-            "ID",
-            "First Name", 
-            "Last Name", 
-            "TA Code", 
-            "Email", 
-            "Session Day", 
-            "Google ID", 
-            "Active",
-            {
-              name: "Attendance",
-              formatter: (cell) => h('span', {
-                style: `
-                  padding: 4px 12px;
-                  border-radius: 12px;
-                  font-weight: 600;
-                  font-size: 12px;
-                  background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                  color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                `
-              }, cell)
-            }
-          ]}
-          search={true}
-          pagination={{ enabled: true, limit: 10 }}
-          sort={true}
-        />
+        <div style={{ 
+          background: 'white', 
+          borderRadius: 8, 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          <Grid
+            data={gridData}
+            columns={[
+              { name: "ID", width: '60px' },
+              { name: "First Name", width: '120px' },
+              { name: "Last Name", width: '120px' },
+              { name: "TA Code", width: '100px' },
+              { name: "Email", width: '220px' },
+              { name: "Session Day", width: '120px' },
+              { name: "Google ID", width: '120px' },
+              { 
+                name: "Active",
+                width: '80px',
+                formatter: (cell) => cell ? 'Yes' : 'No'
+              },
+              {
+                name: "Attendance",
+                width: '120px',
+                formatter: (cell) => h('span', {
+                  style: `
+                    display: inline-block;
+                    padding: 6px 16px;
+                    border-radius: 4px;
+                    font-weight: 500;
+                    font-size: 13px;
+                    background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                    color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                  `
+                }, cell || 'Absent')
+              }
+            ]}
+            search={true}
+            pagination={{ enabled: true, limit: 10 }}
+            sort={true}
+            style={{
+              table: {
+                'font-size': '14px',
+                'border-collapse': 'collapse'
+              },
+              th: {
+                'background-color': '#f9fafb',
+                'padding': '16px 12px',
+                'text-align': 'left',
+                'font-weight': '600',
+                'color': '#374151',
+                'border-bottom': '2px solid #e5e7eb'
+              },
+              td: {
+                'padding': '14px 12px',
+                'border-bottom': '1px solid #f3f4f6',
+                'color': '#1f2937'
+              }
+            }}
+          />
+        </div>
       )}
 
       {/* Modal */}
@@ -211,58 +247,97 @@ function VPDashboard() {
           <div style={{
             background: 'white',
             padding: 30,
-            borderRadius: 8,
+            borderRadius: 12,
             width: 500,
-            maxWidth: '90%'
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
-            <h2 style={{ marginTop: 0 }}>Add New TA</h2>
+            <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Add New TA</h2>
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>First Name:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  First Name:
+                </label>
                 <input
                   type="text"
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Last Name:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Last Name:
+                </label>
                 <input
                   type="text"
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>TA Code:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  TA Code:
+                </label>
                 <input
                   type="text"
                   name="ta_code"
                   value={formData.ta_code}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Email:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Email:
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Session Day:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Session Day:
+                </label>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     type="button"
@@ -270,12 +345,13 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e4c7e2ff',
-                      color: formData.session_day === 'Friday' ? 'white' : '#000000ff',
+                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Friday' ? 'white' : '#374151',
                       border: 'none',
-                      borderRadius: 5,
+                      borderRadius: 6,
                       cursor: 'pointer',
-                      fontWeight: formData.session_day === 'Friday' ? 'bold' : 'normal'
+                      fontWeight: formData.session_day === 'Friday' ? '600' : '500',
+                      fontSize: '14px'
                     }}
                   >
                     Friday
@@ -286,12 +362,13 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#b4c8f4ff',
-                      color: formData.session_day === 'Saturday' ? 'white' : '#000000ff',
+                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Saturday' ? 'white' : '#374151',
                       border: 'none',
-                      borderRadius: 5,
+                      borderRadius: 6,
                       cursor: 'pointer',
-                      fontWeight: formData.session_day === 'Saturday' ? 'bold' : 'normal'
+                      fontWeight: formData.session_day === 'Saturday' ? '600' : '500',
+                      fontSize: '14px'
                     }}
                   >
                     Saturday
@@ -302,40 +379,51 @@ function VPDashboard() {
                     style={{
                       flex: 1,
                       padding: '10px',
-                      background: formData.session_day === 'Both' ? '#2563eb' : '#a8e2b4ff',
-                      color: formData.session_day === 'Both' ? 'white' : '#000000ff',
+                      background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Both' ? 'white' : '#374151',
                       border: 'none',
-                      borderRadius: 5,
+                      borderRadius: 6,
                       cursor: 'pointer',
-                      fontWeight: formData.session_day === 'Both' ? 'bold' : 'normal'
+                      fontWeight: formData.session_day === 'Both' ? '600' : '500',
+                      fontSize: '14px'
                     }}
                   >
                     Both
                   </button>
                 </div>
                 {formData.session_day && (
-                  <p style={{ marginTop: 5, fontSize: 14, color: '#059669' }}>
+                  <p style={{ marginTop: 6, fontSize: 13, color: '#059669' }}>
                     Selected: {formData.session_day}
                   </p>
                 )}
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Google ID:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Google ID:
+                </label>
                 <input
                   type="text"
                   name="google_id"
                   value={formData.google_id}
                   onChange={handleInputChange}
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: '#374151' }}>
                   <input
                     type="checkbox"
                     name="is_active"
                     checked={formData.is_active}
                     onChange={handleInputChange}
+                    style={{ width: '16px', height: '16px' }}
                   />
                   Is Active
                 </label>
@@ -349,8 +437,10 @@ function VPDashboard() {
                     background: '#6b7280',
                     color: 'white',
                     border: 'none',
-                    borderRadius: 5,
-                    cursor: 'pointer'
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
                   }}
                 >
                   Cancel
@@ -362,8 +452,10 @@ function VPDashboard() {
                     background: '#16a34a',
                     color: 'white',
                     border: 'none',
-                    borderRadius: 5,
-                    cursor: 'pointer'
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
                   }}
                 >
                   Add TA
