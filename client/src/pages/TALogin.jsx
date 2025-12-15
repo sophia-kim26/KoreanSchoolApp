@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check } from 'lucide-react';
+import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import './style/TALoginCSS.css'
 
 export default function TALogin() {
     const navigate = useNavigate();
     const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
-    const [pin, setPin] = useState(['', '', '', '', '', '']);
+    const [pin, setPin] = useState('');
     const [currentUser, setCurrentUser] = useState(null);
     const [error, setError] = useState('');
     const [showNewPin, setShowNewPin] = useState(false);
@@ -16,7 +17,7 @@ export default function TALogin() {
     const [email, setEmail] = useState('');
     const [sessionDay, setSessionDay] = useState('');
     
-    const pinRefs = useRef([]);
+    const pinInputRef = useRef(null);
 
     // Generate random 6-digit PIN
     const generatePin = () => {
@@ -41,52 +42,24 @@ export default function TALogin() {
     const handleGoToSignIn = () => {
         setShowNewPin(false);
         setAuthState('enterPin');
-        setTimeout(() => pinRefs.current[0]?.focus(), 100);
+        setTimeout(() => pinInputRef.current?.focus(), 100);
     };
 
     // Handle PIN input
-    const handlePinChange = (index, value) => {
-        if (!/^\d*$/.test(value)) return;
-        
-        const newPin = [...pin];
-        newPin[index] = value.slice(-1);
-        setPin(newPin);
-        
-        if (value && index < 5) {
-            pinRefs.current[index + 1]?.focus();
-        }
-    };
-
-    const handlePinKeyDown = (index, e) => {
-        if (e.key === 'Backspace' && !pin[index] && index > 0) {
-            pinRefs.current[index - 1]?.focus();
-        }
-    };
-
-    const handlePinPaste = (e) => {
-        e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        if (pastedData.length > 0) {
-            const newPin = [...pin];
-            for (let i = 0; i < pastedData.length && i < 6; i++) {
-                newPin[i] = pastedData[i];
-            }
-            setPin(newPin);
-            const nextIndex = Math.min(pastedData.length, 5);
-            pinRefs.current[nextIndex]?.focus();
-        }
+    const handlePinChange = (value) => {
+        // Only allow digits and limit to 6 characters
+        const numericValue = value.replace(/\D/g, '').slice(0, 6);
+        setPin(numericValue);
     };
 
     // Verify PIN and redirect to dashboard
     const handleVerifyPin = async () => {
-        const pinString = pin.join('');
-        
         try {
             const response = await fetch('http://localhost:3001/api/signin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ta_code: pinString
+                    ta_code: pin
                 })
             });
 
@@ -104,13 +77,13 @@ export default function TALogin() {
                 }, 500);
             } else {
                 setError(data.error || 'Invalid PIN. Please try again.');
-                setPin(['', '', '', '', '', '']);
-                setTimeout(() => pinRefs.current[0]?.focus(), 100);
+                setPin('');
+                setTimeout(() => pinInputRef.current?.focus(), 100);
             }
         } catch (error) {
             setError('Failed to sign in. Please try again.');
-            setPin(['', '', '', '', '', '']);
-            setTimeout(() => pinRefs.current[0]?.focus(), 100);
+            setPin('');
+            setTimeout(() => pinInputRef.current?.focus(), 100);
             console.error('Error signing in:', error);
         }
     };
@@ -118,20 +91,20 @@ export default function TALogin() {
     // Logout
     const handleLogout = () => {
         setCurrentUser(null);
-        setPin(['', '', '', '', '', '']);
+        setPin('');
         setAuthState('home');
         setError('');
         localStorage.removeItem('current_ta_user');
     };
 
     const handleBackToHome = () => {
-        setPin(['', '', '', '', '', '']);
+        setPin('');
         setAuthState('home');
         setError('');
     };
 
     useEffect(() => {
-        if (authState === 'enterPin' && pin.join('').length === 6) {
+        if (authState === 'enterPin' && pin.length === 6) {
             handleVerifyPin();
         }
     }, [pin]);
@@ -180,22 +153,18 @@ export default function TALogin() {
     };
 
     const PinInput = ({ autoFocus = false }) => (
-        <div className="flex gap-2 justify-center">
-            {pin.map((digit, index) => (
-                <input
-                    key={index}
-                    ref={el => pinRefs.current[index] = el}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value)}
-                    onKeyDown={(e) => handlePinKeyDown(index, e)}
-                    onPaste={handlePinPaste}
-                    autoFocus={autoFocus && index === 0}
-                    className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
-                />
-            ))}
+        <div className="flex justify-center">
+            <input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => handlePinChange(e.target.value)}
+                autoFocus={autoFocus}
+                placeholder="Enter 6-digit PIN"
+                className="line-input"
+            />
         </div>
     );
 
@@ -219,7 +188,7 @@ export default function TALogin() {
                             <button
                                 onClick={() => {
                                     setAuthState('enterPin');
-                                    setTimeout(() => pinRefs.current[0]?.focus(), 100);
+                                    setTimeout(() => pinInputRef.current?.focus(), 100);
                                 }}
                                 className="w-full bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
                             >
@@ -293,9 +262,10 @@ export default function TALogin() {
                 )}
 
                 {authState === 'enterPin' && (
-                    <div className="space-y-6">
+                    <div className="container">
+                    <div className="white-box space-y-6">
                         <div className="text-center">
-                            <h1 className="text-2xl font-bold text-gray-800">Enter Your PIN</h1>
+                            <h1 className="text-2xl font-bold text-gray-800">TA Login</h1>
                             <p className="text-gray-600 mt-2">Enter your 6-digit PIN to access your account</p>
                         </div>
 
@@ -313,6 +283,7 @@ export default function TALogin() {
                         >
                             ← Back to home
                         </button>
+                    </div>
                     </div>
                 )}
 
