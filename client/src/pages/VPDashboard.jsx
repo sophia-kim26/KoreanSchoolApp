@@ -180,6 +180,21 @@ function VPDashboard() {
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button 
+            onClick={handleSignOut}
+            style={{ 
+              padding: '12px 24px', 
+              background: '#a39898ff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            Settings
+          </button>
+          <button 
             onClick={() => setShowModal(true)}
             style={{ 
               padding: '12px 24px', 
