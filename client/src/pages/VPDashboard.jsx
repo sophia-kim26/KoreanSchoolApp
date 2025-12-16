@@ -220,7 +220,7 @@ function VPDashboard() {
         <p>No data found.</p>
       ) : (
         <div style={{ 
-          background: 'white', 
+          background: '#dbeafe', 
           borderRadius: 8, 
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           overflow: 'hidden'
@@ -298,17 +298,18 @@ function VPDashboard() {
                 'border-collapse': 'collapse'
               },
               th: {
-                'background-color': '#f9fafb',
+                'background-color': '#93c5fd',
                 'padding': '16px 12px',
                 'text-align': 'left',
                 'font-weight': '600',
-                'color': '#374151',
-                'border-bottom': '2px solid #e5e7eb'
+                'color': '#1e3a8a',
+                'border-bottom': '2px solid #3b82f6'
               },
               td: {
                 'padding': '14px 12px',
-                'border-bottom': '1px solid #f3f4f6',
-                'color': '#1f2937'
+                'border-bottom': '1px solid #bfdbfe',
+                'color': '#1e40af',
+                'background-color': '#eff6ff'
               }
             }}
           />
