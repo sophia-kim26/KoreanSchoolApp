@@ -22,12 +22,12 @@ export default function App() {
         <Routes>
           <Route path="/" element={
             <div>
-              <h1>Hello world</h1>
+              {/* <h1>Hello world</h1>
               <h2>Grid.js example</h2>
               <GridTable />
               <h2>Chart.js example</h2>
               <Chart />
-              <h2>Log in Screens</h2>
+              <h2>Log in Screens</h2> */}
               <Home />
             </div>
           } />
