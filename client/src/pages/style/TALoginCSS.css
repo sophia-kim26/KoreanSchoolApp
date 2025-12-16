@@ -17,7 +17,7 @@
 .line-input {
   background: transparent; /* Makes the background of the input box invisible */
   border: none; /* Removes all default borders */
-  border-bottom: 1px solid #000; /* Adds only a bottom border (adjust color and thickness as needed) */
+  border-bottom: 3px solid #d4b1e5; /* Adds only a bottom border (adjust color and thickness as needed) */
   outline: none; /* Removes the default blue/black outline that appears when the input is focused */
   padding: 2px 5px; /* Adds some padding for better text positioning relative to the line */
   box-shadow: none; /* Removes any default box shadow */

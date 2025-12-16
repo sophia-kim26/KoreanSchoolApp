@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './style/TALoginCSS.css'
+import './style/TALoginCSS.css';
+import logo from '../assets/logo.png';
 
 export default function TALogin() {
     const navigate = useNavigate();
@@ -171,6 +172,11 @@ export default function TALogin() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                <img 
+                    src={logo} 
+                    alt="Logo" 
+                    className="absolute top-4 right-4 h-16 w-auto"
+                />
                 {authState === 'home' && (
                     <div className="space-y-6">
                         <div className="text-center">
