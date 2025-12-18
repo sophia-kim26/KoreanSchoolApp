@@ -4,6 +4,8 @@ import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
+import logo from '../assets/logo.png';
+
 
 function VPDashboard() {
   const [data, setData] = useState([]);
