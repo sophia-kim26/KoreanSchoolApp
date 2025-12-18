@@ -49,7 +49,7 @@ export default function VPLogin() {
             {!isAuthenticated && !isLoading && (
                 <>
                     <p>Please sign in to continue</p>
-                    <button onClick={handleLogin}>Sign In</button>
+                    <button onClick={handleLogin} className="btn-primary">Sign In</button>
                 </>
             )}
 

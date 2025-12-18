@@ -67,7 +67,7 @@ body {
   transform-box: fill-box;
 }
 
-/* Grid.js Global Table Styling */
+/* Grid.js global table styling! */
 .gridjs-wrapper {
   background: #dbeafe;
   border-radius: 8px;
@@ -165,4 +165,36 @@ button.btn-absent {
   font-size: 13px;
   background-color: #fee2e2;
   color: #991b1b;
+}
+
+/* Page Container Styling */
+.page-container {
+  padding: 40px 20px;
+  font-family: 'Chiron Hei HK', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.page-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Page Info Text */
+.page-info {
+  margin-bottom: 30px;
+  color: #374151;
+  font-size: 14px;
 }

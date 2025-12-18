@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
 import { useNavigate } from "react-router-dom";
+import logo from '../assets/logo.png';
 
 function TADashboard() {
   const [data, setData] = useState([]);
@@ -174,30 +175,38 @@ function TADashboard() {
   };
 
   return (
-    <div>
-      <h1>TA Dashboard - Timesheet for {taName}</h1>
+    <div className="page-container">
+      <div className="page-header" style={{ justifyContent: "flex-start", gap: "40px"}}>
+        <img 
+          src={logo} 
+          alt="Logo" 
+          className="absolute top-4 right-4 h-16 w-auto"
+        />
+        <h1 className="page-title">TA Dashboard - Timesheet for {taName}</h1>
 
-      {/* --- NEW BUTTONS --- */}
-      <div style={{ marginBottom: "20px" }}>
-        <button
-          onClick={() => setShowClockInConfirm(true)}
-          className="btn-primary"
-          style={{ marginRight: "10px" }}
-          disabled={clockedIn}
-        >
-          Clock In
-        </button>
-        <button
-          onClick={() => setShowClockOutConfirm(true)}
-          className="btn-primary"
-          style={{ marginRight: "10px" }}
-          disabled={!clockedIn}
-        >
-          Clock Out
-        </button>
+        {/* --- NEW BUTTONS --- */}
+        <div className="page-actions" style={{ justifyContent: "flex-start", gap: "10px"}}>
+          <button
+            onClick={() => setShowClockInConfirm(true)}
+            className="btn-primary"
+            style={{ marginRight: "10px" }}
+            disabled={clockedIn}
+          >
+            Clock In
+          </button>
+          
+          <button
+            onClick={() => setShowClockOutConfirm(true)}
+            className="btn-primary"
+            style={{ marginRight: "10px" }}
+            disabled={!clockedIn}
+          >
+            Clock Out
+          </button>
+        </div>
       </div>
 
-      <div style={{ marginBottom: "20px", fontSize: "18px" }}>
+      <div style={{ marginBottom: "10px", fontSize: "18px" }}>
         {clockInTime && (
           <p><strong>Clocked In:</strong> {clockInTime.toLocaleString()}</p>
         )}
