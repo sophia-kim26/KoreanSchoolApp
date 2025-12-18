@@ -1,7 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import './style/VPLoginCSS.css'
+import './style/global.css'
 import logo from '../assets/logo.png';
 
 export default function VPLogin() {
