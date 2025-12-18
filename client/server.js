@@ -44,7 +44,7 @@ app.get('/api/shifts', async (req, res) => {
         shifts.ta_id,
         shifts.clock_in,
         shifts.clock_out,
-        shifts.was_manual,
+        shifts.elapsed_time,
         shifts.notes,
         ta_list.first_name,
         ta_list.last_name
@@ -61,17 +61,49 @@ app.get('/api/shifts', async (req, res) => {
 // POST a new shift
 app.post('/api/shifts', async (req, res) => {
   try {
-    const { ta_id, clock_in, clock_out, was_manual, notes } = req.body;
+    const { ta_id, clock_in, clock_out, elapsed_time, notes } = req.body;
     const result = await sql`
-      INSERT INTO shifts (ta_id, clock_in, clock_out, was_manual, notes)
-      VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${was_manual}, ${notes})
+      INSERT INTO shifts (ta_id, clock_in, clock_out, elapsed_time, notes)
+      VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${elapsed_time}, ${notes})
       RETURNING *
     `;
-    res.json(result);
+    res.json(result[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+// UPDATE a shift (clock out)
+app.put('/api/shifts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clock_out } = req.body;
+
+    console.log("Received PUT request for shift:", id);
+    // console.log("Clock out value:", clock_out);
+    // console.log("Clock out type:", typeof clock_out);
+
+    const result = await sql`
+      UPDATE shifts
+      SET clock_out = ${clock_out}
+      SET elapsed_time = ${elapsed_time}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+
+    console.log("Update result:", result);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Shift not found' });
+    }
+
+    res.json(result[0]);
+  } catch (error) {
+    console.error("Error updating shift:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 // Create new TA account
