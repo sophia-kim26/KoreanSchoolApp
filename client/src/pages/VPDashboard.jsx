@@ -14,7 +14,6 @@ function VPDashboard() {
     ta_code: "",
     email: "",
     session_day: "",
-    google_id: "",
     is_active: true
   });
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
@@ -74,12 +73,15 @@ function VPDashboard() {
     e.preventDefault();
     
     try {
+      // Don't send google_id in the request
+      const { ...dataToSend } = formData;
+      
       const response = await fetch("http://localhost:3001/api/data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
 
       if (response.ok) {
@@ -89,7 +91,6 @@ function VPDashboard() {
           ta_code: "",
           email: "",
           session_day: "",
-          google_id: "",
           is_active: true
         });
         setShowModal(false);
@@ -146,7 +147,7 @@ function VPDashboard() {
     }
   };
 
-  // Transform data for Grid.js
+  // Transform data for Grid.js - skip google_id column
   const gridData = data.map(row => [
     row.id, 
     row.first_name, 
@@ -154,7 +155,6 @@ function VPDashboard() {
     row.ta_code, 
     row.email, 
     row.session_day, 
-    row.google_id, 
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
@@ -179,6 +179,21 @@ function VPDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
+          <button 
+            onClick={handleSignOut}
+            style={{ 
+              padding: '12px 24px', 
+              background: '#a39898ff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            Settings
+          </button>
           <button 
             onClick={() => setShowModal(true)}
             style={{ 
@@ -234,7 +249,6 @@ function VPDashboard() {
               { name: "TA Code", width: '100px' },
               { name: "Email", width: '220px' },
               { name: "Session Day", width: '120px' },
-              { name: "Google ID", width: '120px' },
               { 
                 name: "Active",
                 width: '80px',
@@ -482,25 +496,6 @@ function VPDashboard() {
                     Selected: {formData.session_day}
                   </p>
                 )}
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                  Google ID:
-                </label>
-                <input
-                  type="text"
-                  name="google_id"
-                  value={formData.google_id}
-                  onChange={handleInputChange}
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 12px', 
-                    borderRadius: 6, 
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                />
               </div>
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: '#374151' }}>
