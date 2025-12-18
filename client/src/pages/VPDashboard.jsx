@@ -192,17 +192,17 @@ function VPDashboard() {
             display: 'flex', 
             gap: 10 
           }}>
-            <button 
-            onClick={handleSignOut}
-            className="btn-settings"
-          >
-            Settings
-          </button>
           <button 
             onClick={() => setShowModal(true)}
             className="btn-primary"
           >
             Add New TA
+          </button>
+          <button 
+            // onClick={handleSignOut}
+            className="btn-settings"
+          >
+            Settings
           </button>
           <button 
             onClick={handleSignOut}

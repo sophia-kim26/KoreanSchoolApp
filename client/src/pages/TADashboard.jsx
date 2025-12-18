@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.png';
 
 function TADashboard() {
   const [data, setData] = useState([]);
-  const navigate = useNavigate();
+
   const [clockedIn, setClockedIn] = useState(false);
+  const { logout } = useAuth0();
+  const navigate = useNavigate();
 
   // for marking time
   const [clockInTime, setClockInTime] = useState(null);
@@ -51,7 +54,6 @@ function TADashboard() {
     }
   };
 
-
   // Check authentication on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
@@ -85,6 +87,15 @@ function TADashboard() {
     // row.elapsed_time,
     row.notes,
   ]);
+
+  // sign out
+  const handleSignOut = () => {
+    logout({ 
+      logoutParams: { 
+        returnTo: window.location.origin
+      } 
+    });
+  };
 
   // Get TA full name from currentUser
   const taName = currentUser
@@ -189,12 +200,13 @@ function TADashboard() {
             top: '100px',
             right: '20px',
             display: 'flex',
-            gap: 10
+            gap: 10,
+            zIndex: 10
           }}>
             <button
               onClick={() => setShowClockInConfirm(true)}
               className="btn-primary"
-              style={{ marginRight: "10px" }}
+              // style={{ marginRight: "10px" }}
               disabled={clockedIn}
             >
               Clock In
@@ -203,10 +215,21 @@ function TADashboard() {
             <button
               onClick={() => setShowClockOutConfirm(true)}
               className="btn-primary"
-              style={{ marginRight: "10px" }}
               disabled={!clockedIn}
             >
               Clock Out
+            </button>
+            <button 
+              // onClick={handleSignOut}
+              className="btn-settings"
+            >
+              Settings
+            </button>
+            <button 
+              onClick={handleSignOut}
+              className="btn-danger"
+            >
+              Sign Out
             </button>
           </div>
       </div>
@@ -253,7 +276,6 @@ function TADashboard() {
                   clockIn();
                 }}
                 className="btn-primary"
-                style={{ marginRight: "10px" }}
               >
                 Yes, I'm sure
               </button>
