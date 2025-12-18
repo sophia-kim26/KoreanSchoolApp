@@ -1,5 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300..800&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap');
+
+body {
+  font-family: 'Asta Sans', sans-serif;
+}
+
 .yin-yang-svg {
-  transform: rotate(-75deg);
+  transform: rotate(-70deg);
 }
 
 .yin-yang-path {
