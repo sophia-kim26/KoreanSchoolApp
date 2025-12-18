@@ -4,6 +4,7 @@ import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.png';
+import Chart from "../pages/Chart.jsx";
 
 function TADashboard() {
   const [data, setData] = useState([]);
@@ -261,6 +262,10 @@ function TADashboard() {
             sort={true}
           />
       )}
+
+      <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
+      <h1>Hours by month</h1>
+      <Chart/>
 
       {/* clock in popup */}
       {showClockInConfirm && (
