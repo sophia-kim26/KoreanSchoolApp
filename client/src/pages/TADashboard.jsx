@@ -108,7 +108,7 @@ function TADashboard() {
         body: JSON.stringify({
           ta_id: currentUser.id,
           clock_in: time.toISOString(), // Convert to ISO string
-          elapsed_time: false,
+          elapsed_time: null,
           notes: ""
         })
       });
@@ -138,13 +138,15 @@ function TADashboard() {
     const time = new Date();
     setClockOutTime(time);
 
-    // calculate elapsed
+    // calculate elapsed BEFORE sending to database
+    let elapsedTime = null;
     if (clockInTime) {
       const diff = time - clockInTime;
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
-      setElapsed({ hours, minutes });
+      elapsedTime = { hours, minutes };
+      setElapsed(elapsedTime);
     }
 
     // update existing database row
@@ -158,8 +160,8 @@ function TADashboard() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clock_out: time,
-          elapsed_time: elapsed
+          clock_out: time.toISOString(),
+          elapsed_time: elapsedTime ? `${elapsedTime.hours}h ${elapsedTime.minutes}m` : null
         })
       });
 

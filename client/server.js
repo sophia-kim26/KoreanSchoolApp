@@ -74,19 +74,19 @@ app.post('/api/shifts', async (req, res) => {
 });
 
 // UPDATE a shift (clock out)
+// UPDATE a shift (clock out)
 app.put('/api/shifts/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { clock_out } = req.body;
+    const { clock_out, elapsed_time } = req.body;  // Get elapsed_time from request body
 
     console.log("Received PUT request for shift:", id);
-    // console.log("Clock out value:", clock_out);
-    // console.log("Clock out type:", typeof clock_out);
+    console.log("Clock out value:", clock_out);
+    console.log("Elapsed time:", elapsed_time);
 
     const result = await sql`
       UPDATE shifts
-      SET clock_out = ${clock_out}
-      SET elapsed_time = ${elapsed_time}
+      SET clock_out = ${clock_out}, elapsed_time = ${elapsed_time}
       WHERE id = ${id}
       RETURNING *
     `;
