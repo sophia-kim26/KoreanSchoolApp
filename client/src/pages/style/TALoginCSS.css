@@ -1,6 +1,7 @@
 body {
-  background-color: rgb(241, 245, 250);
+  background-color: #f5f5f5;
 }
+
 .container {
   display: flex;
   justify-content: center;
@@ -8,27 +9,80 @@ body {
   height: 75vh;
   width: 100%;
 }
+
 .white-box {
   background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 2px 2px 2px rgba(101, 101, 101, 0.1);
+  padding: 60px 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   margin: 20px;
-  width: 80%; 
-  max-width: 500px;
-  height: 500px;
-  display: flex;            /* Add this */
-  flex-direction: column;   /* Add this */
-  justify-content: center;  /* Add this */
+  width: 90%; 
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
+
+.login-text {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 400;
+  margin-bottom: 40px;
+  color: #000;
+  letter-spacing: -0.5px;
+}
+
+.white-box p {
+  font-size: 1.125rem;
+  color: #666;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .line-input {
   background: transparent;
   border: none;
-  border-bottom: 3px solid #d4b1e5;
+  border-bottom: 2px solid #d4b1e5;
   outline: none;
-  padding: 2px 5px;
+  padding: 12px 8px;
   box-shadow: none;
-}
-.login-text{
+  width: 100%;
+  max-width: 350px;
+  font-size: 1.5rem;
+  letter-spacing: 8px;
   text-align: center;
+  margin-bottom: 30px;
+  transition: border-color 0.3s ease;
+}
+
+.line-input:focus {
+  border-bottom-color: #b89dd4;
+}
+
+.line-input::placeholder {
+  letter-spacing: normal;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* Style the Log In button to match the image */
+.white-box button[type="button"] {
+  background-color: #d4b1e5;
+  color: #4a4a8a;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  max-width: 350px;
+  transition: background-color 0.3s ease;
+}
+
+.white-box button[type="button"]:hover {
+  background-color: #c5a0d8;
 }
