@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
+import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
-import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
+import logo from '../assets/logo.png';
+
 
 function VPDashboard() {
   const [data, setData] = useState([]);
@@ -13,27 +16,44 @@ function VPDashboard() {
     ta_code: "",
     email: "",
     session_day: "",
-    google_id: "",
     is_active: true
   });
-  const { isLoaded, userId } = useAuth();
-  const { signOut } = useClerk();
+  const { isLoading, isAuthenticated, user, logout } = useAuth0();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/vp/login');
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
   const fetchData = () => {
     fetch("http://localhost:3001/api/data")
       .then(res => res.json())
-      .then(json => setData(json))
+      .then(json => {
+        // Sort: active TAs by ID ascending, then inactive TAs at bottom
+        const sorted = json.sort((a, b) => {
+          if (a.is_active === b.is_active) {
+            return a.id - b.id; // Ascending ID
+          }
+          return b.is_active - a.is_active; // Active first
+        });
+        setData(sorted);
+      })
       .catch(err => console.error(err));
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/vp/login');
+  const handleSignOut = () => {
+    logout({ 
+      logoutParams: { 
+        returnTo: window.location.origin
+      } 
+    });
   };
 
   const handleInputChange = (e) => {
@@ -44,31 +64,38 @@ function VPDashboard() {
     }));
   };
 
+  const handleSessionDaySelect = (day) => {
+    setFormData(prev => ({
+      ...prev,
+      session_day: day
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
+      // Don't send google_id in the request
+      const { ...dataToSend } = formData;
+      
       const response = await fetch("http://localhost:3001/api/data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
 
       if (response.ok) {
-        // Reset form and close modal
         setFormData({
           first_name: "",
           last_name: "",
           ta_code: "",
           email: "",
           session_day: "",
-          google_id: "",
           is_active: true
         });
         setShowModal(false);
-        // Refresh the data
         fetchData();
       } else {
         alert("Failed to add new TA");
@@ -79,30 +106,107 @@ function VPDashboard() {
     }
   };
 
-  // Transform your data into an array of arrays for Grid.js
-  const gridData = data.map(row => [row.id, row.first_name, row.last_name, row.ta_code, row.email, row.session_day, row.google_id, row.is_active]);
+  // Toggle attendance
+  const toggleAttendance = async (taId, currentAttendance) => {
+    try {
+      if (currentAttendance === 'Present') {
+        // Clock out - remove the shift
+        await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
+          method: 'POST'
+        });
+      } else {
+        // Clock in - create a shift
+        await fetch('http://localhost:3001/api/attendance/clock-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ta_id: taId })
+        });
+      }
+      fetchData(); // Refresh data
+    } catch (err) {
+      console.error(err);
+      alert('Error updating attendance');
+    }
+  };
+
+  // Deactivate TA
+  const deactivateTA = async (taId) => {
+    if (!confirm('Are you sure you want to deactivate this TA?')) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/ta/${taId}/deactivate`, {
+        method: 'PATCH'
+      });
+      
+      if (response.ok) {
+        fetchData();
+      } else {
+        alert('Failed to deactivate TA');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deactivating TA');
+    }
+  };
+
+  // Transform data for Grid.js - skip google_id column
+  const gridData = data.map(row => [
+    row.id, 
+    row.first_name, 
+    row.last_name, 
+    row.ta_code, 
+    row.email, 
+    row.session_day, 
+    row.is_active,
+    row.total_hours || '0.00',
+    row.attendance,
+    row.id // for the actions column
+  ]);
+
+  if (isLoading) {
+    return <div style={{ padding: 20 }}>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: 20 }}>
+        <h1>Access Denied</h1>
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-    <SignedOut>
-      <h1>Access Denied</h1>
-      <p>Please sign in to access the VP Dashboard</p>
-      <SignInButton mode="modal" />
-    </SignedOut>
-
-    <SignedIn>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1>VP Dashboard - TA List</h1>
+    <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
+          <button 
+            onClick={handleSignOut}
+            style={{ 
+              padding: '12px 24px', 
+              background: '#a39898ff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            Settings
+          </button>
           <button 
             onClick={() => setShowModal(true)}
             style={{ 
-              padding: '10px 20px', 
+              padding: '12px 24px', 
               background: '#16a34a', 
               color: 'white', 
               border: 'none', 
-              borderRadius: 5,
-              cursor: 'pointer'
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Add New TA
@@ -110,12 +214,14 @@ function VPDashboard() {
           <button 
             onClick={handleSignOut}
             style={{ 
-              padding: '10px 20px', 
+              padding: '12px 24px', 
               background: '#dc2626', 
               color: 'white', 
               border: 'none', 
-              borderRadius: 5,
-              cursor: 'pointer'
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Sign Out
@@ -123,17 +229,107 @@ function VPDashboard() {
         </div>
       </div>
 
-      <p style={{ marginBottom: 20 }}>Logged in as: {userId}</p>
+      <p style={{ marginBottom: 30, color: '#374151', fontSize: '14px' }}>
+        Logged in as: {user?.email || user?.name}
+      </p>
       
       {data.length === 0 ? (
         <p>No data found.</p>
       ) : (
-        <Grid
-          data={gridData}
-          columns={["id", "first_name", "last_name", "ta_code", "email", "session_day", "google_id", "is_active"]}
-          search={true}
-          pagination={{ enabled: true, limit: 10 }}
-        />
+        <div style={{ 
+          background: '#dbeafe', 
+          borderRadius: 8, 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          <Grid
+            data={gridData}
+            columns={[
+              { name: "ID", width: '60px' },
+              { name: "First Name", width: '120px' },
+              { name: "Last Name", width: '120px' },
+              { name: "TA Code", width: '100px' },
+              { name: "Email", width: '220px' },
+              { name: "Session Day", width: '120px' },
+              { 
+                name: "Active",
+                width: '80px',
+                formatter: (cell) => cell ? 'Yes' : 'No'
+              },
+              {
+                name: "Total Hours",
+                width: '100px',
+                formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
+              },
+              {
+                name: "Attendance",
+                width: '120px',
+                formatter: (cell, row) => {
+                  const taId = row.cells[0].data;
+                  return h('button', {
+                    style: `
+                      display: inline-block;
+                      padding: 6px 16px;
+                      border-radius: 4px;
+                      font-weight: 500;
+                      font-size: 13px;
+                      background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                      color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                      border: none;
+                      cursor: pointer;
+                      transition: opacity 0.2s;
+                    `,
+                    onmouseover: function() { this.style.opacity = '0.8'; },
+                    onmouseout: function() { this.style.opacity = '1'; },
+                    onclick: () => toggleAttendance(taId, cell)
+                  }, cell || 'Absent');
+                }
+              },
+              {
+                name: "Actions",
+                width: '100px',
+                formatter: (cell) => {
+                  return h('button', {
+                    style: `
+                      padding: 6px 12px;
+                      background-color: #ef4444;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 12px;
+                      font-weight: 500;
+                    `,
+                    onclick: () => deactivateTA(cell)
+                  }, 'Remove');
+                }
+              }
+            ]}
+            search={true}
+            pagination={{ enabled: true, limit: 10 }}
+            sort={true}
+            style={{
+              table: {
+                'font-size': '14px',
+                'border-collapse': 'collapse'
+              },
+              th: {
+                'background-color': '#93c5fd',
+                'padding': '16px 12px',
+                'text-align': 'left',
+                'font-weight': '600',
+                'color': '#1e3a8a',
+                'border-bottom': '2px solid #3b82f6'
+              },
+              td: {
+                'padding': '14px 12px',
+                'border-bottom': '1px solid #bfdbfe',
+                'color': '#1e40af',
+                'background-color': '#eff6ff'
+              }
+            }}
+          />
+        </div>
       )}
 
       {/* Modal */}
@@ -153,83 +349,164 @@ function VPDashboard() {
           <div style={{
             background: 'white',
             padding: 30,
-            borderRadius: 8,
+            borderRadius: 12,
             width: 500,
-            maxWidth: '90%'
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
-            <h2 style={{ marginTop: 0 }}>Add New TA</h2>
+            <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Add New TA</h2>
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>First Name:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  First Name:
+                </label>
                 <input
                   type="text"
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Last Name:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Last Name:
+                </label>
                 <input
                   type="text"
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>TA Code:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  TA Code:
+                </label>
                 <input
                   type="text"
                   name="ta_code"
                   value={formData.ta_code}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Email:</label>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Email:
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Session Day:</label>
-                <input
-                  type="text"
-                  name="session_day"
-                  value={formData.session_day}
-                  onChange={handleInputChange}
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                />
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Session Day:
+                </label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Friday')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Friday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Friday' ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Friday' ? '600' : '500',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Friday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Saturday')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Saturday' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Saturday' ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Saturday' ? '600' : '500',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Saturday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSessionDaySelect('Both')}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
+                      color: formData.session_day === 'Both' ? 'white' : '#374141',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontWeight: formData.session_day === 'Both' ? '600' : '500',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Both
+                  </button>
+                </div>
+                {formData.session_day && (
+                  <p style={{ marginTop: 6, fontSize: 13, color: '#059669' }}>
+                    Selected: {formData.session_day}
+                  </p>
+                )}
               </div>
-              <div style={{ marginBottom: 15 }}>
-                <label style={{ display: 'block', marginBottom: 5 }}>Google ID:</label>
-                <input
-                  type="text"
-                  name="google_id"
-                  value={formData.google_id}
-                  onChange={handleInputChange}
-                  style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: '#374151' }}>
                   <input
                     type="checkbox"
                     name="is_active"
                     checked={formData.is_active}
                     onChange={handleInputChange}
+                    style={{ width: '16px', height: '16px' }}
                   />
                   Is Active
                 </label>
@@ -243,8 +520,10 @@ function VPDashboard() {
                     background: '#6b7280',
                     color: 'white',
                     border: 'none',
-                    borderRadius: 5,
-                    cursor: 'pointer'
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
                   }}
                 >
                   Cancel
@@ -256,8 +535,10 @@ function VPDashboard() {
                     background: '#16a34a',
                     color: 'white',
                     border: 'none',
-                    borderRadius: 5,
-                    cursor: 'pointer'
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
                   }}
                 >
                   Add TA
@@ -267,7 +548,6 @@ function VPDashboard() {
           </div>
         </div>
       )}
-      </SignedIn>
     </div>
   );
 }
