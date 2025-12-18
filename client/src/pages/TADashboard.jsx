@@ -19,8 +19,6 @@ function TADashboard() {
   const [activeShiftId, setActiveShiftId] = useState(null);
 
 
-
-
   const overlayStyle = {
     position: "fixed",
     top: 0,
@@ -183,6 +181,7 @@ function TADashboard() {
       <div style={{ marginBottom: "20px" }}>
         <button
           onClick={() => setShowClockInConfirm(true)}
+          className="btn-primary"
           style={{ marginRight: "10px" }}
           disabled={clockedIn}
         >
@@ -190,6 +189,7 @@ function TADashboard() {
         </button>
         <button
           onClick={() => setShowClockOutConfirm(true)}
+          className="btn-primary"
           style={{ marginRight: "10px" }}
           disabled={!clockedIn}
         >
@@ -238,12 +238,16 @@ function TADashboard() {
                   setShowClockInConfirm(false);
                   clockIn();
                 }}
+                className="btn-primary"
                 style={{ marginRight: "10px" }}
               >
                 Yes, I'm sure
               </button>
 
-              <button onClick={() => setShowClockInConfirm(false)}>
+              <button
+                onClick={() => setShowClockInConfirm(false)}
+                className="btn-danger"
+                >
                 Cancel
               </button>
             </div>
@@ -264,12 +268,15 @@ function TADashboard() {
                   setShowClockOutConfirm(false);
                   clockOut();
                 }}
+                className="btn-primary"
                 style={{ marginRight: "10px" }}
               >
                 Yes, I'm sure
               </button>
 
-              <button onClick={() => setShowClockOutConfirm(false)}>
+              <button onClick={() => setShowClockOutConfirm(false)}
+                className="btn-danger"
+                >
                 Cancel
               </button>
             </div>
