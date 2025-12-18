@@ -271,8 +271,8 @@ export default function TALogin() {
                     <div className="container">
                     <div className="white-box space-y-6">
                         <div className="text-center">
-                            <h1 className="text-2xl font-bold text-gray-800">TA Login</h1>
-                            <p className="text-gray-600 mt-2">Enter your 6-digit PIN to access your account</p>
+                            <h1 className="login-text text-2xl font-bold text-gray-800">TA Login</h1>
+                            <p className="text-gray-600 mt-2">User ID</p>
                         </div>
 
                         <PinInput autoFocus={true} />
