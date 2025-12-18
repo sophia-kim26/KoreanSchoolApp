@@ -42,7 +42,7 @@ function Home() {
           {/* Red (bottom) button - flipped vertically */}
           <path
             id="vpPath"
-            d="M 100 200 A 50 50 0 0 0 100 100 A 50 50 0 0 1 100 0 A 100 100 0 0 1 100 200"
+            d="M 100 200 A 40 40 0 0 0 100 100 A 40 40 0 0 1 100 0 A 100 100 0 0 1 100 200"
             fill="#cd313a"
             className="yin-yang-path cursor-pointer transition-transform hover:scale-105 active:scale-95 origin-center"
             onClick={() => handleClickVP()}
@@ -50,7 +50,7 @@ function Home() {
 
           {/* Blue (top) button */}
           <path
-            d="M 100 0 A 50 50 0 0 0 100 100 A 50 50 0 0 1 100 200 A 100 100 0 0 1 100 0"
+            d="M 100 0 A 40 40 0 0 0 100 100 A 40 40 0 0 1 100 200 A 100 100 0 0 1 100 0"
             fill="#0047a0"
             className="yin-yang-path cursor-pointer transition-transform hover:scale-105 active:scale-95 origin-center"
             onClick={() => handleClickTA()}
@@ -61,11 +61,11 @@ function Home() {
             x="60" 
             y="130" 
             fill="white" 
-            fontSize="16" 
+            fontSize="14" 
             fontWeight="bold" 
             textAnchor="middle"
             className="pointer-events-none"
-            style={{ transform: 'rotate(75deg)', transformOrigin: '60px 110px' }}
+            style={{ transform: 'rotate(70deg)', transformOrigin: '60px 110px' }}
           >
             Teacher Assistants
           </text>
@@ -74,11 +74,11 @@ function Home() {
             x="140" 
             y="80" 
             fill="white" 
-            fontSize="16" 
+            fontSize="14" 
             fontWeight="bold" 
             textAnchor="middle"
             className="pointer-events-none"
-            style={{ transform: 'rotate(75deg)', transformOrigin: '140px 90px' }}
+            style={{ transform: 'rotate(70deg)', transformOrigin: '140px 90px' }}
           >
             Vice-Principal
           </text>
