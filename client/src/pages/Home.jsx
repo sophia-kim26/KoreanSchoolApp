@@ -65,7 +65,7 @@ function Home() {
             fontWeight="bold" 
             textAnchor="middle"
             className="pointer-events-none"
-            style={{ transform: 'rotate(70deg)', transformOrigin: '60px 110px' }}
+            style={{ transform: 'rotate(75deg)', transformOrigin: '60px 110px' }}
           >
             Teacher Assistants
           </text>
@@ -78,7 +78,7 @@ function Home() {
             fontWeight="bold" 
             textAnchor="middle"
             className="pointer-events-none"
-            style={{ transform: 'rotate(70deg)', transformOrigin: '140px 90px' }}
+            style={{ transform: 'rotate(75deg)', transformOrigin: '140px 90px' }}
           >
             Vice-Principal
           </text>
