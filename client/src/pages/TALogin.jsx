@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './style/TALoginCSS.css';
+import './style/global.css';
 import logo from '../assets/logo.png';
 
 export default function TALogin() {

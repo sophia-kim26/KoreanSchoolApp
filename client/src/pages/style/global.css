@@ -32,3 +32,10 @@ body {
 .login-text{
     text-align: center;
 }
+.yin-yang-svg {
+  transform: rotate(-75deg);
+}
+
+.yin-yang-path {
+  transform-box: fill-box;
+}
