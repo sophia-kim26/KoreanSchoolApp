@@ -40,9 +40,11 @@ export default function VPLogin() {
 
     return (
         <div style={{ padding: 20 }}>
-            <div className="logo">
-                <img src={logo} alt="Logo" />
-            </div>
+            <img 
+                src={logo} 
+                alt="Logo" 
+                className="page-logo"
+            />
             
             <h1>Vice-Principal Login</h1>
             

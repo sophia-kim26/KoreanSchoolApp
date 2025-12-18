@@ -180,30 +180,35 @@ function TADashboard() {
         <img 
           src={logo} 
           alt="Logo" 
-          className="absolute top-4 right-4 h-16 w-auto"
+          className="page-logo"
         />
+        
         <h1 className="page-title">TA Dashboard - Timesheet for {taName}</h1>
-
-        {/* --- NEW BUTTONS --- */}
-        <div className="page-actions" style={{ justifyContent: "flex-start", gap: "10px"}}>
-          <button
-            onClick={() => setShowClockInConfirm(true)}
-            className="btn-primary"
-            style={{ marginRight: "10px" }}
-            disabled={clockedIn}
-          >
-            Clock In
-          </button>
-          
-          <button
-            onClick={() => setShowClockOutConfirm(true)}
-            className="btn-primary"
-            style={{ marginRight: "10px" }}
-            disabled={!clockedIn}
-          >
-            Clock Out
-          </button>
-        </div>
+          <div style={{
+            position: 'absolute',
+            top: '100px',
+            right: '20px',
+            display: 'flex',
+            gap: 10
+          }}>
+            <button
+              onClick={() => setShowClockInConfirm(true)}
+              className="btn-primary"
+              style={{ marginRight: "10px" }}
+              disabled={clockedIn}
+            >
+              Clock In
+            </button>
+            
+            <button
+              onClick={() => setShowClockOutConfirm(true)}
+              className="btn-primary"
+              style={{ marginRight: "10px" }}
+              disabled={!clockedIn}
+            >
+              Clock Out
+            </button>
+          </div>
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>

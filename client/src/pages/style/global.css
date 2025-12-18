@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+@import ""
 body {
     background-color: rgb(241, 245, 250);
 }
@@ -197,4 +198,13 @@ button.btn-absent {
   margin-bottom: 30px;
   color: #374151;
   font-size: 14px;
+}
+
+/* Logo Styling */
+.page-logo {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  height: 64px;
+  width: auto;
 }

@@ -178,55 +178,39 @@ function VPDashboard() {
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+      <img 
+        src={logo} 
+        alt="Logo" 
+        className="page-logo"
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button 
+          <div style={{ 
+            position: 'absolute', 
+            top: '100px', 
+            right: '20px', 
+            display: 'flex', 
+            gap: 10 
+          }}>
+            <button 
             onClick={handleSignOut}
-            style={{ 
-              padding: '12px 24px', 
-              background: '#a39898ff', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
+            className="btn-settings"
           >
             Settings
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            style={{ 
-              padding: '12px 24px', 
-              background: '#16a34a', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
+            className="btn-primary"
           >
             Add New TA
           </button>
           <button 
             onClick={handleSignOut}
-            style={{ 
-              padding: '12px 24px', 
-              background: '#dc2626', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
+            className="btn-danger"
           >
             Sign Out
           </button>
-        </div>
+          </div>
       </div>
 
       <p style={{ marginBottom: 30, color: '#374151', fontSize: '14px' }}>
