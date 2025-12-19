@@ -124,6 +124,7 @@ app.get('/api/shifts', async (req, res) => {
         shifts.ta_id,
         shifts.clock_in,
         shifts.clock_out,
+        shifts.elapsed_time,
         shifts.notes,
         ta_list.first_name,
         ta_list.last_name
@@ -235,6 +236,29 @@ app.post('/api/signin', async (req, res) => {
       success: true, 
       ta: result[0] 
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET active shift for a TA
+app.get('/api/shifts/active/:ta_id', async (req, res) => {
+  try {
+    const { ta_id } = req.params;
+    
+    // Find the most recent shift where clock_out is NULL
+    const result = await sql`
+      SELECT * FROM shifts
+      WHERE ta_id = ${ta_id} AND clock_out IS NULL
+      ORDER BY clock_in DESC
+      LIMIT 1
+    `;
+    
+    if (result.length > 0) {
+      res.json({ activeShift: result[0] });
+    } else {
+      res.json({ activeShift: null });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

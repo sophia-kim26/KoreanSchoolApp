@@ -1,7 +1,8 @@
+import React from 'react';
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import './style/global.css'
+import './style/global.css';
 import logo from '../assets/logo.png';
 
 export default function VPLogin() {
@@ -40,43 +41,66 @@ export default function VPLogin() {
 
     const handleBack = () => {
         logout({ 
-        logoutParams: { 
-            returnTo: window.location.origin
-        } 
+            logoutParams: { 
+                returnTo: window.location.origin
+            } 
         });
     };
 
     return (
-        <div style={{ padding: 20 }}>
-            <img 
-                src={logo} 
-                alt="Logo" 
-                className="page-logo"
-            />
-            
-            <h1>Vice-Principal Login</h1>
-            
-            {!isAuthenticated && !isLoading && (
-                <>
-                    <p>Please sign in to continue</p>
-                    <button onClick={handleLogin} className="btn-primary">Sign In</button>
-                    <button 
-                        onClick={handleBack}
-                        className="btn-danger"
-                        style={{ marginLeft: "10px" }}
-                    >
-                        Back
-                    </button>
-                </>
-            )}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                <img 
+                    src={logo} 
+                    alt="Logo" 
+                    className="absolute top-4 right-4 h-16 w-auto"
+                />
+                
+                {!isAuthenticated && !isLoading && (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h1 className="text-3xl font-bold text-gray-800">Vice-Principal Login</h1>
+                            <p className="text-gray-600 mt-2">Please sign in to continue</p>
+                        </div>
 
-            {isAuthenticated && (
-                <p>Redirecting to dashboard...</p>
-            )}
+                        <div className="space-y-3">
+                            <button
+                                onClick={handleLogin}
+                                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                            >
+                                Sign In
+                            </button>
 
-            {isLoading && (
-                <p>Loading...</p>
-            )}
+                            <div className="flex justify-center">
+                                <button 
+                                    onClick={handleBack}
+                                    className="btn-danger"
+                                >
+                                    ← Back
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isAuthenticated && (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-800">Redirecting...</h1>
+                            <p className="text-gray-600 mt-2">Taking you to your dashboard</p>
+                        </div>
+                    </div>
+                )}
+
+                {isLoading && (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-800">Loading...</h1>
+                            <p className="text-gray-600 mt-2">Please wait</p>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
