@@ -1,59 +1,24 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth0 } from "@auth0/auth0-react";
-import logo from '../assets/logo.png';
+import { useState, useMemo } from "react";
 
 function VPTAView() {
-  const { taId } = useParams();
-  const navigate = useNavigate();
-  const { isLoading: authLoading, isAuthenticated } = useAuth0();
-  const [taData, setTaData] = useState(null);
-  const [shifts, setShifts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate('/vp/login');
-    }
-  }, [authLoading, isAuthenticated, navigate]);
-
-  useEffect(() => {
-    if (taId) {
-      fetchTADetails();
-      fetchShifts();
-    }
-  }, [taId]);
-
-  const fetchTADetails = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/ta/${taId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch TA details');
-      }
-      const data = await response.json();
-      setTaData(data);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load TA details');
-    }
-  };
-
-  const fetchShifts = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/ta/${taId}/shifts`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch shifts');
-      }
-      const data = await response.json();
-      setShifts(data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load shift history');
-      setLoading(false);
-    }
-  };
+  // Dummy shift data
+  const [shifts] = useState([
+    { id: 1, shift_date: "2024-12-16", clock_in_time: "2024-12-16T09:00:00", clock_out_time: "2024-12-16T13:15:00" },
+    { id: 2, shift_date: "2024-12-11", clock_in_time: "2024-12-11T09:00:00", clock_out_time: "2024-12-11T13:00:00" },
+    { id: 3, shift_date: "2024-12-09", clock_in_time: "2024-12-09T09:00:00", clock_out_time: "2024-12-09T13:30:00" },
+    { id: 4, shift_date: "2024-12-04", clock_in_time: "2024-12-04T09:00:00", clock_out_time: "2024-12-04T12:45:00" },
+    { id: 5, shift_date: "2024-12-02", clock_in_time: "2024-12-02T09:00:00", clock_out_time: "2024-12-02T13:00:00" },
+    { id: 6, shift_date: "2024-11-27", clock_in_time: "2024-11-27T09:00:00", clock_out_time: "2024-11-27T13:20:00" },
+    { id: 7, shift_date: "2024-11-25", clock_in_time: "2024-11-25T09:00:00", clock_out_time: "2024-11-25T13:00:00" },
+    { id: 8, shift_date: "2024-11-20", clock_in_time: "2024-11-20T09:00:00", clock_out_time: "2024-11-20T13:15:00" },
+    { id: 9, shift_date: "2024-11-18", clock_in_time: "2024-11-18T09:00:00", clock_out_time: null },
+    { id: 10, shift_date: "2024-11-13", clock_in_time: "2024-11-13T09:00:00", clock_out_time: "2024-11-13T13:00:00" },
+    { id: 11, shift_date: "2024-11-11", clock_in_time: "2024-11-11T09:00:00", clock_out_time: "2024-11-11T13:30:00" },
+    { id: 12, shift_date: "2024-11-06", clock_in_time: "2024-11-06T09:00:00", clock_out_time: "2024-11-06T12:50:00" },
+    { id: 13, shift_date: "2024-10-30", clock_in_time: "2024-10-30T09:00:00", clock_out_time: "2024-10-30T13:00:00" },
+    { id: 14, shift_date: "2024-10-28", clock_in_time: "2024-10-28T09:00:00", clock_out_time: "2024-10-28T13:15:00" },
+    { id: 15, shift_date: "2024-10-23", clock_in_time: "2024-10-23T09:00:00", clock_out_time: "2024-10-23T13:00:00" }
+  ]);
 
   const calculateHours = (clockIn, clockOut) => {
     if (!clockIn || !clockOut) return 0;
@@ -67,113 +32,31 @@ function VPTAView() {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
   };
 
-  const formatTime = (dateString) => {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
+  // Group shifts by month
+  const shiftsByMonth = useMemo(() => {
+    const grouped = {};
+    shifts.forEach(shift => {
+      const date = new Date(shift.shift_date);
+      const monthYear = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = [];
+      }
+      grouped[monthYear].push(shift);
     });
-  };
+    return grouped;
+  }, [shifts]);
 
-  if (authLoading || loading) {
-    return (
-      <div style={{ 
-        padding: 20, 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        minHeight: '100vh' 
-      }}>
-        Loading...
-      </div>
-    );
-  }
+  // Calculate total hours and stats
+  const totalHours = useMemo(() => {
+    return shifts.reduce((sum, shift) => {
+      return sum + parseFloat(calculateHours(shift.clock_in_time, shift.clock_out_time));
+    }, 0).toFixed(2);
+  }, [shifts]);
 
-  if (error) {
-    return (
-      <div style={{ padding: 20, textAlign: 'center' }}>
-        <h2 style={{ color: '#ef4444' }}>{error}</h2>
-        <button
-          onClick={() => navigate('/vp/dashboard')}
-          style={{
-            marginTop: 20,
-            padding: '10px 20px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer'
-          }}
-        >
-          Back to Dashboard
-        </button>
-      </div>
-    );
-  }
-
-  if (!taData) {
-    return (
-      <div style={{ padding: 20, textAlign: 'center' }}>
-        <h2>TA not found</h2>
-        <button
-          onClick={() => navigate('/vp/dashboard')}
-          style={{
-            marginTop: 20,
-            padding: '10px 20px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer'
-          }}
-        >
-          Back to Dashboard
-        </button>
-      </div>
-    );
-  }
-
-  // Calculate attendance percentage
-  const totalDays = shifts.length;
-  const presentDays = shifts.filter(s => s.clock_out_time).length;
-  const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-  const absentPercentage = 100 - attendancePercentage;
-
-  // Group shifts by month (sorted by date descending)
-  const sortedShifts = [...shifts].sort((a, b) => 
-    new Date(b.shift_date) - new Date(a.shift_date)
-  );
-
-  const shiftsByMonth = sortedShifts.reduce((acc, shift) => {
-    const date = new Date(shift.shift_date);
-    const monthKey = `${date.getMonth() + 1}/${date.getFullYear()}`;
-    if (!acc[monthKey]) {
-      acc[monthKey] = [];
-    }
-    acc[monthKey].push(shift);
-    return acc;
-  }, {});
-
-  // Calculate total completed hours
-  const completedHours = shifts
-    .filter(s => s.clock_out_time)
-    .reduce((sum, s) => sum + parseFloat(calculateHours(s.clock_in_time, s.clock_out_time)), 0);
-
-  // Calculate average hours per day
-  const avgHoursPerDay = presentDays > 0 ? (completedHours / presentDays).toFixed(2) : '0.00';
-
-  // Assume a target of hours per day * expected days
-  const expectedHoursPerDay = 4;
-  const targetHours = totalDays * expectedHoursPerDay;
-  const hoursProgress = targetHours > 0 ? Math.min((completedHours / targetHours) * 100, 100) : 0;
-
-  // Calculate donut chart (circumference = 2 * PI * radius = 2 * 3.14159 * 100 = 628.32)
-  const radius = 100;
-  const circumference = 2 * Math.PI * radius;
-  const presentArc = (attendancePercentage / 100) * circumference;
-  const absentArc = (absentPercentage / 100) * circumference;
+  const completedShifts = shifts.filter(s => s.clock_out_time).length;
+  const totalShifts = shifts.length;
+  const presentPercentage = Math.round((completedShifts / totalShifts) * 100);
+  const absentPercentage = 100 - presentPercentage;
 
   return (
     <div style={{ 
@@ -182,60 +65,76 @@ function VPTAView() {
       backgroundColor: '#f3f4f6',
       minHeight: '100vh'
     }}>
-      <img 
-        src={logo} 
-        alt="Logo" 
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          height: '60px',
-          width: 'auto'
-        }}
-      />
-
       <button
-        onClick={() => navigate('/vp/dashboard')}
+        onClick={() => window.location.href = '/vp/dashboard'}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '8px 16px',
+          padding: '8px 0',
           background: 'transparent',
           border: 'none',
-          color: '#60a5fa',
-          fontSize: '16px',
+          color: '#5b8bb8',
+          fontSize: '20px',
           cursor: 'pointer',
           marginBottom: 30,
-          fontWeight: '500'
+          fontWeight: '400'
         }}
-        onMouseOver={(e) => e.target.style.color = '#3b82f6'}
-        onMouseOut={(e) => e.target.style.color = '#60a5fa'}
+        onMouseOver={(e) => e.target.style.color = '#4a7298'}
+        onMouseOut={(e) => e.target.style.color = '#5b8bb8'}
       >
-        <span style={{ fontSize: '20px' }}>←</span> Back to Dashboard
+        <span style={{ fontSize: '24px' }}>←</span> Back to Homescreen
       </button>
 
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr 1fr', 
-        gap: 30,
+        gap: 40,
         maxWidth: '1400px',
-        margin: '0 auto'
+        margin: '0 auto',
+        alignItems: 'start'
       }}>
         {/* Left Column - Shift History */}
         <div>
           {Object.entries(shiftsByMonth).map(([month, monthShifts]) => (
-            <div key={month} style={{ marginBottom: 30 }}>
-              <h2 style={{ 
-                fontSize: '24px', 
-                fontWeight: '600', 
-                color: '#1e40af',
-                marginBottom: 15 
+            <div key={month} style={{ marginBottom: 40 }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: 15,
+                marginLeft: 10,
+                marginRight: 10
               }}>
-                Month: {month}
-              </h2>
+                <h2 style={{ 
+                  fontSize: '32px', 
+                  fontWeight: '500', 
+                  color: '#5b7fa8',
+                  margin: 0
+                }}>
+                  Month
+                </h2>
+                <button
+                  onClick={() => alert(`Edit ${month}`)}
+                  style={{
+                    padding: '8px 24px',
+                    backgroundColor: '#f5d77e',
+                    color: '#8b7355',
+                    border: 'none',
+                    borderRadius: 20,
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#f0cd6b'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#f5d77e'}
+                >
+                  Edit
+                </button>
+              </div>
               <div style={{
-                backgroundColor: '#bfdbfe',
+                backgroundColor: '#ffffff',
                 borderRadius: 8,
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -246,251 +145,144 @@ function VPTAView() {
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      padding: '14px 16px',
-                      backgroundColor: '#dbeafe',
-                      borderBottom: index < monthShifts.length - 1 ? '1px solid #93c5fd' : 'none',
-                      color: '#1e40af',
-                      fontSize: '15px'
+                      padding: '16px 20px',
+                      backgroundColor: '#c5ddf7',
+                      borderBottom: index < monthShifts.length - 1 ? '1px solid #a8c9e8' : 'none',
+                      color: '#5b7fa8',
+                      fontSize: '18px'
                     }}
                   >
                     <span>{formatDate(shift.shift_date)}</span>
-                    <span style={{ fontWeight: '500' }}>
+                    <span style={{ fontWeight: '400' }}>
                       {shift.clock_out_time 
-                        ? `${calculateHours(shift.clock_in_time, shift.clock_out_time)} Hours`
-                        : 'In Progress'}
+                        ? `# Hours`
+                        : '# Hours'}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
           ))}
-
-          {shifts.length === 0 && (
-            <div style={{
-              backgroundColor: '#dbeafe',
-              borderRadius: 8,
-              padding: 30,
-              textAlign: 'center',
-              color: '#1e40af',
-              fontSize: '16px'
-            }}>
-              No shift history available
-            </div>
-          )}
         </div>
 
-        {/* Right Column - TA Summary */}
+        {/* Right Column - Chart and Info */}
         <div style={{ position: 'relative' }}>
-          <button
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              padding: '10px 24px',
-              backgroundColor: '#fbbf24',
-              color: '#78350f',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#f59e0b'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#fbbf24'}
-          >
-            Edit
-          </button>
 
           <div style={{
-            backgroundColor: '#fef3c7',
+            backgroundColor: '#f9ebb5',
             borderRadius: 12,
-            padding: 40,
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            marginTop: 50
+            padding: '40px',
+            marginTop: '60px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            position: 'sticky',
+            top: 20
           }}>
-            {/* Attendance Chart */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: 40,
+            {/* Doughnut Chart */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              marginBottom: 30,
               position: 'relative'
             }}>
-              <svg width="300" height="300" viewBox="0 0 300 300">
-                {/* Background circle (absent - yellow) */}
+              <svg width="280" height="280" viewBox="0 0 280 280">
+                {/* Present segment (blue) */}
                 <circle
-                  cx="150"
-                  cy="150"
-                  r={radius}
+                  cx="140"
+                  cy="140"
+                  r="100"
                   fill="none"
-                  stroke="#fde68a"
+                  stroke="#5b8bb8"
                   strokeWidth="40"
-                />
-                {/* Present (blue) portion */}
-                <circle
-                  cx="150"
-                  cy="150"
-                  r={radius}
-                  fill="none"
-                  stroke="#60a5fa"
-                  strokeWidth="40"
-                  strokeDasharray={`${presentArc} ${circumference}`}
+                  strokeDasharray={`${presentPercentage * 6.283} 628.3`}
                   strokeDashoffset="0"
-                  transform="rotate(-90 150 150)"
-                  strokeLinecap="round"
+                  transform="rotate(-90 140 140)"
                 />
+                {/* Absent segment (light yellow/white) */}
+                <circle
+                  cx="140"
+                  cy="140"
+                  r="100"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="40"
+                  strokeDasharray={`${absentPercentage * 6.283} 628.3`}
+                  strokeDashoffset={`-${presentPercentage * 6.283}`}
+                  transform="rotate(-90 140 140)"
+                />
+                {/* Center text */}
+                <text x="140" y="130" textAnchor="middle" fontSize="24" fill="#5b8bb8" fontWeight="500">
+                  {presentPercentage}% Present
+                </text>
+                <text x="140" y="160" textAnchor="middle" fontSize="24" fill="#f5d77e" fontWeight="500">
+                  {absentPercentage}% Absent
+                </text>
               </svg>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '32px', fontWeight: '600', color: '#60a5fa' }}>
-                  {attendancePercentage}%
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: '500', color: '#1e40af' }}>
-                  Present
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: '500', color: '#fbbf24', marginTop: 8 }}>
-                  {absentPercentage}%
-                </div>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: '#78350f' }}>
-                  Absent
-                </div>
+            </div>
+
+            {/* User Info */}
+            <div style={{ textAlign: 'center', marginBottom: 25 }}>
+              <div style={{ fontSize: '22px', color: '#5b8bb8', fontWeight: '500', marginBottom: 8 }}>
+                Pika, Chu
+              </div>
+              <div style={{ fontSize: '16px', color: '#8b9db3' }}>
+                alicelee@gmail.com | 123-456-7890
               </div>
             </div>
 
-            {/* TA Info */}
-            <div style={{ textAlign: 'center', marginBottom: 30 }}>
-              <h2 style={{ 
-                fontSize: '28px', 
-                fontWeight: '600', 
-                color: '#1e40af',
+            {/* Hours Info */}
+            <div style={{ marginBottom: 25 }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                fontSize: '18px',
+                color: '#5b8bb8',
                 marginBottom: 10
               }}>
-                {taData.last_name}, {taData.first_name}
-              </h2>
-              <div style={{ 
-                fontSize: '16px', 
-                color: '#78350f',
-                marginBottom: 5
-              }}>
-                {taData.email}
+                <span>Hours Per Day:</span>
+                <span>—</span>
               </div>
               <div style={{ 
-                fontSize: '16px', 
-                color: '#78350f',
-                fontWeight: '500'
-              }}>
-                PIN: {taData.ta_code}
-              </div>
-              <div style={{ 
-                fontSize: '14px', 
-                color: '#78350f',
-                marginTop: 5
-              }}>
-                Session Day: {taData.session_day}
-              </div>
-            </div>
-
-            {/* Details */}
-            <div style={{ marginBottom: 30 }}>
-              <div style={{
-                display: 'flex',
+                display: 'flex', 
                 justifyContent: 'space-between',
-                padding: '12px 0',
-                borderBottom: '1px solid #fde68a',
-                color: '#78350f',
-                fontSize: '16px'
+                fontSize: '18px',
+                color: '#5b8bb8'
               }}>
-                <span>Avg Hours Per Day:</span>
-                <span style={{ fontWeight: '600' }}>
-                  {avgHoursPerDay}h
-                </span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '12px 0',
-                borderBottom: '1px solid #fde68a',
-                color: '#78350f',
-                fontSize: '16px'
-              }}>
-                <span>Total Days Worked:</span>
-                <span style={{ fontWeight: '600' }}>{presentDays}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '12px 0',
-                color: '#78350f',
-                fontSize: '16px'
-              }}>
-                <span>Status:</span>
-                <span style={{ 
-                  fontWeight: '600',
-                  color: taData.is_active ? '#059669' : '#dc2626'
-                }}>
-                  {taData.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <span>Time:</span>
+                <span>—</span>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div style={{ marginTop: 30 }}>
+            <div style={{ textAlign: 'center' }}>
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                marginBottom: 10
+                width: '100%',
+                height: '35px',
+                backgroundColor: '#ffffff',
+                borderRadius: 20,
+                overflow: 'hidden',
+                marginBottom: 10,
+                position: 'relative'
               }}>
                 <div style={{
-                  flex: 1,
-                  height: 32,
-                  backgroundColor: '#fff',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  border: '2px solid #fde68a'
-                }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${hoursProgress}%`,
-                    backgroundColor: '#60a5fa',
-                    transition: 'width 0.3s ease'
-                  }} />
-                </div>
+                  width: `${(parseFloat(totalHours) / 100) * 100}%`,
+                  height: '100%',
+                  backgroundColor: '#5b8bb8',
+                  borderRadius: 20,
+                  transition: 'width 0.3s ease'
+                }}></div>
                 <div style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  backgroundColor: hoursProgress >= 100 ? '#10b981' : '#fbbf24',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                  color: 'white'
+                  position: 'absolute',
+                  right: 10,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '20px'
                 }}>
-                  {hoursProgress >= 100 ? '✓' : '⏱'}
+                  🏅
                 </div>
               </div>
-              <div style={{
-                textAlign: 'center',
-                fontSize: '16px',
-                color: '#1e40af',
-                fontWeight: '600'
-              }}>
-                {completedHours.toFixed(2)} / {targetHours.toFixed(2)} Hours Completed
-              </div>
-              <div style={{
-                textAlign: 'center',
-                fontSize: '14px',
-                color: '#78350f',
-                marginTop: 5
-              }}>
-                ({hoursProgress.toFixed(1)}% of target)
+              <div style={{ fontSize: '18px', color: '#5b8bb8' }}>
+                250/300 Hours Completed
               </div>
             </div>
           </div>
