@@ -5,7 +5,7 @@ import './style/global.css'
 import logo from '../assets/logo.png';
 
 export default function VPLogin() {
-    const { isLoading, isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
+    const { isLoading, isAuthenticated, loginWithRedirect, logout } = useAuth0();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -38,18 +38,35 @@ export default function VPLogin() {
         });
     };
 
+    const handleBack = () => {
+        logout({ 
+        logoutParams: { 
+            returnTo: window.location.origin
+        } 
+        });
+    };
+
     return (
         <div style={{ padding: 20 }}>
-            <div className="logo">
-                <img src={logo} alt="Logo" />
-            </div>
+            <img 
+                src={logo} 
+                alt="Logo" 
+                className="page-logo"
+            />
             
             <h1>Vice-Principal Login</h1>
             
             {!isAuthenticated && !isLoading && (
                 <>
                     <p>Please sign in to continue</p>
-                    <button onClick={handleLogin}>Sign In</button>
+                    <button onClick={handleLogin} className="btn-primary">Sign In</button>
+                    <button 
+                        onClick={handleBack}
+                        className="btn-danger"
+                        style={{ marginLeft: "10px" }}
+                    >
+                        Back
+                    </button>
                 </>
             )}
 
