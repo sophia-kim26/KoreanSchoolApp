@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import './style/global.css';
+import logo from '../assets/logo.png';
 
 function Home() {
   const navigate = useNavigate();
@@ -28,6 +29,11 @@ function Home() {
       justifyContent: 'center',
       gap: '2rem'
     }}>
+      <img 
+        src={logo} 
+        alt="Logo" 
+        className="page-logo"
+      />
       <h1 style={{ 
         fontSize: '2rem', 
         fontWeight: 'bold', 

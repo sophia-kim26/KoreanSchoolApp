@@ -3,6 +3,8 @@ import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'l
 import { useNavigate } from 'react-router-dom';
 import './style/global.css';
 import logo from '../assets/logo.png';
+import { useAuth0 } from "@auth0/auth0-react";
+
 
 export default function TALogin() {
     const navigate = useNavigate();
@@ -19,6 +21,8 @@ export default function TALogin() {
     const [sessionDay, setSessionDay] = useState('');
     
     const pinInputRef = useRef(null);
+    const { logout } = useAuth0();
+
 
     // Generate random 6-digit PIN
     const generatePin = () => {
@@ -44,6 +48,14 @@ export default function TALogin() {
         setShowNewPin(false);
         setAuthState('enterPin');
         setTimeout(() => pinInputRef.current?.focus(), 100);
+    };
+
+    const handleBack= () => {
+        logout({ 
+        logoutParams: { 
+            returnTo: window.location.origin
+        } 
+        });
     };
 
     // Handle PIN input
@@ -200,6 +212,14 @@ export default function TALogin() {
                             >
                                 Sign In with PIN
                             </button>
+                            <div className="flex justify-center">
+                                <button 
+                                    onClick={handleBack}
+                                    className="btn-danger"
+                                    >
+                                    ← Back
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -262,7 +282,7 @@ export default function TALogin() {
                             onClick={() => setAuthState('home')}
                             className="w-full text-gray-600 text-sm hover:text-gray-800"
                         >
-                            ← Back to Home
+                            ← Back
                         </button>
                     </div>
                 )}
@@ -287,7 +307,7 @@ export default function TALogin() {
                             onClick={handleBackToHome}
                             className="w-full text-gray-600 text-sm hover:text-gray-800"
                         >
-                            ← Back to home
+                            ← Back
                         </button>
                     </div>
                     </div>
