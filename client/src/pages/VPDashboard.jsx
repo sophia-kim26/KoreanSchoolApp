@@ -18,6 +18,12 @@ function VPDashboard() {
     session_day: "",
     is_active: true
   });
+
+  // Generate random 6-digit PIN
+  const generatePIN = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
   const navigate = useNavigate();
 
@@ -75,10 +81,13 @@ function VPDashboard() {
     e.preventDefault();
     
     try {
-      // Don't send google_id in the request
-      const { ...dataToSend } = formData;
+      // Generate PIN and prepare data
+      const dataToSend = {
+        ...formData,
+        ta_code: generatePIN()
+      };
       
-      const response = await fetch("http://localhost:3001/api/data", {
+      const response = await fetch("http://localhost:3001/api/create-account", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -149,7 +158,7 @@ function VPDashboard() {
     }
   };
 
-  // Transform data for Grid.js - skip google_id column
+  // Transform data for Grid.js
   const gridData = data.map(row => [
     row.id, 
     row.first_name, 
@@ -199,7 +208,6 @@ function VPDashboard() {
             Add New TA
           </button>
           <button 
-            // onClick={handleSignOut}
             className="btn-settings"
           >
             Settings
@@ -368,26 +376,6 @@ function VPDashboard() {
                   type="text"
                   name="last_name"
                   value={formData.last_name}
-                  onChange={handleInputChange}
-                  required
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 12px', 
-                    borderRadius: 6, 
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                  TA Code:
-                </label>
-                <input
-                  type="text"
-                  name="ta_code"
-                  value={formData.ta_code}
                   onChange={handleInputChange}
                   required
                   style={{ 
