@@ -4,6 +4,7 @@ import VPLogin from "./pages/VPLogin";
 import TALogin from "./pages/TALogin";
 import VPDashboard from "./pages/VPDashboard";
 import TADashboard from "./pages/TADashboard";
+import VPTAView from "./pages/VPTAView";
 import GridTable from "./pages/Grid.jsx";
 import Chart from "./pages/Chart.jsx";
 import { Auth0Provider } from '@auth0/auth0-react';
@@ -34,11 +35,13 @@ export default function App() {
           <Route path="/vp/login" element={<VPLogin />} />
           <Route path="/ta/login" element={<TALogin />} />
           <Route path="/vp/dashboard" element={<VPDashboard />} />
+          <Route path="/vp/ta-view/:taId" element={<VPTAView />} />
           {/* i put this here for now. you can change the number inside the brackets to load ta/dashboard for specific ta_id
           but later we need a way to get the
           ta_id after a ta logs in so we can load the
           dashboard / timesheet spectific to that ta */}
           <Route path="/ta/dashboard" element={<TADashboard taId={0} />} />
+          
         </Routes>
       </BrowserRouter>
     </Auth0Provider>

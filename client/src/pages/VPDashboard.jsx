@@ -29,6 +29,37 @@ function VPDashboard() {
 
   useEffect(() => {
     fetchData();
+    
+    // Add click listeners to table rows after Grid.js renders
+    const addRowClickListeners = () => {
+      const rows = document.querySelectorAll('.gridjs-tr');
+      rows.forEach(row => {
+        // Skip header rows
+        if (row.querySelector('th')) return;
+        
+        row.addEventListener('click', (e) => {
+          // Don't trigger row click if clicking buttons
+          if (e.target.tagName === 'BUTTON') return;
+          
+          const firstCell = row.querySelector('.gridjs-td');
+          if (firstCell) {
+            const taId = firstCell.textContent;
+            handleRowClick(taId);
+          }
+        });
+        
+        // Add hover effect
+        row.addEventListener('mouseenter', () => {
+          row.style.backgroundColor = '#dbeafe';
+        });
+        row.addEventListener('mouseleave', () => {
+          row.style.backgroundColor = '#eff6ff';
+        });
+      });
+    };
+    
+    // Delay to ensure Grid.js has rendered
+    setTimeout(addRowClickListeners, 100);
   }, []);
 
   // Redirect to login if not authenticated
@@ -50,6 +81,29 @@ function VPDashboard() {
           return b.is_active - a.is_active; // Active first
         });
         setData(sorted);
+        
+        // Re-add click listeners after data updates
+        setTimeout(() => {
+          const rows = document.querySelectorAll('.gridjs-tr');
+          rows.forEach(row => {
+            if (row.querySelector('th')) return;
+            
+            row.addEventListener('click', (e) => {
+              if (e.target.tagName === 'BUTTON') return;
+              const firstCell = row.querySelector('.gridjs-td');
+              if (firstCell) {
+                handleRowClick(firstCell.textContent);
+              }
+            });
+            
+            row.addEventListener('mouseenter', () => {
+              row.style.backgroundColor = '#dbeafe';
+            });
+            row.addEventListener('mouseleave', () => {
+              row.style.backgroundColor = '#eff6ff';
+            });
+          });
+        }, 100);
       })
       .catch(err => console.error(err));
   };
@@ -156,6 +210,14 @@ function VPDashboard() {
       console.error(err);
       alert('Error deactivating TA');
     }
+  };
+
+  // Handle row click
+  const handleRowClick = (taId) => {
+    console.log('Clicked TA ID:', taId);
+    // Navigate to detail page or show details modal
+    navigate(`/vp/ta-view/${taId}`);
+    alert(`View details for TA ID: ${taId}`);
   };
 
   // Transform data for Grid.js
@@ -300,6 +362,9 @@ function VPDashboard() {
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
+            className={{
+              tr: 'clickable-row'
+            }}
             style={{
               table: {
                 'font-size': '14px',
@@ -318,6 +383,10 @@ function VPDashboard() {
                 'border-bottom': '1px solid #bfdbfe',
                 'color': '#1e40af',
                 'background-color': '#eff6ff'
+              },
+              tr: {
+                'cursor': 'pointer',
+                'transition': 'background-color 0.2s'
               }
             }}
           />
