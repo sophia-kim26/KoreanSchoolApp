@@ -207,7 +207,6 @@ function TADashboard() {
             <button
               onClick={() => setShowClockInConfirm(true)}
               className="btn-primary"
-              // style={{ marginRight: "10px" }}
               disabled={clockedIn}
             >
               Clock In
@@ -270,11 +269,11 @@ function TADashboard() {
       {/* clock in popup */}
       {showClockInConfirm && (
         <div style={overlayStyle}>
-          <div style={modalStyle}>
+          <div style={modalStyle} >
             <h2>Confirm Clock In</h2>
             <p>Are you sure you want to clock in?</p>
 
-            <div style={{ marginTop: "20px" }}>
+            <div style={{ marginTop: "20px", right: "10px" }}>
               <button
                 onClick={() => {
                   setShowClockInConfirm(false);
@@ -303,14 +302,13 @@ function TADashboard() {
             <h2>Confirm Clock Out</h2>
             <p>Are you sure you want to clock out?</p>
 
-            <div style={{ marginTop: "20px" }}>
+            <div style={{ marginTop: "20px", right: "10px" }}>
               <button
                 onClick={() => {
                   setShowClockOutConfirm(false);
                   clockOut();
                 }}
                 className="btn-primary"
-                style={{ marginRight: "10px" }}
               >
                 Yes, I'm sure
               </button>
