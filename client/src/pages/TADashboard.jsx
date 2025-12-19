@@ -55,6 +55,28 @@ function TADashboard() {
     }
   };
 
+  const checkActiveShift = async (userId) => {
+  try {
+    const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
+    const json = await res.json();
+    
+    if (json.activeShift) {
+      // User has an active shift - they're clocked in
+      setClockedIn(true);
+      setActiveShiftId(json.activeShift.id);
+      setClockInTime(new Date(json.activeShift.clock_in));
+      console.log("Active shift found:", json.activeShift);
+    } else {
+      // No active shift - they're clocked out
+      setClockedIn(false);
+      setActiveShiftId(null);
+      setClockInTime(null);
+    }
+  } catch (err) {
+    console.error("Failed to check active shift:", err);
+  }
+};
+
   // Check authentication on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
@@ -63,6 +85,7 @@ function TADashboard() {
       return;
     }
     setCurrentUser(user);
+    checkActiveShift(user.id);
   }, [navigate]);
 
   // Fetch shifts data
@@ -255,7 +278,7 @@ function TADashboard() {
          <Grid
             key={JSON.stringify(data)}
             data={gridData}
-            columns={["ID", "TA ID", "TA Name", "Clock In", "Clock Out", "Elapsed Time", "Notes"]}
+            columns={["ID", "TA ID", "TA Name", "Clock In", "Clock Out", "Notes", "Elapsed Time"]}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
@@ -278,6 +301,8 @@ function TADashboard() {
                 onClick={() => {
                   setShowClockInConfirm(false);
                   clockIn();
+                  // i would include this but rn it doesn't keep track of sign in/out when you log back in
+                  // handleSignOut();
                 }}
                 className="btn-primary"
               >
@@ -307,6 +332,7 @@ function TADashboard() {
                 onClick={() => {
                   setShowClockOutConfirm(false);
                   clockOut();
+                  // handleSignOut();
                 }}
                 className="btn-primary"
               >
