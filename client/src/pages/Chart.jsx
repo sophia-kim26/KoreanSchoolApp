@@ -54,9 +54,9 @@ export default function Chart() {
 
   // sample TA info
   const taInfo = {
-    firstName: "Pika",
-    lastName: "Chu",
-    email: "alicelee@gmail.com",
+    firstName: "John",
+    lastName: "Pork",
+    email: "johnpork@gmail.com",
     phone: "123-456-7890",
     hoursPerDay: "—",
     time: "—",
