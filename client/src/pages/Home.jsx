@@ -50,7 +50,7 @@ function Home() {
             id="vpPath"
             d="M 100 200 A 40 40 0 0 0 100 100 A 40 40 0 0 1 100 0 A 100 100 0 0 1 100 200"
             fill="#cd313a"
-            className="yin-yang-path cursor-pointer transition-transform hover:scale-105 active:scale-95 origin-center"
+            className="yin-yang-path cursor-pointer transition-transform hover:scale-100 active:scale-95 origin-center"
             onClick={() => handleClickVP()}
           />
 
@@ -58,7 +58,7 @@ function Home() {
           <path
             d="M 100 0 A 40 40 0 0 0 100 100 A 40 40 0 0 1 100 200 A 100 100 0 0 1 100 0"
             fill="#0047a0"
-            className="yin-yang-path cursor-pointer transition-transform hover:scale-105 active:scale-95 origin-center"
+            className="yin-yang-path cursor-pointer transition-transform hover:scale-100 active:scale-95 origin-center"
             onClick={() => handleClickTA()}
           />
 

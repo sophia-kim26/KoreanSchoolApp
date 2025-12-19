@@ -46,19 +46,6 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
-app.post('/api/data', async (req, res) => {
-  try {
-    const { first_name, last_name, ta_code, email, session_day, google_id, is_active } = req.body;
-    const result = await sql`
-      INSERT INTO ta_list (first_name, last_name, ta_code, email, session_day, google_id, is_active, created_at) 
-      VALUES (${first_name}, ${last_name}, ${ta_code}, ${email}, ${session_day}, ${google_id}, ${is_active}, NOW()) 
-      RETURNING *
-    `;
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Clock in - create a new shift
 app.post('/api/attendance/clock-in', async (req, res) => {
