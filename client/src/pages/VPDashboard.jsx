@@ -58,7 +58,7 @@ function VPDashboard() {
               const firstCell = row.querySelector('.gridjs-td');
               if (firstCell) {
                 handleRowClick(firstCell.textContent);
-                //alert(`View details for TA ID: ${taId}`);
+                alert(`View details for TA ID: ${taId}`);
               }
             });
             
