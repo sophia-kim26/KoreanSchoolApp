@@ -47,6 +47,29 @@ function VPDashboard() {
           return b.is_active - a.is_active;
         });
         setData(sorted);
+
+        setTimeout(() => {
+          const rows = document.querySelectorAll('.gridjs-tr');
+          rows.forEach(row => {
+            if (row.querySelector('th')) return;
+            
+            row.addEventListener('click', (e) => {
+              if (e.target.tagName === 'BUTTON') return;
+              const firstCell = row.querySelector('.gridjs-td');
+              if (firstCell) {
+                handleRowClick(firstCell.textContent);
+                alert(`View details for TA ID: ${taId}`);
+              }
+            });
+            
+            row.addEventListener('mouseenter', () => {
+              row.style.backgroundColor = '#dbeafe';
+            });
+            row.addEventListener('mouseleave', () => {
+              row.style.backgroundColor = '#eff6ff';
+            });
+          });
+        }, 100);
       })
       .catch(err => {
         console.error("Fetch error:", err);
@@ -163,6 +186,13 @@ function VPDashboard() {
       console.error(err);
       alert('Error deactivating TA');
     }
+  };
+
+  const handleRowClick = (taId) => {
+    console.log('Clicked TA ID:', taId);
+    // Navigate to detail page or show details modal
+    navigate(`/vp/ta-view/${taId}`);
+    alert(`View details for TA ID: ${taId}`);
   };
 
   const gridData = data.map(row => [

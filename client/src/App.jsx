@@ -35,8 +35,7 @@ export default function App() {
           <Route path="/vp/login" element={<VPLogin />} />
           <Route path="/ta/login" element={<TALogin />} />
           <Route path="/vp/dashboard" element={<VPDashboard />} />
-          <Route path="/vp/ta-view" element={<VPTAView />} />
-          <Route path="/vp/analytics" element={<VPTAView />} />
+          <Route path="/vp/ta-view/:taId" element={<VPTAView />} />
           {/* i put this here for now. you can change the number inside the brackets to load ta/dashboard for specific ta_id
           but later we need a way to get the
           ta_id after a ta logs in so we can load the
