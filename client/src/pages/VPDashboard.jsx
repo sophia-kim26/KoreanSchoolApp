@@ -226,21 +226,7 @@ function VPDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-        <button
-    onClick={() => navigate('/vp/analytics')}
-    style={{
-      padding: '12px 24px',
-      background: '#2563eb',
-      color: 'white',
-      border: 'none',
-      borderRadius: 6,
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '500'
-    }}
-  >
-    Analytics
-  </button>
+        
 
           <button 
             onClick={() => setShowSettingsModal(true)}
