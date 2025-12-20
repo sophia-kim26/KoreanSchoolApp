@@ -778,8 +778,7 @@ function VPDashboard() {
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button style={{
                         padding: '10px 30px',
-                        background: '#4b5563',
-                        color: 'white',
+                        background: 'white',
                         border: '1px solid #d1d5db',
                         borderRadius: 6,
                         cursor: 'pointer',
@@ -790,8 +789,8 @@ function VPDashboard() {
                       </button>
                       <button style={{
                         padding: '10px 30px',
-                        background: 'white',
-                        color: 'black',
+                        background: '#4b5563',
+                        color: 'white',
                         border: '1px solid #4b5563',
                         borderRadius: 6,
                         cursor: 'pointer',
