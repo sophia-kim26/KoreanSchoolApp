@@ -78,38 +78,53 @@ function VPDashboard() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const { ...dataToSend } = formData;
-      
-      const response = await fetch("http://localhost:3001/api/data", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(dataToSend)
-      });
+  e.preventDefault();
 
-      if (response.ok) {
-        setFormData({
-          first_name: "",
-          last_name: "",
-          ta_code: "",
-          email: "",
-          session_day: "",
-          is_active: true
-        });
-        setShowModal(false);
-        fetchData();
-      } else {
-        alert("Failed to add new TA");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error adding new TA");
+  try {
+    // Basic front-end validation (optional but helpful)
+    if (!formData.session_day) {
+      alert("Please select a Session Day (Friday/Saturday/Both).");
+      return;
     }
-  };
+
+    const response = await fetch("http://localhost:3001/api/create-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim(),
+        ta_code: formData.ta_code.trim(),
+        session_day: formData.session_day,
+      }),
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      // This will show your backend messages like:
+      // "Account already exists with this email" or "PIN already exists..."
+      alert(payload.error || "Failed to add new TA");
+      return;
+    }
+
+    // Success
+    setFormData({
+      first_name: "",
+      last_name: "",
+      ta_code: "",
+      email: "",
+      session_day: "",
+      is_active: true,
+    });
+    setShowModal(false);
+    fetchData();
+  } catch (err) {
+    console.error(err);
+    alert("Error adding new TA: " + err.message);
+  }
+};
+
 
   const toggleAttendance = async (taId, currentAttendance) => {
     try {
