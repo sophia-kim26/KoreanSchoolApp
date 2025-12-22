@@ -8,21 +8,19 @@ import Chart from "../pages/Chart.jsx";
 
 function TADashboard() {
   const [data, setData] = useState([]);
-
   const [clockedIn, setClockedIn] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('appearance');
   const { logout } = useAuth0();
   const navigate = useNavigate();
 
-  // for marking time
   const [clockInTime, setClockInTime] = useState(null);
   const [clockOutTime, setClockOutTime] = useState(null);
   const [elapsed, setElapsed] = useState(null);
- 
   const [currentUser, setCurrentUser] = useState(null);
   const [showClockInConfirm, setShowClockInConfirm] = useState(false);
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
   const [activeShiftId, setActiveShiftId] = useState(null);
-
 
   const overlayStyle = {
     position: "fixed",
@@ -45,7 +43,7 @@ function TADashboard() {
     minWidth: "300px",
   };
 
-    const fetchShifts = async () => {
+  const fetchShifts = async () => {
     try {
       const res = await fetch("http://localhost:3001/api/shifts");
       const json = await res.json();
@@ -56,28 +54,25 @@ function TADashboard() {
   };
 
   const checkActiveShift = async (userId) => {
-  try {
-    const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
-    const json = await res.json();
-    
-    if (json.activeShift) {
-      // User has an active shift - they're clocked in
-      setClockedIn(true);
-      setActiveShiftId(json.activeShift.id);
-      setClockInTime(new Date(json.activeShift.clock_in));
-      console.log("Active shift found:", json.activeShift);
-    } else {
-      // No active shift - they're clocked out
-      setClockedIn(false);
-      setActiveShiftId(null);
-      setClockInTime(null);
+    try {
+      const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
+      const json = await res.json();
+      
+      if (json.activeShift) {
+        setClockedIn(true);
+        setActiveShiftId(json.activeShift.id);
+        setClockInTime(new Date(json.activeShift.clock_in));
+        console.log("Active shift found:", json.activeShift);
+      } else {
+        setClockedIn(false);
+        setActiveShiftId(null);
+        setClockInTime(null);
+      }
+    } catch (err) {
+      console.error("Failed to check active shift:", err);
     }
-  } catch (err) {
-    console.error("Failed to check active shift:", err);
-  }
-};
+  };
 
-  // Check authentication on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
     if (!user) {
@@ -88,7 +83,6 @@ function TADashboard() {
     checkActiveShift(user.id);
   }, [navigate]);
 
-  // Fetch shifts data
   useEffect(() => {
     fetch("http://localhost:3001/api/shifts")
       .then(res => res.json())
@@ -96,23 +90,19 @@ function TADashboard() {
       .catch(err => console.error(err));
   }, []);
 
-  // Filter rows for the current user's TA ID
   const taData = currentUser 
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
-  // Map filtered rows for Grid.js
   const gridData = taData.map(row => [
     row.id,
-    row.ta_id, // hide this later?
+    row.ta_id,
     `${row.first_name} ${row.last_name}`,
     row.clock_in,
     row.clock_out,
-    // row.elapsed_time,
     row.notes,
   ]);
 
-  // sign out
   const handleSignOut = () => {
     logout({ 
       logoutParams: { 
@@ -121,12 +111,10 @@ function TADashboard() {
     });
   };
 
-  // Get TA full name from currentUser
   const taName = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
-  // clock in and clock out functions
   const clockIn = async () => {
     console.log("Clock In pressed");
     setClockedIn(true);
@@ -135,14 +123,12 @@ function TADashboard() {
     setClockInTime(time);
 
     try {
-      // create database row
       const res = await fetch("http://localhost:3001/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ta_id: currentUser.id,
-          clock_in: time.toISOString(), // Convert to ISO string
-          // elapsed_time: false,
+          clock_in: time.toISOString(),
           notes: ""
         })
       });
@@ -156,14 +142,12 @@ function TADashboard() {
         return;
       }
 
-      // store new row ID so we can update it later
       setActiveShiftId(newShift.id);
       console.log("Shift created with ID:", newShift.id);
-      console.log("activeShiftId set to:", newShift.id);
-
     } catch (err) {
       console.error("Failed to clock in:", err);
-  }};
+    }
+  };
 
   const clockOut = async () => {
     console.log("Clock Out pressed");
@@ -172,7 +156,6 @@ function TADashboard() {
     const time = new Date();
     setClockOutTime(time);
 
-    // calculate elapsed
     if (clockInTime) {
       const diff = time - clockInTime;
       const totalMinutes = Math.floor(diff / 1000 / 60);
@@ -181,7 +164,6 @@ function TADashboard() {
       setElapsed({ hours, minutes });
     }
 
-    // update existing database row
     if (!activeShiftId) {
       console.error("No active shift ID found.");
       return;
@@ -193,16 +175,11 @@ function TADashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clock_out: time,
-          // elapsed_time: elapsed
         })
       });
 
       console.log(`Shift ${activeShiftId} updated with clock-out time`);
-
-      // Refresh the data to show updated clock-out time in the grid
       await fetchShifts();
-
-      // Reset active shift
       setActiveShiftId(null);
     } catch (err) {
       console.error("Failed to clock out:", err);
@@ -243,7 +220,7 @@ function TADashboard() {
               Clock Out
             </button>
             <button 
-              // onClick={handleSignOut}
+              onClick={() => setShowSettingsModal(true)}
               className="btn-settings"
             >
               Settings
@@ -271,7 +248,6 @@ function TADashboard() {
       )}
       </div>
 
-
       {taData.length === 0 ? (
         <p>No data found.</p>
       ) : (
@@ -289,30 +265,26 @@ function TADashboard() {
       <h1>Hours by month</h1>
       <Chart/>
 
-      {/* clock in popup */}
+      {/* Clock In Confirmation */}
       {showClockInConfirm && (
         <div style={overlayStyle}>
-          <div style={modalStyle} >
+          <div style={modalStyle}>
             <h2>Confirm Clock In</h2>
             <p>Are you sure you want to clock in?</p>
-
             <div style={{ marginTop: "20px", right: "10px" }}>
               <button
                 onClick={() => {
                   setShowClockInConfirm(false);
                   clockIn();
-                  // i would include this but rn it doesn't keep track of sign in/out when you log back in
-                  // handleSignOut();
                 }}
                 className="btn-primary"
               >
                 Yes, I'm sure
               </button>
-
               <button
                 onClick={() => setShowClockInConfirm(false)}
                 className="btn-danger"
-                >
+              >
                 Cancel
               </button>
             </div>
@@ -320,30 +292,253 @@ function TADashboard() {
         </div>
       )}
 
-      {/* clock out popup */}
+      {/* Clock Out Confirmation */}
       {showClockOutConfirm && (
         <div style={overlayStyle}>
           <div style={modalStyle}>
             <h2>Confirm Clock Out</h2>
             <p>Are you sure you want to clock out?</p>
-
             <div style={{ marginTop: "20px", right: "10px" }}>
               <button
                 onClick={() => {
                   setShowClockOutConfirm(false);
                   clockOut();
-                  // handleSignOut();
                 }}
                 className="btn-primary"
               >
                 Yes, I'm sure
               </button>
-
-              <button onClick={() => setShowClockOutConfirm(false)}
+              <button 
+                onClick={() => setShowClockOutConfirm(false)}
                 className="btn-danger"
-                >
+              >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 30,
+            borderRadius: 12,
+            width: 600,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  padding: '5px 10px',
+                  marginRight: '10px',
+                  color: '#6b7280'
+                }}
+              >
+                ←
+              </button>
+              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ 
+              display: 'flex', 
+              gap: 0, 
+              marginBottom: 24,
+              borderBottom: '2px solid #e5e7eb'
+            }}>
+              <button 
+                onClick={() => setActiveTab('appearance')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'appearance' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  borderTopLeftRadius: 8,
+                  borderTopRightRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'appearance' ? '#1e40af' : '#6b7280'
+                }}>
+                Appearance
+              </button>
+              <button 
+                onClick={() => setActiveTab('navigation')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'navigation' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'navigation' ? '#1e40af' : '#6b7280'
+                }}>
+                Navigation
+              </button>
+              <button 
+                onClick={() => setActiveTab('account')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'account' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'account' ? '#1e40af' : '#6b7280'
+                }}>
+                Account
+              </button>
+              <button 
+                onClick={() => setActiveTab('privacy')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'privacy' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'privacy' ? '#1e40af' : '#6b7280'
+                }}>
+                Privacy
+              </button>
+            </div>
+
+            {/* Settings Content */}
+            <div style={{ 
+              background: '#dbeafe', 
+              padding: 30, 
+              borderRadius: 8,
+              minHeight: '400px'
+            }}>
+              {/* Appearance Tab */}
+              {activeTab === 'appearance' && (
+                <>
+                  <div style={{ marginBottom: 30 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                      Language Preferences
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+                        English
+                      </button>
+                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
+                        Korean
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 30 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                      Theme
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+                        Light Mode
+                      </button>
+                      <button style={{ padding: '10px 30px', background: '#4b5563', color: 'white', border: '1px solid #4b5563', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>
+                        Dark Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                      Text/Icon Size
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>S</button>
+                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '16px', fontWeight: '500' }}>M</button>
+                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '20px', fontWeight: '500' }}>L</button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Navigation Tab */}
+              {activeTab === 'navigation' && (
+                <>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Keyboard Navigation</h3>
+                  <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', marginBottom: 24 }}>Edit Keybinds</button>
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ marginBottom: 12, fontSize: '14px', color: '#1e40af' }}>Change Selection:</p>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>↑</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>←</button>
+                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>↓</button>
+                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>→</button>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Select:</p>
+                    <div style={{ padding: '12px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px', textAlign: 'center' }}>Enter</div>
+                  </div>
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Escape/Return:</p>
+                    <div style={{ padding: '12px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px', textAlign: 'center' }}>Esc</div>
+                  </div>
+                </>
+              )}
+
+              {/* Account Tab */}
+              {activeTab === 'account' && (
+                <>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Information</h3>
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Name</p>
+                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                      {taName}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Email</p>
+                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                      {currentUser?.email || 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Phone Number</p>
+                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                      Not provided
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Privacy Tab */}
+              {activeTab === 'privacy' && (
+                <>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Security</h3>
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Password</p>
+                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px' }}>********</div>
+                  </div>
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Two-factor Authentication</p>
+                    <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>Set Up</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

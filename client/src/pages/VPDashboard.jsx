@@ -4,12 +4,12 @@ import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
-import logo from '../assets/logo.png';
-
 
 function VPDashboard() {
   const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('appearance');
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -19,7 +19,6 @@ function VPDashboard() {
     is_active: true
   });
 
-  // Generate random 6-digit PIN
   const generatePIN = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -29,40 +28,8 @@ function VPDashboard() {
 
   useEffect(() => {
     fetchData();
-    
-    // Add click listeners to table rows after Grid.js renders
-    const addRowClickListeners = () => {
-      const rows = document.querySelectorAll('.gridjs-tr');
-      rows.forEach(row => {
-        // Skip header rows
-        if (row.querySelector('th')) return;
-        
-        row.addEventListener('click', (e) => {
-          // Don't trigger row click if clicking buttons
-          if (e.target.tagName === 'BUTTON') return;
-          
-          const firstCell = row.querySelector('.gridjs-td');
-          if (firstCell) {
-            const taId = firstCell.textContent;
-            handleRowClick(taId);
-          }
-        });
-        
-        // Add hover effect
-        row.addEventListener('mouseenter', () => {
-          row.style.backgroundColor = '#dbeafe';
-        });
-        row.addEventListener('mouseleave', () => {
-          row.style.backgroundColor = '#eff6ff';
-        });
-      });
-    };
-    
-    // Delay to ensure Grid.js has rendered
-    setTimeout(addRowClickListeners, 100);
   }, []);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate('/vp/login');
@@ -70,19 +37,22 @@ function VPDashboard() {
   }, [isLoading, isAuthenticated, navigate]);
 
   const fetchData = () => {
+    console.log("Fetching data...");
     fetch("http://localhost:3001/api/data")
-      .then(res => res.json())
+      .then(res => {
+        console.log("Response status:", res.status);
+        return res.json();
+      })
       .then(json => {
-        // Sort: active TAs by ID ascending, then inactive TAs at bottom
+        console.log("Received data:", json);
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
-            return a.id - b.id; // Ascending ID
+            return a.id - b.id;
           }
-          return b.is_active - a.is_active; // Active first
+          return b.is_active - a.is_active;
         });
         setData(sorted);
-        
-        // Re-add click listeners after data updates
+
         setTimeout(() => {
           const rows = document.querySelectorAll('.gridjs-tr');
           rows.forEach(row => {
@@ -93,6 +63,7 @@ function VPDashboard() {
               const firstCell = row.querySelector('.gridjs-td');
               if (firstCell) {
                 handleRowClick(firstCell.textContent);
+                alert(`View details for TA ID: ${taId}`);
               }
             });
             
@@ -105,7 +76,10 @@ function VPDashboard() {
           });
         }, 100);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Error loading data: " + err.message);
+      });
   };
 
   const handleSignOut = () => {
@@ -169,30 +143,27 @@ function VPDashboard() {
     }
   };
 
-  // Toggle attendance
+
   const toggleAttendance = async (taId, currentAttendance) => {
     try {
       if (currentAttendance === 'Present') {
-        // Clock out - remove the shift
         await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
           method: 'POST'
         });
       } else {
-        // Clock in - create a shift
         await fetch('http://localhost:3001/api/attendance/clock-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ta_id: taId })
         });
       }
-      fetchData(); // Refresh data
+      fetchData();
     } catch (err) {
       console.error(err);
       alert('Error updating attendance');
     }
   };
 
-  // Deactivate TA
   const deactivateTA = async (taId) => {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
@@ -212,15 +183,12 @@ function VPDashboard() {
     }
   };
 
-  // Handle row click
   const handleRowClick = (taId) => {
     console.log('Clicked TA ID:', taId);
     // Navigate to detail page or show details modal
     navigate(`/vp/ta-view/${taId}`);
-    alert(`View details for TA ID: ${taId}`);
   };
 
-  // Transform data for Grid.js
   const gridData = data.map(row => [
     row.id, 
     row.first_name, 
@@ -231,7 +199,7 @@ function VPDashboard() {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.id // for the actions column
+    row.id
   ]);
 
   if (isLoading) {
@@ -249,46 +217,74 @@ function VPDashboard() {
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <img 
-        src={logo} 
-        alt="Logo" 
-        className="page-logo"
-      />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
-          <div style={{ 
-            position: 'absolute', 
-            top: '100px', 
-            right: '20px', 
-            display: 'flex', 
-            gap: 10 
-          }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+        
+
           <button 
-            onClick={() => setShowModal(true)}
-            className="btn-primary"
-          >
-            Add New TA
-          </button>
-          <button 
-            className="btn-settings"
+            onClick={() => setShowSettingsModal(true)}
+            style={{ 
+              padding: '12px 24px', 
+              background: '#a39898ff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
             Settings
           </button>
           <button 
+            onClick={() => setShowModal(true)}
+            style={{ 
+              padding: '12px 24px', 
+              background: '#16a34a', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            Add New TA
+          </button>
+          <button 
             onClick={handleSignOut}
-            className="btn-danger"
+            style={{ 
+              padding: '12px 24px', 
+              background: '#dc2626', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
             Sign Out
           </button>
-          </div>
+        </div>
       </div>
 
       <p style={{ marginBottom: 30, color: '#374151', fontSize: '14px' }}>
         Logged in as: {user?.email || user?.name}
       </p>
+
+      <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
+        Total TAs: {data.length}
+      </p>
       
       {data.length === 0 ? (
-        <p>No data found.</p>
+        <div>
+          <p>No data found.</p>
+          <button onClick={fetchData} style={{ padding: '10px 20px', marginTop: 10 }}>
+            Retry Load
+          </button>
+        </div>
       ) : (
         <div style={{ 
           background: '#dbeafe', 
@@ -362,9 +358,6 @@ function VPDashboard() {
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
-            className={{
-              tr: 'clickable-row'
-            }}
             style={{
               table: {
                 'font-size': '14px',
@@ -383,10 +376,6 @@ function VPDashboard() {
                 'border-bottom': '1px solid #bfdbfe',
                 'color': '#1e40af',
                 'background-color': '#eff6ff'
-              },
-              tr: {
-                'cursor': 'pointer',
-                'transition': 'background-color 0.2s'
               }
             }}
           />
@@ -586,6 +575,497 @@ function VPDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showSettingsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 30,
+            borderRadius: 12,
+            width: 500,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Settings</h2>
+            
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Account Information</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: 8 }}>
+                Email: {user?.email || user?.name}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: 20, paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Dashboard Settings</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                Configure your dashboard preferences and manage your account settings here.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 30,
+            borderRadius: 12,
+            width: 600,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  padding: '5px 10px',
+                  marginRight: '10px',
+                  color: '#6b7280'
+                }}
+              >
+                ←
+              </button>
+              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ 
+              display: 'flex', 
+              gap: 0, 
+              marginBottom: 24,
+              borderBottom: '2px solid #e5e7eb'
+            }}>
+              <button 
+                onClick={() => setActiveTab('appearance')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'appearance' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  borderTopLeftRadius: 8,
+                  borderTopRightRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'appearance' ? '#1e40af' : '#6b7280'
+                }}>
+                Appearance
+              </button>
+              <button 
+                onClick={() => setActiveTab('navigation')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'navigation' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'navigation' ? '#1e40af' : '#6b7280'
+                }}>
+                Navigation
+              </button>
+              <button 
+                onClick={() => setActiveTab('account')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'account' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'account' ? '#1e40af' : '#6b7280'
+                }}>
+                Account
+              </button>
+              <button 
+                onClick={() => setActiveTab('privacy')}
+                style={{
+                  padding: '12px 24px',
+                  background: activeTab === 'privacy' ? '#bfdbfe' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeTab === 'privacy' ? '#1e40af' : '#6b7280'
+                }}>
+                Privacy
+              </button>
+            </div>
+
+            {/* Settings Content */}
+            <div style={{ 
+              background: '#dbeafe', 
+              padding: 30, 
+              borderRadius: 8,
+              minHeight: '400px'
+            }}>
+              {/* Appearance Tab */}
+              {activeTab === 'appearance' && (
+                <>
+                  {/* Language Preferences */}
+                  <div style={{ marginBottom: 30 }}>
+                    <h3 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      marginBottom: 12,
+                      color: '#1e40af'
+                    }}>
+                      Language Preferences
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{
+                        padding: '10px 30px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}>
+                        English
+                      </button>
+                      <button style={{
+                        padding: '10px 30px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#6b7280'
+                      }}>
+                        Korean
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Theme */}
+                  <div style={{ marginBottom: 30 }}>
+                    <h3 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      marginBottom: 12,
+                      color: '#1e40af'
+                    }}>
+                      Theme
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{
+                        padding: '10px 30px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}>
+                        Light Mode
+                      </button>
+                      <button style={{
+                        padding: '10px 30px',
+                        background: '#4b5563',
+                        color: 'white',
+                        border: '1px solid #4b5563',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}>
+                        Dark Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Text/Icon Size */}
+                  <div>
+                    <h3 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      marginBottom: 12,
+                      color: '#1e40af'
+                    }}>
+                      Text/Icon Size
+                    </h3>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{
+                        padding: '10px 20px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}>
+                        S
+                      </button>
+                      <button style={{
+                        padding: '10px 20px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        fontWeight: '500'
+                      }}>
+                        M
+                      </button>
+                      <button style={{
+                        padding: '10px 20px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '20px',
+                        fontWeight: '500'
+                      }}>
+                        L
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Navigation Tab */}
+              {activeTab === 'navigation' && (
+                <>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '600', 
+                    marginBottom: 20,
+                    color: '#1e40af'
+                  }}>
+                    Keyboard Navigation
+                  </h3>
+                  
+                  <button style={{
+                    padding: '8px 20px',
+                    background: 'white',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginBottom: 24
+                  }}>
+                    Edit Keybinds
+                  </button>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ marginBottom: 12, fontSize: '14px', color: '#1e40af' }}>
+                      Change Selection:
+                    </p>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button style={{
+                        padding: '12px 24px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: '16px'
+                      }}>
+                        ↑
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      <button style={{
+                        padding: '12px 24px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: '16px'
+                      }}>
+                        ←
+                      </button>
+                      <button style={{
+                        padding: '12px 24px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: '16px'
+                      }}>
+                        ↓
+                      </button>
+                      <button style={{
+                        padding: '12px 24px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        fontSize: '16px'
+                      }}>
+                        →
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Select:</p>
+                    <div style={{
+                      padding: '12px 20px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '150px',
+                      textAlign: 'center'
+                    }}>
+                      Enter
+                    </div>
+                  </div>
+
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Escape/Return:</p>
+                    <div style={{
+                      padding: '12px 20px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '150px',
+                      textAlign: 'center'
+                    }}>
+                      Esc
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Account Tab */}
+              {activeTab === 'account' && (
+                <>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '600', 
+                    marginBottom: 20,
+                    color: '#1e40af'
+                  }}>
+                    Information
+                  </h3>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Name</p>
+                    <div style={{
+                      padding: '10px 16px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '200px'
+                    }}>
+                      {user?.name || 'N/A'}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Email</p>
+                    <div style={{
+                      padding: '10px 16px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '200px'
+                    }}>
+                      {user?.email || 'N/A'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Phone Number</p>
+                    <div style={{
+                      padding: '10px 16px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '200px'
+                    }}>
+                      {user?.phone_number || 'Not provided'}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Privacy Tab */}
+              {activeTab === 'privacy' && (
+                <>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '600', 
+                    marginBottom: 20,
+                    color: '#1e40af'
+                  }}>
+                    Security
+                  </h3>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Password</p>
+                    <div style={{
+                      padding: '10px 16px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      width: '150px'
+                    }}>
+                      ********
+                    </div>
+                  </div>
+
+                  <div>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Two-factor Authentication</p>
+                    <button style={{
+                      padding: '8px 20px',
+                      background: 'white',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}>
+                      Set Up
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
