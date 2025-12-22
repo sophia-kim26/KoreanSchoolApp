@@ -187,7 +187,6 @@ function VPDashboard() {
     console.log('Clicked TA ID:', taId);
     // Navigate to detail page or show details modal
     navigate(`/vp/ta-view/${taId}`);
-    alert(`View details for TA ID: ${taId}`);
   };
 
   const gridData = data.map(row => [
