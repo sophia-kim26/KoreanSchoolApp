@@ -18,6 +18,11 @@ function VPDashboard() {
     session_day: "",
     is_active: true
   });
+
+  const generatePIN = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
   const navigate = useNavigate();
 
@@ -101,52 +106,42 @@ function VPDashboard() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    
+    try {
+      // Generate PIN and prepare data
+      const dataToSend = {
+        ...formData,
+        ta_code: generatePIN()
+      };
+      
+      const response = await fetch("http://localhost:3001/api/create-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataToSend)
+      });
 
-  try {
-    // Basic front-end validation (optional but helpful)
-    if (!formData.session_day) {
-      alert("Please select a Session Day (Friday/Saturday/Both).");
-      return;
+      if (response.ok) {
+        setFormData({
+          first_name: "",
+          last_name: "",
+          ta_code: "",
+          email: "",
+          session_day: "",
+          is_active: true
+        });
+        setShowModal(false);
+        fetchData();
+      } else {
+        alert("Failed to add new TA");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error adding new TA");
     }
-
-    const response = await fetch("http://localhost:3001/api/create-account", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
-        email: formData.email.trim(),
-        ta_code: formData.ta_code.trim(),
-        session_day: formData.session_day,
-      }),
-    });
-
-    const payload = await response.json();
-
-    if (!response.ok) {
-      // This will show your backend messages like:
-      // "Account already exists with this email" or "PIN already exists..."
-      alert(payload.error || "Failed to add new TA");
-      return;
-    }
-
-    // Success
-    setFormData({
-      first_name: "",
-      last_name: "",
-      ta_code: "",
-      email: "",
-      session_day: "",
-      is_active: true,
-    });
-    setShowModal(false);
-    fetchData();
-  } catch (err) {
-    console.error(err);
-    alert("Error adding new TA: " + err.message);
-  }
-};
+  };
 
 
   const toggleAttendance = async (taId, currentAttendance) => {
@@ -388,6 +383,7 @@ function VPDashboard() {
         </div>
       )}
 
+      {/* Modal */}
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -439,26 +435,6 @@ function VPDashboard() {
                   type="text"
                   name="last_name"
                   value={formData.last_name}
-                  onChange={handleInputChange}
-                  required
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 12px', 
-                    borderRadius: 6, 
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                  TA Code:
-                </label>
-                <input
-                  type="text"
-                  name="ta_code"
-                  value={formData.ta_code}
                   onChange={handleInputChange}
                   required
                   style={{ 
