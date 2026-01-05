@@ -1,24 +1,33 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
-function VPTAView() {
-  // Dummy shift data
-  const [shifts] = useState([
-    { id: 1, shift_date: "2024-12-16", clock_in_time: "2024-12-16T09:00:00", clock_out_time: "2024-12-16T13:15:00" },
-    { id: 2, shift_date: "2024-12-11", clock_in_time: "2024-12-11T09:00:00", clock_out_time: "2024-12-11T13:00:00" },
-    { id: 3, shift_date: "2024-12-09", clock_in_time: "2024-12-09T09:00:00", clock_out_time: "2024-12-09T13:30:00" },
-    { id: 4, shift_date: "2024-12-04", clock_in_time: "2024-12-04T09:00:00", clock_out_time: "2024-12-04T12:45:00" },
-    { id: 5, shift_date: "2024-12-02", clock_in_time: "2024-12-02T09:00:00", clock_out_time: "2024-12-02T13:00:00" },
-    { id: 6, shift_date: "2024-11-27", clock_in_time: "2024-11-27T09:00:00", clock_out_time: "2024-11-27T13:20:00" },
-    { id: 7, shift_date: "2024-11-25", clock_in_time: "2024-11-25T09:00:00", clock_out_time: "2024-11-25T13:00:00" },
-    { id: 8, shift_date: "2024-11-20", clock_in_time: "2024-11-20T09:00:00", clock_out_time: "2024-11-20T13:15:00" },
-    { id: 9, shift_date: "2024-11-18", clock_in_time: "2024-11-18T09:00:00", clock_out_time: null },
-    { id: 10, shift_date: "2024-11-13", clock_in_time: "2024-11-13T09:00:00", clock_out_time: "2024-11-13T13:00:00" },
-    { id: 11, shift_date: "2024-11-11", clock_in_time: "2024-11-11T09:00:00", clock_out_time: "2024-11-11T13:30:00" },
-    { id: 12, shift_date: "2024-11-06", clock_in_time: "2024-11-06T09:00:00", clock_out_time: "2024-11-06T12:50:00" },
-    { id: 13, shift_date: "2024-10-30", clock_in_time: "2024-10-30T09:00:00", clock_out_time: "2024-10-30T13:00:00" },
-    { id: 14, shift_date: "2024-10-28", clock_in_time: "2024-10-28T09:00:00", clock_out_time: "2024-10-28T13:15:00" },
-    { id: 15, shift_date: "2024-10-23", clock_in_time: "2024-10-23T09:00:00", clock_out_time: "2024-10-23T13:00:00" }
-  ]);
+function VPTAView({ ta_id }) {
+  const [allShifts, setAllShifts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch shifts from API
+  useEffect(() => {
+    const fetchShifts = async () => {
+      try {
+        const response = await fetch('/api/shifts');
+        if (!response.ok) throw new Error('Failed to fetch shifts');
+        const data = await response.json();
+        setAllShifts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShifts();
+  }, []);
+
+  // Filter shifts for the specific TA
+  const shifts = useMemo(() => {
+    if (!allShifts || !ta_id) return [];
+    return allShifts.filter(shift => shift.ta_id === ta_id);
+  }, [allShifts, ta_id]);
 
   const calculateHours = (clockIn, clockOut) => {
     if (!clockIn || !clockOut) return 0;
@@ -32,11 +41,14 @@ function VPTAView() {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
   };
 
+  // Get TA info from first shift
+  const taInfo = shifts.length > 0 ? shifts[0] : null;
+
   // Group shifts by month
   const shiftsByMonth = useMemo(() => {
     const grouped = {};
     shifts.forEach(shift => {
-      const date = new Date(shift.shift_date);
+      const date = new Date(shift.clock_in);
       const monthYear = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
       if (!grouped[monthYear]) {
         grouped[monthYear] = [];
@@ -49,14 +61,46 @@ function VPTAView() {
   // Calculate total hours and stats
   const totalHours = useMemo(() => {
     return shifts.reduce((sum, shift) => {
-      return sum + parseFloat(calculateHours(shift.clock_in_time, shift.clock_out_time));
+      return sum + parseFloat(calculateHours(shift.clock_in, shift.clock_out));
     }, 0).toFixed(2);
   }, [shifts]);
 
-  const completedShifts = shifts.filter(s => s.clock_out_time).length;
+  const completedShifts = shifts.filter(s => s.clock_out).length;
   const totalShifts = shifts.length;
-  const presentPercentage = Math.round((completedShifts / totalShifts) * 100);
+  const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
   const absentPercentage = 100 - presentPercentage;
+
+  if (loading) {
+    return (
+      <div style={{ 
+        padding: '40px 20px', 
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        backgroundColor: '#f3f4f6',
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{ fontSize: '24px', color: '#5b8bb8' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        padding: '40px 20px', 
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        backgroundColor: '#f3f4f6',
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{ fontSize: '24px', color: '#dc2626' }}>Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
@@ -112,7 +156,7 @@ function VPTAView() {
                   color: '#5b7fa8',
                   margin: 0
                 }}>
-                  Month
+                  {month}
                 </h2>
                 <button
                   onClick={() => alert(`Edit ${month}`)}
@@ -152,11 +196,11 @@ function VPTAView() {
                       fontSize: '18px'
                     }}
                   >
-                    <span>{formatDate(shift.shift_date)}</span>
+                    <span>{formatDate(shift.clock_in)}</span>
                     <span style={{ fontWeight: '400' }}>
-                      {shift.clock_out_time 
-                        ? `# Hours`
-                        : '# Hours'}
+                      {shift.clock_out 
+                        ? `${calculateHours(shift.clock_in, shift.clock_out)} Hours`
+                        : 'In Progress'}
                     </span>
                   </div>
                 ))}
@@ -223,10 +267,10 @@ function VPTAView() {
             {/* User Info */}
             <div style={{ textAlign: 'center', marginBottom: 25 }}>
               <div style={{ fontSize: '22px', color: '#5b8bb8', fontWeight: '500', marginBottom: 8 }}>
-                Pika, Chu
+                {taInfo ? `${taInfo.last_name}, ${taInfo.first_name}` : 'No TA Selected'}
               </div>
               <div style={{ fontSize: '16px', color: '#8b9db3' }}>
-                alicelee@gmail.com | 123-456-7890
+                TA ID: {ta_id || 'N/A'}
               </div>
             </div>
 
@@ -265,7 +309,7 @@ function VPTAView() {
                 position: 'relative'
               }}>
                 <div style={{
-                  width: `${(parseFloat(totalHours) / 100) * 100}%`,
+                  width: `${(parseFloat(totalHours) / 300) * 100}%`,
                   height: '100%',
                   backgroundColor: '#5b8bb8',
                   borderRadius: 20,
@@ -282,7 +326,7 @@ function VPTAView() {
                 </div>
               </div>
               <div style={{ fontSize: '18px', color: '#5b8bb8' }}>
-                250/300 Hours Completed
+                {totalHours}/300 Hours Completed
               </div>
             </div>
           </div>
