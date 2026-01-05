@@ -38,7 +38,7 @@ function VPDashboard() {
 
   const fetchData = () => {
     console.log("Fetching data...");
-    fetch("http://localhost:3001/api/data")
+    fetch("http://localhost:3001/api/tas")
       .then(res => {
         console.log("Response status:", res.status);
         return res.json();
@@ -170,7 +170,7 @@ function VPDashboard() {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/ta/${taId}/deactivate`, {
+      const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
       
