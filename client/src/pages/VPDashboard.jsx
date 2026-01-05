@@ -59,7 +59,9 @@ function VPDashboard() {
             if (row.querySelector('th')) return;
             
             row.addEventListener('click', (e) => {
-              if (e.target.tagName === 'BUTTON') return;
+              //if (e.target.tagName === 'BUTTON') return;
+              if (e.target.closest('button')) return;
+
               const firstCell = row.querySelector('.gridjs-td');
               if (firstCell) {
                 handleRowClick(firstCell.textContent);
@@ -199,6 +201,7 @@ function VPDashboard() {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
+    row.id,
     row.id
   ]);
 
@@ -335,6 +338,30 @@ function VPDashboard() {
                   }, cell || 'Absent');
                 }
               },
+
+              {
+  name: "Analytics",
+  width: "140px",
+  formatter: (cell) => {
+    return h('button', {
+      style: `
+        padding: 6px 12px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      `,
+      onclick: (e) => {
+        e.stopPropagation(); // IMPORTANT: prevents row click firing too
+        handleRowClick(cell); // cell is the taId we passed in gridData
+      }
+    }, 'View Analytics');
+  }
+},
+
               {
                 name: "Actions",
                 width: '100px',
