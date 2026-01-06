@@ -73,7 +73,30 @@ function TADashboard() {
     }
   };
 
+  // autologout when you close the tab or window
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('current_ta_user');
+      sessionStorage.setItem('ta_session_ended', 'true');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
+    const sessionEnded = sessionStorage.getItem('ta_session_ended');
+    
+    if (sessionEnded === 'true') {
+      sessionStorage.removeItem('ta_session_ended');
+      localStorage.removeItem('current_ta_user');
+      navigate('/ta/login');
+      return;
+    }
+
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
     if (!user) {
       navigate('/ta/login');
@@ -104,6 +127,10 @@ function TADashboard() {
   ]);
 
   const handleSignOut = () => {
+    // clean up and clear user data
+    localStorage.removeItem('current_ta_user');
+    sessionStorage.removeItem('ta_session_ended');
+    
     logout({ 
       logoutParams: { 
         returnTo: window.location.origin
@@ -149,7 +176,6 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock in:", err);
     }
-    navigate('/ta/login');
   };
 
   const clockOut = async () => {
@@ -187,9 +213,6 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
-
-    // edirect to sign in
-    navigate('/ta/login');
   };
 
   return (
