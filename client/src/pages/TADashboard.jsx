@@ -117,9 +117,11 @@ function TADashboard() {
 
   const clockIn = async () => {
     console.log("Clock In pressed");
+    // maybe this is not working
     setClockedIn(true);
 
     const time = new Date();
+    // works bc clocked in: is showing up correctly
     setClockInTime(time);
 
     try {
@@ -147,8 +149,6 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock in:", err);
     }
-
-    // redirect to sign in
     navigate('/ta/login');
   };
 
@@ -188,7 +188,7 @@ function TADashboard() {
       console.error("Failed to clock out:", err);
     }
 
-    // redirect to sign in
+    // edirect to sign in
     navigate('/ta/login');
   };
 
