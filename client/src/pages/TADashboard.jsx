@@ -147,6 +147,9 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock in:", err);
     }
+
+    // redirect to sign in
+    navigate('/ta/login');
   };
 
   const clockOut = async () => {
@@ -184,6 +187,9 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
+
+    // redirect to sign in
+    navigate('/ta/login');
   };
 
   return (
@@ -263,7 +269,7 @@ function TADashboard() {
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      <Chart/>
+      <Chart currentUser={currentUser} />
 
       {/* Clock In Confirmation */}
       {showClockInConfirm && (

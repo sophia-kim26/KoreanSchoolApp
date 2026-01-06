@@ -12,7 +12,19 @@ import {
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart() {
+export default function Chart(currentUser) {
+
+  const taInfo = {
+    firstName: currentUser?.first_name || "First Name",
+    lastName: currentUser?.last_name || "Last Name",
+    email: currentUser?.email || "email@example.com",
+    phone: "123-456-7890",
+    hoursPerDay: "—",
+    time: "—",
+    hoursCompleted: 250,
+    totalHoursRequired: 300
+  };
+
   const dataValues = [12, 19, 40, 30, 5]
 
   // bar graph
@@ -26,6 +38,8 @@ export default function Chart() {
       }
     ]
   };
+
+  
 
   const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
 
@@ -51,18 +65,6 @@ export default function Chart() {
       }
     }
   }
-
-  // sample TA info
-  const taInfo = {
-    firstName: "John",
-    lastName: "Pork",
-    email: "johnpork@gmail.com",
-    phone: "123-456-7890",
-    hoursPerDay: "—",
-    time: "—",
-    hoursCompleted: 250,
-    totalHoursRequired: 300
-  };
 
   // doughnut chart data (attendance)
   const presentPercentage = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
@@ -136,7 +138,7 @@ export default function Chart() {
         {/* ta info */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <h2 style={{ fontSize: "24px", color: "#5b8dc4", marginBottom: "8px" }}>
-            {taInfo.lastName}, {taInfo.firstName}
+            {taInfo.firstName} {taInfo.lastName}
           </h2>
           <p style={{ color: "#9ca3af", fontSize: "16px" }}>
             {taInfo.email} | {taInfo.phone}
