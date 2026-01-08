@@ -73,7 +73,30 @@ function TADashboard() {
     }
   };
 
+  // autologout when you close the tab or window
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('current_ta_user');
+      sessionStorage.setItem('ta_session_ended', 'true');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
+    const sessionEnded = sessionStorage.getItem('ta_session_ended');
+    
+    if (sessionEnded === 'true') {
+      sessionStorage.removeItem('ta_session_ended');
+      localStorage.removeItem('current_ta_user');
+      navigate('/ta/login');
+      return;
+    }
+
     const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
     if (!user) {
       navigate('/ta/login');
@@ -104,6 +127,10 @@ function TADashboard() {
   ]);
 
   const handleSignOut = () => {
+    // clean up and clear user data
+    localStorage.removeItem('current_ta_user');
+    sessionStorage.removeItem('ta_session_ended');
+    
     logout({ 
       logoutParams: { 
         returnTo: window.location.origin
@@ -117,9 +144,11 @@ function TADashboard() {
 
   const clockIn = async () => {
     console.log("Clock In pressed");
+    // maybe this is not working
     setClockedIn(true);
 
     const time = new Date();
+    // works bc clocked in: is showing up correctly
     setClockInTime(time);
 
     try {
@@ -263,7 +292,7 @@ function TADashboard() {
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      <Chart/>
+      <Chart currentUser={currentUser} />
 
       {/* Clock In Confirmation */}
       {showClockInConfirm && (

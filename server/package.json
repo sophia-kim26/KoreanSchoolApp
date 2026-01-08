@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "server": "node ../server/index.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
