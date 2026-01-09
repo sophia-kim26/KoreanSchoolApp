@@ -176,6 +176,7 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock in:", err);
     }
+    navigate('/ta/login');
   };
 
   const clockOut = async () => {
@@ -213,6 +214,7 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
+    navigate('/ta/login');
   };
 
   return (
