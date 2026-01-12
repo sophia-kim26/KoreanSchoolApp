@@ -59,6 +59,20 @@ export const getAllShifts = async () => {
   `;
 };
 
+export const getShiftsForTA = async (ta_id) => {
+  return await sql`
+    SELECT 
+      shifts.*,
+      ta_list.first_name,
+      ta_list.last_name,
+      ta_list.email
+    FROM shifts
+    INNER JOIN ta_list ON ta_list.id = shifts.ta_id
+    WHERE shifts.ta_id = ${ta_id}
+    ORDER BY shifts.clock_in DESC
+  `;
+};
+
 export const getActiveShift = async (ta_id) => {
   const result = await sql`
     SELECT * FROM shifts

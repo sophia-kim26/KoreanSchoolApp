@@ -9,34 +9,62 @@ function VPTAView({ ta_id }) {
   useEffect(() => {
     const fetchShifts = async () => {
       try {
-        const response = await fetch('/api/shifts');
-        if (!response.ok) throw new Error('Failed to fetch shifts');
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned non-JSON response. Is the backend running on http://localhost:3001?");
+        }
+        
         const data = await response.json();
-        setAllShifts(data);
+        console.log('Fetched shifts data for TA:', ta_id, data);
+        setAllShifts(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchShifts();
-  }, []);
+    if (ta_id) {
+      fetchShifts();
+    } else {
+      setLoading(false);
+      setError("No TA ID provided");
+    }
+  }, [ta_id]);
 
-  // Filter shifts for the specific TA
+  // Use shifts directly since they're already filtered by the API
   const shifts = useMemo(() => {
-    if (!allShifts || !ta_id) return [];
-    return allShifts.filter(shift => shift.ta_id === ta_id);
+    if (!allShifts || allShifts.length === 0) {
+      console.log('No shifts returned from API');
+      return [];
+    }
+    
+    console.log(`Using ${allShifts.length} shifts from API for TA ${ta_id}`);
+    
+    // Sort by date descending (newest first)
+    return allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
   }, [allShifts, ta_id]);
 
   const calculateHours = (clockIn, clockOut) => {
     if (!clockIn || !clockOut) return 0;
     const start = new Date(clockIn);
     const end = new Date(clockOut);
-    return ((end - start) / (1000 * 60 * 60)).toFixed(2);
+    const hours = (end - start) / (1000 * 60 * 60);
+    return hours > 0 ? hours.toFixed(2) : 0;
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
   };
@@ -46,22 +74,36 @@ function VPTAView({ ta_id }) {
 
   // Group shifts by month
   const shiftsByMonth = useMemo(() => {
+    if (!shifts || shifts.length === 0) return {};
+    
     const grouped = {};
     shifts.forEach(shift => {
+      if (!shift.clock_in) return;
+      
       const date = new Date(shift.clock_in);
       const monthYear = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+      
       if (!grouped[monthYear]) {
         grouped[monthYear] = [];
       }
       grouped[monthYear].push(shift);
     });
-    return grouped;
+    
+    // Sort months in reverse chronological order
+    const sortedEntries = Object.entries(grouped).sort((a, b) => {
+      const dateA = new Date(a[1][0].clock_in);
+      const dateB = new Date(b[1][0].clock_in);
+      return dateB - dateA;
+    });
+    
+    return Object.fromEntries(sortedEntries);
   }, [shifts]);
 
   // Calculate total hours and stats
   const totalHours = useMemo(() => {
     return shifts.reduce((sum, shift) => {
-      return sum + parseFloat(calculateHours(shift.clock_in, shift.clock_out));
+      const hours = parseFloat(calculateHours(shift.clock_in, shift.clock_out));
+      return sum + (isNaN(hours) ? 0 : hours);
     }, 0).toFixed(2);
   }, [shifts]);
 
@@ -81,7 +123,7 @@ function VPTAView({ ta_id }) {
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        <div style={{ fontSize: '24px', color: '#5b8bb8' }}>Loading...</div>
+        <div style={{ fontSize: '24px', color: '#5b8bb8' }}>Loading shifts for TA {ta_id}...</div>
       </div>
     );
   }
@@ -94,10 +136,33 @@ function VPTAView({ ta_id }) {
         backgroundColor: '#f3f4f6',
         minHeight: '100vh',
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: 20
       }}>
-        <div style={{ fontSize: '24px', color: '#dc2626' }}>Error: {error}</div>
+        <div style={{ fontSize: '24px', color: '#dc2626', fontWeight: '600' }}>Error Loading Data</div>
+        <div style={{ fontSize: '16px', color: '#6b7280', maxWidth: '500px', textAlign: 'center' }}>
+          {error}
+        </div>
+        <div style={{ fontSize: '14px', color: '#9ca3af', maxWidth: '600px', textAlign: 'center' }}>
+          Please ensure your backend server is running and accessible at the correct endpoint.
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#5b8bb8',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -140,78 +205,103 @@ function VPTAView({ ta_id }) {
       }}>
         {/* Left Column - Shift History */}
         <div>
-          {Object.entries(shiftsByMonth).map(([month, monthShifts]) => (
-            <div key={month} style={{ marginBottom: 40 }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: 15,
-                marginLeft: 10,
-                marginRight: 10
-              }}>
-                <h2 style={{ 
-                  fontSize: '32px', 
-                  fontWeight: '500', 
-                  color: '#5b7fa8',
-                  margin: 0
-                }}>
-                  {month}
-                </h2>
-                <button
-                  onClick={() => alert(`Edit ${month}`)}
-                  style={{
-                    padding: '8px 24px',
-                    backgroundColor: '#f5d77e',
-                    color: '#8b7355',
-                    border: 'none',
-                    borderRadius: 20,
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#f0cd6b'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#f5d77e'}
-                >
-                  Edit
-                </button>
-              </div>
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: 8,
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              }}>
-                {monthShifts.map((shift, index) => (
-                  <div
-                    key={shift.id || index}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      padding: '16px 20px',
-                      backgroundColor: '#c5ddf7',
-                      borderBottom: index < monthShifts.length - 1 ? '1px solid #a8c9e8' : 'none',
-                      color: '#5b7fa8',
-                      fontSize: '18px'
-                    }}
-                  >
-                    <span>{formatDate(shift.clock_in)}</span>
-                    <span style={{ fontWeight: '400' }}>
-                      {shift.clock_out 
-                        ? `${calculateHours(shift.clock_in, shift.clock_out)} Hours`
-                        : 'In Progress'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {Object.entries(shiftsByMonth).length === 0 ? (
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 8,
+              padding: '40px',
+              textAlign: 'center',
+              color: '#6b7280',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <p style={{ fontSize: '18px', margin: 0, marginBottom: 10, fontWeight: '500' }}>
+                No shifts found for TA ID: {ta_id}
+              </p>
+              <p style={{ fontSize: '14px', margin: 0, color: '#9ca3af' }}>
+                Total shifts in database: {allShifts.length}
+              </p>
+              <p style={{ fontSize: '14px', margin: 0, marginTop: 10, color: '#9ca3af' }}>
+                Check console for debugging information
+              </p>
             </div>
-          ))}
+          ) : (
+            Object.entries(shiftsByMonth).map(([month, monthShifts]) => (
+              <div key={month} style={{ marginBottom: 40 }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: 15,
+                  marginLeft: 10,
+                  marginRight: 10
+                }}>
+                  <h2 style={{ 
+                    fontSize: '32px', 
+                    fontWeight: '500', 
+                    color: '#5b7fa8',
+                    margin: 0
+                  }}>
+                    {month}
+                  </h2>
+                  <button
+                    onClick={() => alert(`Edit ${month}`)}
+                    style={{
+                      padding: '8px 24px',
+                      backgroundColor: '#f5d77e',
+                      color: '#8b7355',
+                      border: 'none',
+                      borderRadius: 20,
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseOver={(e) => e.target.style.backgroundColor = '#f0cd6b'}
+                    onMouseOut={(e) => e.target.style.backgroundColor = '#f5d77e'}
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div style={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }}>
+                  {monthShifts.map((shift, index) => {
+                    const hours = calculateHours(shift.clock_in, shift.clock_out);
+                    return (
+                      <div
+                        key={shift.id || `${shift.clock_in}-${index}`}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          padding: '16px 20px',
+                          backgroundColor: '#c5ddf7',
+                          borderBottom: index < monthShifts.length - 1 ? '1px solid #a8c9e8' : 'none',
+                          color: '#5b7fa8',
+                          fontSize: '18px'
+                        }}
+                      >
+                        <span>{formatDate(shift.clock_in)}</span>
+                        <span style={{ fontWeight: '400' }}>
+                          {shift.clock_out && hours > 0
+                            ? `${hours} Hours`
+                            : shift.clock_out 
+                            ? '0.00 Hours'
+                            : 'In Progress'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Right Column - Chart and Info */}
         <div style={{ position: 'relative' }}>
-
           <div style={{
             backgroundColor: '#f9ebb5',
             borderRadius: 12,
@@ -309,7 +399,7 @@ function VPTAView({ ta_id }) {
                 position: 'relative'
               }}>
                 <div style={{
-                  width: `${(parseFloat(totalHours) / 300) * 100}%`,
+                  width: `${Math.min((parseFloat(totalHours) / 300) * 100, 100)}%`,
                   height: '100%',
                   backgroundColor: '#5b8bb8',
                   borderRadius: 20,
