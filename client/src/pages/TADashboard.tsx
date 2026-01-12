@@ -4,25 +4,61 @@ import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.png';
-import Chart from "../pages/Chart.jsx";
+import Chart from "./Chart";
+
+interface TAUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  session_day: 'Friday' | 'Saturday' | 'Both';
+  is_active: boolean;
+  created_at: string;
+}
+
+interface Shift {
+  id: number;
+  ta_id: number;
+  first_name?: string;
+  last_name?: string;
+  clock_in: string;
+  clock_out: string | null;
+  elapsed_time: number | null;
+  was_manual: boolean;
+  notes: string | null;
+}
+
+interface ActiveShiftResponse {
+  activeShift: {
+    id: number;
+    clock_in: string;
+  } | null;
+}
+
+interface ElapsedTime {
+  hours: number;
+  minutes: number;
+}
+
+type SettingsTab = 'appearance' | 'navigation' | 'account' | 'privacy';
 
 function TADashboard() {
-  const [data, setData] = useState([]);
-  const [clockedIn, setClockedIn] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('appearance');
+  const [data, setData] = useState<Shift[]>([]);
+  const [clockedIn, setClockedIn] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
   const { logout } = useAuth0();
   const navigate = useNavigate();
 
-  const [clockInTime, setClockInTime] = useState(null);
-  const [clockOutTime, setClockOutTime] = useState(null);
-  const [elapsed, setElapsed] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showClockInConfirm, setShowClockInConfirm] = useState(false);
-  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
-  const [activeShiftId, setActiveShiftId] = useState(null);
+  const [clockInTime, setClockInTime] = useState<Date | null>(null);
+  const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
+  const [elapsed, setElapsed] = useState<ElapsedTime | null>(null);
+  const [currentUser, setCurrentUser] = useState<TAUser | null>(null);
+  const [showClockInConfirm, setShowClockInConfirm] = useState<boolean>(false);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState<boolean>(false);
+  const [activeShiftId, setActiveShiftId] = useState<number | null>(null);
 
-  const overlayStyle = {
+  const overlayStyle: React.CSSProperties = {
     position: "fixed",
     top: 0,
     left: 0,
@@ -35,7 +71,7 @@ function TADashboard() {
     zIndex: 1000,
   };
 
-  const modalStyle = {
+  const modalStyle: React.CSSProperties = {
     backgroundColor: "#fff",
     padding: "30px",
     borderRadius: "8px",
@@ -43,20 +79,20 @@ function TADashboard() {
     minWidth: "300px",
   };
 
-  const fetchShifts = async () => {
+  const fetchShifts = async (): Promise<void> => {
     try {
       const res = await fetch("http://localhost:3001/api/shifts");
-      const json = await res.json();
+      const json: Shift[] = await res.json();
       setData(json);
     } catch (err) {
       console.error("Failed to fetch shifts:", err);
     }
   };
 
-  const checkActiveShift = async (userId) => {
+  const checkActiveShift = async (userId: number): Promise<void> => {
     try {
       const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
-      const json = await res.json();
+      const json: ActiveShiftResponse = await res.json();
       
       if (json.activeShift) {
         setClockedIn(true);
@@ -97,7 +133,9 @@ function TADashboard() {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
+    const userString = localStorage.getItem('current_ta_user');
+    const user: TAUser | null = userString ? JSON.parse(userString) : null;
+    
     if (!user) {
       navigate('/ta/login');
       return;
@@ -109,7 +147,7 @@ function TADashboard() {
   useEffect(() => {
     fetch("http://localhost:3001/api/shifts")
       .then(res => res.json())
-      .then(json => setData(json))
+      .then((json: Shift[]) => setData(json))
       .catch(err => console.error(err));
   }, []);
 
@@ -118,17 +156,14 @@ function TADashboard() {
     : [];
 
   const gridData = taData.map(row => [
-    row.id, // placeholder for date
-    // row.ta_id,
-    // `${row.first_name} ${row.last_name}`,
+    row.id,
     row.clock_in,
     row.clock_out,
-    row.elapsed_time, // placeholder for elapsed time
+    row.elapsed_time,
     row.notes,
   ]);
 
   const handleSignOut = () => {
-    // clean up and clear user data
     localStorage.removeItem('current_ta_user');
     sessionStorage.removeItem('ta_session_ended');
     
@@ -143,13 +178,11 @@ function TADashboard() {
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
-  const clockIn = async () => {
+  const clockIn = async (): Promise<void> => {
     console.log("Clock In pressed");
-    // maybe this is not working
     setClockedIn(true);
 
     const time = new Date();
-    // works bc clocked in: is showing up correctly
     setClockInTime(time);
 
     try {
@@ -157,14 +190,14 @@ function TADashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ta_id: currentUser.id,
+          ta_id: currentUser?.id,
           clock_in: time.toISOString(),
           notes: ""
         })
       });
 
       console.log("Response status:", res.status);
-      const newShift = await res.json();
+      const newShift: Shift = await res.json();
       console.log("New shift response:", newShift);
 
       if (!newShift.id) {
@@ -180,24 +213,24 @@ function TADashboard() {
     navigate('/ta/login');
   };
 
-  const clockOut = async () => {
+  const clockOut = async (): Promise<void> => {
     console.log("Clock Out pressed");
     setClockedIn(false);
 
     const time = new Date();
     setClockOutTime(time);
 
-    let calculatedElapsed = null;
+    let calculatedElapsed: ElapsedTime | null = null;
 
     if (clockInTime) {
-      console.log("in clockInTime function"); // true
-      const diff = time - clockInTime;
+      console.log("in clockInTime function");
+      const diff = time.getTime() - clockInTime.getTime();
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       calculatedElapsed = { hours, minutes }; 
       setElapsed(calculatedElapsed);
-      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`); // works
+      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`);
     }
 
     if (!activeShiftId) {
@@ -211,7 +244,6 @@ function TADashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clock_out: time,
-          // HERE
           elapsed_time: calculatedElapsed ? calculatedElapsed.hours : 0
         })
       });
@@ -222,7 +254,6 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
-    // navigate('/ta/login');
   };
 
   return (
