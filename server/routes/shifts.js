@@ -3,7 +3,8 @@ import {
   getAllShifts, 
   createShift, 
   updateShift,
-  getActiveShift 
+  getActiveShift,
+  getShiftsForTA
 } from '../services/shiftService.js';
 import { validateShift } from '../middleware/validate.js';
 
@@ -13,6 +14,16 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const result = await getAllShifts();
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/shifts/ta/:ta_id - get all shifts for a specific TA
+router.get('/ta/:ta_id', async (req, res, next) => {
+  try {
+    const result = await getShiftsForTA(req.params.ta_id);
     res.json(result);
   } catch (error) {
     next(error);
