@@ -118,11 +118,12 @@ function TADashboard() {
     : [];
 
   const gridData = taData.map(row => [
-    row.id,
-    row.ta_id,
-    `${row.first_name} ${row.last_name}`,
+    row.id, // placeholder for date
+    // row.ta_id,
+    // `${row.first_name} ${row.last_name}`,
     row.clock_in,
     row.clock_out,
+    row.elapsed_time, // placeholder for elapsed time
     row.notes,
   ]);
 
@@ -186,12 +187,17 @@ function TADashboard() {
     const time = new Date();
     setClockOutTime(time);
 
+    let calculatedElapsed = null;
+
     if (clockInTime) {
+      console.log("in clockInTime function"); // true
       const diff = time - clockInTime;
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
-      setElapsed({ hours, minutes });
+      calculatedElapsed = { hours, minutes }; 
+      setElapsed(calculatedElapsed);
+      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`); // works
     }
 
     if (!activeShiftId) {
@@ -205,6 +211,8 @@ function TADashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clock_out: time,
+          // HERE
+          elapsed_time: calculatedElapsed ? calculatedElapsed.hours : 0
         })
       });
 
@@ -214,7 +222,7 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
-    navigate('/ta/login');
+    // navigate('/ta/login');
   };
 
   return (
@@ -285,7 +293,7 @@ function TADashboard() {
          <Grid
             key={JSON.stringify(data)}
             data={gridData}
-            columns={["ID", "TA ID", "TA Name", "Clock In", "Clock Out", "Notes", "Elapsed Time"]}
+            columns={["Date", "Clock In", "Clock Out", "Elapsed Time", "Notes"]}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
