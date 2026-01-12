@@ -1,10 +1,12 @@
 import express from 'express';
 import { createAccount, signIn } from '../services/taService.js';
 import { validateCreateAccount } from '../middleware/validate.js';
+import { loginLimiter, createAccountLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.post('/create-account', validateCreateAccount, async (req, res, next) => {
+// Create account endpoint with rate limiting
+router.post('/create-account', createAccountLimiter, validateCreateAccount, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
@@ -13,7 +15,8 @@ router.post('/create-account', validateCreateAccount, async (req, res, next) => 
   }
 });
 
-router.post('/signin', async (req, res, next) => {
+// Sign in endpoint with rate limiting
+router.post('/signin', loginLimiter, async (req, res, next) => {
   try {
     const result = await signIn(req.body.ta_code);
     res.json(result);
