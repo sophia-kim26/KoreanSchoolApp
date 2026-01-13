@@ -1,6 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-function VPTAView({ ta_id }) {
+function VPTAView() {
+  // Extract ta_id from URL params
+  const { ta_id } = useParams();
+  const navigate = useNavigate();
+  
   const [allShifts, setAllShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -175,7 +180,7 @@ function VPTAView({ ta_id }) {
       minHeight: '100vh'
     }}>
       <button
-        onClick={() => window.location.href = '/vp/dashboard'}
+        onClick={() => navigate('/vp/dashboard')}
         style={{
           display: 'flex',
           alignItems: 'center',
