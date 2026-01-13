@@ -50,11 +50,11 @@ export default function TALogin() {
         setTimeout(() => pinInputRef.current?.focus(), 100);
     };
 
-    const handleBack= () => {
+    const handleBack = () => {
         logout({ 
-        logoutParams: { 
-            returnTo: window.location.origin
-        } 
+            logoutParams: { 
+                returnTo: window.location.origin
+            } 
         });
     };
 
@@ -77,6 +77,18 @@ export default function TALogin() {
             });
 
             const data = await response.json();
+
+            // Check for rate limit error (429 status) BEFORE checking data.success
+            if (!response.ok) {
+                if (response.status === 429) {
+                    setError(data.error || 'Too many login attempts. Please try again later.');
+                } else {
+                    setError(data.error || 'Invalid PIN. Please try again.');
+                }
+                setPin('');
+                setTimeout(() => pinInputRef.current?.focus(), 100);
+                return;
+            }
 
             if (data.success) {
                 setCurrentUser(data.ta);
@@ -144,6 +156,16 @@ export default function TALogin() {
             });
 
             const data = await response.json();
+
+            // Check for rate limit error (429 status) BEFORE checking data.success
+            if (!response.ok) {
+                if (response.status === 429) {
+                    setError(data.error || 'Too many account creation attempts. Please try again later.');
+                } else {
+                    setError(data.error || 'Failed to create account');
+                }
+                return;
+            }
 
             if (data.success) {
                 setNewlyCreatedPin(newPin);
@@ -216,7 +238,7 @@ export default function TALogin() {
                                 <button 
                                     onClick={handleBack}
                                     className="btn-danger"
-                                    >
+                                >
                                     ← Back
                                 </button>
                             </div>
@@ -289,27 +311,27 @@ export default function TALogin() {
 
                 {authState === 'enterPin' && (
                     <div className="container">
-                    <div className="white-box space-y-6">
-                        <div className="text-center">
-                            <h1 className="login-text text-2xl font-bold text-gray-800">TA Login</h1>
-                            <p className="text-gray-600 mt-2">User ID</p>
-                        </div>
-
-                        <PinInput autoFocus={true} />
-
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                                {error}
+                        <div className="white-box space-y-6">
+                            <div className="text-center">
+                                <h1 className="login-text text-2xl font-bold text-gray-800">TA Login</h1>
+                                <p className="text-gray-600 mt-2">User ID</p>
                             </div>
-                        )}
 
-                        <button
-                            onClick={handleBackToHome}
-                            className="w-full text-gray-600 text-sm hover:text-gray-800"
-                        >
-                            ← Back
-                        </button>
-                    </div>
+                            <PinInput autoFocus={true} />
+
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                                    {error}
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleBackToHome}
+                                className="w-full text-gray-600 text-sm hover:text-gray-800"
+                            >
+                                ← Back
+                            </button>
+                        </div>
                     </div>
                 )}
 
