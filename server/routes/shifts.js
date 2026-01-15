@@ -6,7 +6,7 @@ import {
   getActiveShift,
   getShiftsForTA
 } from '../services/shiftService.js';
-import { validateShift } from '../middleware/validate.js';
+import { validateShift, validateLocation } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -40,8 +40,8 @@ router.get('/active/:ta_id', async (req, res, next) => {
   }
 });
 
-// POST /api/shifts
-router.post('/', validateShift, async (req, res, next) => {
+// POST /api/shifts - ADD validateLocation middleware
+router.post('/', validateShift, validateLocation, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
