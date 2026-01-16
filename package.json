@@ -1,4 +1,6 @@
 {
+  "name": "KoreanSchoolApp",
+  "version": "1.0.0",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
@@ -10,5 +12,8 @@
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
     "jwks-rsa": "^3.2.0"
+  },
+  "scripts": {
+    "server": "node server/index.js"
   }
 }
