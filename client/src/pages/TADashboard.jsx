@@ -6,6 +6,46 @@ import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.png';
 import Chart from "../pages/Chart.jsx";
 
+// Helper function to get user location - OUTSIDE the component
+const getUserLocation = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        });
+      },
+      (error) => {
+        let message = 'Unable to get your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'Location permission denied. Please enable location access.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'Location request timed out.';
+            break;
+        }
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  });
+};
+
 function TADashboard() {
   const [data, setData] = useState([]);
   const [clockedIn, setClockedIn] = useState(false);
@@ -118,17 +158,14 @@ function TADashboard() {
     : [];
 
   const gridData = taData.map(row => [
-    row.id, // placeholder for date
-    // row.ta_id,
-    // `${row.first_name} ${row.last_name}`,
+    row.id,
     row.clock_in,
     row.clock_out,
-    row.elapsed_time, // placeholder for elapsed time
+    row.elapsed_time,
     row.notes,
   ]);
 
   const handleSignOut = () => {
-    // clean up and clear user data
     localStorage.removeItem('current_ta_user');
     sessionStorage.removeItem('ta_session_ended');
     
@@ -143,41 +180,57 @@ function TADashboard() {
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
+  // NEW clockIn function with geolocation - KEEP THIS ONE
   const clockIn = async () => {
     console.log("Clock In pressed");
-    // maybe this is not working
-    setClockedIn(true);
-
-    const time = new Date();
-    // works bc clocked in: is showing up correctly
-    setClockInTime(time);
-
+    
     try {
+      // Get user's location first
+      console.log("Getting location...");
+      const location = await getUserLocation();
+      console.log("Location obtained:", location);
+
+      const time = new Date();
+      setClockInTime(time);
+
+      // Send location data with clock-in request
       const res = await fetch("http://localhost:3001/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ta_id: currentUser.id,
           clock_in: time.toISOString(),
-          notes: ""
+          notes: "",
+          latitude: location.latitude,
+          longitude: location.longitude
         })
       });
 
       console.log("Response status:", res.status);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to clock in');
+      }
+
       const newShift = await res.json();
       console.log("New shift response:", newShift);
 
       if (!newShift.id) {
-        console.error("No shift ID returned from server!");
-        return;
+        throw new Error("No shift ID returned from server!");
       }
 
+      setClockedIn(true);
       setActiveShiftId(newShift.id);
       console.log("Shift created with ID:", newShift.id);
+      
+      alert("Successfully clocked in!");
+      
     } catch (err) {
       console.error("Failed to clock in:", err);
+      setClockedIn(false);
+      alert(err.message || "Failed to clock in. Please try again.");
     }
-    navigate('/ta/login');
   };
 
   const clockOut = async () => {
@@ -190,14 +243,14 @@ function TADashboard() {
     let calculatedElapsed = null;
 
     if (clockInTime) {
-      console.log("in clockInTime function"); // true
+      console.log("in clockInTime function");
       const diff = time - clockInTime;
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       calculatedElapsed = { hours, minutes }; 
       setElapsed(calculatedElapsed);
-      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`); // works
+      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`);
     }
 
     if (!activeShiftId) {
@@ -211,7 +264,6 @@ function TADashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clock_out: time,
-          // HERE
           elapsed_time: calculatedElapsed ? calculatedElapsed.hours : 0
         })
       });
@@ -222,7 +274,6 @@ function TADashboard() {
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
-    // navigate('/ta/login');
   };
 
   return (
@@ -398,7 +449,6 @@ function TADashboard() {
               <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
             </div>
 
-            {/* Tabs */}
             <div style={{ 
               display: 'flex', 
               gap: 0, 
@@ -461,14 +511,12 @@ function TADashboard() {
               </button>
             </div>
 
-            {/* Settings Content */}
             <div style={{ 
               background: '#dbeafe', 
               padding: 30, 
               borderRadius: 8,
               minHeight: '400px'
             }}>
-              {/* Appearance Tab */}
               {activeTab === 'appearance' && (
                 <>
                   <div style={{ marginBottom: 30 }}>
@@ -512,7 +560,6 @@ function TADashboard() {
                 </>
               )}
 
-              {/* Navigation Tab */}
               {activeTab === 'navigation' && (
                 <>
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Keyboard Navigation</h3>
@@ -539,7 +586,6 @@ function TADashboard() {
                 </>
               )}
 
-              {/* Account Tab */}
               {activeTab === 'account' && (
                 <>
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Information</h3>
@@ -564,7 +610,6 @@ function TADashboard() {
                 </>
               )}
 
-              {/* Privacy Tab */}
               {activeTab === 'privacy' && (
                 <>
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Security</h3>

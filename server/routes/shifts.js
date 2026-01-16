@@ -6,7 +6,7 @@ import {
   getActiveShift,
   getShiftsForTA
 } from '../services/shiftService.js';
-import { validateShift } from '../middleware/validate.js';
+import { validateShift, validateLocation } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -40,8 +40,8 @@ router.get('/active/:ta_id', async (req, res, next) => {
   }
 });
 
-// POST /api/shifts
-router.post('/', validateShift, async (req, res, next) => {
+// POST /api/shifts - ADD validateLocation middleware
+router.post('/', validateShift, validateLocation, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -53,11 +53,22 @@ router.post('/', validateShift, async (req, res, next) => {
 // PUT /api/shifts/:id
 router.put('/:id', async (req, res, next) => {
   try {
-    const result = await updateShift(req.params.id, req.body);
+    console.log("=== PUT REQUEST DEBUG ===");
+    console.log("Shift ID:", req.params.id);
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("clock_in:", req.body.clock_in);
+    console.log("clock_out:", req.body.clock_out);
+    
+    const { clock_in, clock_out } = req.body;
+    const result = await updateShift(req.params.id, { clock_in, clock_out });
+    
+    console.log("Update successful:", result);
+    console.log("========================");
+    
     res.json(result);
   } catch (error) {
+    console.error("Update failed:", error);
     next(error);
   }
 });
-
 export default router;

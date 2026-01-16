@@ -2,13 +2,15 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 function VPTAView() {
-  // Extract ta_id from URL params
   const { ta_id } = useParams();
   const navigate = useNavigate();
   
   const [allShifts, setAllShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingMonth, setEditingMonth] = useState(null);
+  const [editedShifts, setEditedShifts] = useState({});
+  const [saving, setSaving] = useState(false);
 
   // Fetch shifts from API
   useEffect(() => {
@@ -47,18 +49,12 @@ function VPTAView() {
     }
   }, [ta_id]);
 
-  // Use shifts directly since they're already filtered by the API
   const shifts = useMemo(() => {
     if (!allShifts || allShifts.length === 0) {
-      console.log('No shifts returned from API');
       return [];
     }
-    
-    console.log(`Using ${allShifts.length} shifts from API for TA ${ta_id}`);
-    
-    // Sort by date descending (newest first)
     return allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
-  }, [allShifts, ta_id]);
+  }, [allShifts]);
 
   const calculateHours = (clockIn, clockOut) => {
     if (!clockIn || !clockOut) return 0;
@@ -74,10 +70,35 @@ function VPTAView() {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
   };
 
-  // Get TA info from first shift
+  // Format date for datetime-local input (no timezone conversion)
+  const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Get local time components
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Convert datetime-local input to ISO string preserving local time
+  const localToISO = (localDateTimeString) => {
+    if (!localDateTimeString) return null;
+    // The datetime-local input gives us a string like "2024-01-15T14:30"
+    // We need to treat this as local time and convert to ISO
+    // Add seconds if not present
+    const withSeconds = localDateTimeString.includes(':') && localDateTimeString.split(':').length === 2
+      ? `${localDateTimeString}:00`
+      : localDateTimeString;
+    
+    const date = new Date(withSeconds);
+    return date.toISOString();
+  };
+
   const taInfo = shifts.length > 0 ? shifts[0] : null;
 
-  // Group shifts by month
   const shiftsByMonth = useMemo(() => {
     if (!shifts || shifts.length === 0) return {};
     
@@ -94,7 +115,6 @@ function VPTAView() {
       grouped[monthYear].push(shift);
     });
     
-    // Sort months in reverse chronological order
     const sortedEntries = Object.entries(grouped).sort((a, b) => {
       const dateA = new Date(a[1][0].clock_in);
       const dateB = new Date(b[1][0].clock_in);
@@ -104,7 +124,6 @@ function VPTAView() {
     return Object.fromEntries(sortedEntries);
   }, [shifts]);
 
-  // Calculate total hours and stats
   const totalHours = useMemo(() => {
     return shifts.reduce((sum, shift) => {
       const hours = parseFloat(calculateHours(shift.clock_in, shift.clock_out));
@@ -116,6 +135,92 @@ function VPTAView() {
   const totalShifts = shifts.length;
   const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
   const absentPercentage = 100 - presentPercentage;
+
+  const handleEditMonth = (month, monthShifts) => {
+    setEditingMonth(month);
+    const initialEdits = {};
+    monthShifts.forEach(shift => {
+      initialEdits[shift.id] = {
+        clock_in: formatDateTimeLocal(shift.clock_in),
+        clock_out: shift.clock_out ? formatDateTimeLocal(shift.clock_out) : ''
+      };
+    });
+    setEditedShifts(initialEdits);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingMonth(null);
+    setEditedShifts({});
+  };
+
+  const handleShiftChange = (shiftId, field, value) => {
+    setEditedShifts(prev => ({
+      ...prev,
+      [shiftId]: {
+        ...prev[shiftId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    setSaving(true);
+    try {
+      const updates = Object.entries(editedShifts).map(([shiftId, data]) => {
+        // Only convert and send if we have valid datetime strings
+        const payload = {};
+        
+        if (data.clock_in) {
+          payload.clock_in = localToISO(data.clock_in);
+        }
+        
+        if (data.clock_out) {
+          payload.clock_out = localToISO(data.clock_out);
+        }
+        
+        console.log(`Updating shift ${shiftId}:`, payload);
+        console.log(`Raw data for shift ${shiftId}:`, data);
+        
+        return fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+      });
+
+      const responses = await Promise.all(updates);
+      
+      // Check if all requests succeeded
+      const failed = responses.filter(r => !r.ok);
+      if (failed.length > 0) {
+        throw new Error(`Failed to update ${failed.length} shift(s)`);
+      }
+      
+      // Refresh shifts data
+      const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
+      const data = await response.json();
+      setAllShifts(Array.isArray(data) ? data : []);
+      
+      handleCloseEdit();
+    } catch (err) {
+      console.error('Error saving changes:', err);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const calculateEditedHours = (shiftId) => {
+    const shift = editedShifts[shiftId];
+    if (!shift || !shift.clock_in || !shift.clock_out) return null;
+    
+    const start = new Date(shift.clock_in);
+    const end = new Date(shift.clock_out);
+    const hours = (end - start) / (1000 * 60 * 60);
+    return hours > 0 ? hours.toFixed(2) : 0;
+  };
 
   if (loading) {
     return (
@@ -149,9 +254,6 @@ function VPTAView() {
         <div style={{ fontSize: '24px', color: '#dc2626', fontWeight: '600' }}>Error Loading Data</div>
         <div style={{ fontSize: '16px', color: '#6b7280', maxWidth: '500px', textAlign: 'center' }}>
           {error}
-        </div>
-        <div style={{ fontSize: '14px', color: '#9ca3af', maxWidth: '600px', textAlign: 'center' }}>
-          Please ensure your backend server is running and accessible at the correct endpoint.
         </div>
         <button
           onClick={() => window.location.reload()}
@@ -222,12 +324,6 @@ function VPTAView() {
               <p style={{ fontSize: '18px', margin: 0, marginBottom: 10, fontWeight: '500' }}>
                 No shifts found for TA ID: {ta_id}
               </p>
-              <p style={{ fontSize: '14px', margin: 0, color: '#9ca3af' }}>
-                Total shifts in database: {allShifts.length}
-              </p>
-              <p style={{ fontSize: '14px', margin: 0, marginTop: 10, color: '#9ca3af' }}>
-                Check console for debugging information
-              </p>
             </div>
           ) : (
             Object.entries(shiftsByMonth).map(([month, monthShifts]) => (
@@ -249,7 +345,7 @@ function VPTAView() {
                     {month}
                   </h2>
                   <button
-                    onClick={() => alert(`Edit ${month}`)}
+                    onClick={() => handleEditMonth(month, monthShifts)}
                     style={{
                       padding: '8px 24px',
                       backgroundColor: '#f5d77e',
@@ -316,7 +412,6 @@ function VPTAView() {
             position: 'sticky',
             top: 20
           }}>
-            {/* Doughnut Chart */}
             <div style={{ 
               display: 'flex', 
               justifyContent: 'center', 
@@ -325,7 +420,6 @@ function VPTAView() {
               position: 'relative'
             }}>
               <svg width="280" height="280" viewBox="0 0 280 280">
-                {/* Present segment (blue) */}
                 <circle
                   cx="140"
                   cy="140"
@@ -337,7 +431,6 @@ function VPTAView() {
                   strokeDashoffset="0"
                   transform="rotate(-90 140 140)"
                 />
-                {/* Absent segment (light yellow/white) */}
                 <circle
                   cx="140"
                   cy="140"
@@ -349,7 +442,6 @@ function VPTAView() {
                   strokeDashoffset={`-${presentPercentage * 6.283}`}
                   transform="rotate(-90 140 140)"
                 />
-                {/* Center text */}
                 <text x="140" y="130" textAnchor="middle" fontSize="24" fill="#5b8bb8" fontWeight="500">
                   {presentPercentage}% Present
                 </text>
@@ -359,7 +451,6 @@ function VPTAView() {
               </svg>
             </div>
 
-            {/* User Info */}
             <div style={{ textAlign: 'center', marginBottom: 25 }}>
               <div style={{ fontSize: '22px', color: '#5b8bb8', fontWeight: '500', marginBottom: 8 }}>
                 {taInfo ? `${taInfo.last_name}, ${taInfo.first_name}` : 'No TA Selected'}
@@ -369,7 +460,6 @@ function VPTAView() {
               </div>
             </div>
 
-            {/* Hours Info */}
             <div style={{ marginBottom: 25 }}>
               <div style={{ 
                 display: 'flex', 
@@ -392,7 +482,6 @@ function VPTAView() {
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div style={{ textAlign: 'center' }}>
               <div style={{
                 width: '100%',
@@ -427,6 +516,167 @@ function VPTAView() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingMonth && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: 12,
+            padding: '30px',
+            maxWidth: '700px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 25px 0', 
+              color: '#5b8bb8',
+              fontSize: '28px',
+              fontWeight: '500'
+            }}>
+              Edit {editingMonth}
+            </h2>
+
+            {shiftsByMonth[editingMonth].map((shift, index) => (
+              <div key={shift.id} style={{
+                marginBottom: 20,
+                padding: '20px',
+                backgroundColor: '#f9fafb',
+                borderRadius: 8,
+                border: '1px solid #e5e7eb'
+              }}>
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '500', 
+                  color: '#5b8bb8',
+                  marginBottom: 15
+                }}>
+                  Shift {index + 1} - {formatDate(shift.clock_in)}
+                </div>
+                
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: '14px', 
+                    color: '#6b7280',
+                    marginBottom: 6
+                  }}>
+                    Clock In
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editedShifts[shift.id]?.clock_in || ''}
+                    onChange={(e) => handleShiftChange(shift.id, 'clock_in', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: '14px', 
+                    color: '#6b7280',
+                    marginBottom: 6
+                  }}>
+                    Clock Out
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editedShifts[shift.id]?.clock_out || ''}
+                    onChange={(e) => handleShiftChange(shift.id, 'clock_out', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+
+                {(() => {
+                  const hours = calculateEditedHours(shift.id);
+                  return hours !== null && (
+                    <div style={{
+                      marginTop: 12,
+                      padding: '10px',
+                      backgroundColor: '#e0f2fe',
+                      borderRadius: 6,
+                      color: '#0369a1',
+                      fontSize: '14px'
+                    }}>
+                      Total Hours: {hours}
+                    </div>
+                  );
+                })()}
+              </div>
+            ))}
+
+            <div style={{ 
+              display: 'flex', 
+              gap: 12, 
+              justifyContent: 'flex-end',
+              marginTop: 25
+            }}>
+              <button
+                onClick={handleCloseEdit}
+                disabled={saving}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#5b8bb8',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.5 : 1
+                }}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

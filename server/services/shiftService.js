@@ -93,23 +93,45 @@ export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
   return result[0];
 };
 
-export const updateShift = async (id, { clock_out }) => {
-  console.log("Received PUT request for shift:", id);
+// export const updateShift = async (id, { clock_out }) => {
+//   console.log("Received PUT request for shift:", id);
+  
+//   const result = await sql`
+//     UPDATE shifts
+//     SET clock_out = ${clock_out}
+//     WHERE id = ${id}
+//     RETURNING *
+//   `;
+
+//   console.log("Update result:", result);
+
+//   if (result.length === 0) {
+//     const error = new Error('Shift not found');
+//     error.status = 404;
+//     throw error;
+//   }
+
+//   return result[0];
+// };
+
+export const updateShift = async (id, { clock_in, clock_out }) => {
+  console.log("Updating shift:", id, "with data:", { clock_in, clock_out });
   
   const result = await sql`
     UPDATE shifts
-    SET clock_out = ${clock_out}
+    SET 
+      clock_in = ${clock_in},
+      clock_out = ${clock_out}
     WHERE id = ${id}
     RETURNING *
   `;
-
+  
   console.log("Update result:", result);
-
+  
   if (result.length === 0) {
     const error = new Error('Shift not found');
     error.status = 404;
     throw error;
   }
-
   return result[0];
 };
