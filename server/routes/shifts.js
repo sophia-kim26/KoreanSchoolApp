@@ -50,6 +50,30 @@ router.post('/', validateShift, validateLocation, async (req, res, next) => {
   }
 });
 
+// POST /api/shifts/manual - Create shift without validation (for manual entry by VP)
+router.post('/manual', async (req, res, next) => {
+  try {
+    console.log('=== MANUAL SHIFT CREATE REQUEST ===');
+    console.log('ta_id:', req.body.ta_id, 'type:', typeof req.body.ta_id);
+    console.log('clock_in:', req.body.clock_in);
+    console.log('clock_out:', req.body.clock_out);
+    console.log('notes:', req.body.notes);    
+    const result = await createShift(req.body);
+    
+    console.log('Shift created successfully:', result);
+    console.log('===================================');
+    
+    res.json(result);
+  } catch (error) {
+    console.error('=== ERROR CREATING MANUAL SHIFT ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('===================================');
+    next(error);
+  }
+});
+
 // PUT /api/shifts/:id
 router.put('/:id', async (req, res, next) => {
   try {
