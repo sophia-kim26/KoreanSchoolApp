@@ -16,7 +16,7 @@ router.post('/create-account', createAccountLimiter, validateCreateAccount, asyn
 });
 
 // Sign in endpoint with rate limiting
-router.post('/signin', loginLimiter, async (req, res, next) => {
+router.post('/signin', async (req, res, next) => {
   try {
     const result = await signIn(req.body.ta_code);
     res.json(result);

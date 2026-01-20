@@ -16,7 +16,8 @@ function VPDashboard() {
     ta_code: "",
     email: "",
     session_day: "",
-    is_active: true
+    is_active: true,
+    korean_name: ""
   });
 
   const generatePIN = () => {
@@ -132,7 +133,8 @@ function VPDashboard() {
           ta_code: "",
           email: "",
           session_day: "",
-          is_active: true
+          is_active: true,
+          korean_name: ""
         });
         setShowModal(false);
         fetchData();
@@ -195,14 +197,13 @@ function VPDashboard() {
     row.id, 
     row.first_name, 
     row.last_name, 
+    row.korean_name,
     row.ta_code, 
     row.email, 
     row.session_day, 
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.id,
-    row.id
   ]);
 
   if (isLoading) {
@@ -301,6 +302,7 @@ function VPDashboard() {
               { name: "ID", width: '60px' },
               { name: "First Name", width: '120px' },
               { name: "Last Name", width: '120px' },
+              { name: "Korean Name", width: '120px' },
               { name: "TA Code", width: '100px' },
               { name: "Email", width: '220px' },
               { name: "Session Day", width: '120px' },
