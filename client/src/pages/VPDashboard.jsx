@@ -13,7 +13,6 @@ function VPDashboard() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    ta_code: "",
     email: "",
     session_day: "",
     is_active: true,
@@ -130,11 +129,9 @@ function VPDashboard() {
         setFormData({
           first_name: "",
           last_name: "",
-          ta_code: "",
-          email: "",
+          korean_name: "",
           session_day: "",
           is_active: true,
-          korean_name: ""
         });
         setShowModal(false);
         fetchData();
@@ -194,12 +191,9 @@ function VPDashboard() {
   };
 
   const gridData = data.map(row => [
-    row.id, 
     row.first_name, 
     row.last_name, 
     row.korean_name,
-    row.ta_code, 
-    row.email, 
     row.session_day, 
     row.is_active,
     row.total_hours || '0.00',
@@ -299,12 +293,9 @@ function VPDashboard() {
           <Grid
             data={gridData}
             columns={[
-              { name: "ID", width: '60px' },
               { name: "First Name", width: '120px' },
               { name: "Last Name", width: '120px' },
               { name: "Korean Name", width: '120px' },
-              { name: "TA Code", width: '100px' },
-              { name: "Email", width: '220px' },
               { name: "Session Day", width: '120px' },
               { 
                 name: "Active",
@@ -809,7 +800,7 @@ function VPDashboard() {
                         borderRadius: 6,
                         cursor: 'pointer',
                         fontSize: '14px',
-                        color: '#6b7280'
+                        fontWeight: '500'
                       }}>
                         Korean
                       </button>
