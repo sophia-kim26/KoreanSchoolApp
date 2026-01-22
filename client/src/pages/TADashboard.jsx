@@ -233,6 +233,7 @@ function TADashboard() {
     }
   };
 
+
   const clockOut = async () => {
     console.log("Clock Out pressed");
     setClockedIn(false);
@@ -353,7 +354,7 @@ function TADashboard() {
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      <Chart currentUser={currentUser} />
+      {currentUser && <Chart currentUser={currentUser}/>}
 
       {/* Clock In Confirmation */}
       {showClockInConfirm && (

@@ -18,7 +18,7 @@ function VPDashboard() {
     session_day: "",
     is_active: true
   });
-
+  
   const generatePIN = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -319,23 +319,97 @@ function VPDashboard() {
                 width: '120px',
                 formatter: (cell, row) => {
                   const taId = row.cells[0].data;
-                  return h('button', {
-                    style: `
-                      display: inline-block;
-                      padding: 6px 16px;
-                      border-radius: 4px;
-                      font-weight: 500;
-                      font-size: 13px;
-                      background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                      color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                      border: none;
-                      cursor: pointer;
-                      transition: opacity 0.2s;
-                    `,
-                    onmouseover: function() { this.style.opacity = '0.8'; },
-                    onmouseout: function() { this.style.opacity = '1'; },
-                    onclick: () => toggleAttendance(taId, cell)
-                  }, cell || 'Absent');
+                  const dropdownId = `dropdown-${taId}`;
+                  
+                  return h('div', {
+                    style: 'position: relative; display: inline-block;'
+                  }, [
+                    h('button', {
+                      id: `btn-${taId}`,
+                      style: `
+                        display: inline-block;
+                        padding: 6px 16px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                        font-size: 13px;
+                        background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                        color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                        border: none;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                      `,
+                      onmouseover: function() { this.style.opacity = '0.8'; },
+                      onmouseout: function() { this.style.opacity = '1'; },
+                      onclick: (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(dropdownId);
+                        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+                        allDropdowns.forEach(d => {
+                          if (d.id !== dropdownId) d.style.display = 'none';
+                        });
+                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                      }
+                    }, cell || 'Absent'),
+                    h('div', {
+                      id: dropdownId,
+                      style: `
+                        display: none;
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        margin-top: 4px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 4px;
+                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                        z-index: 1000;
+                        min-width: 120px;
+                      `
+                    }, [
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Present');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Present'),
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Absent');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Absent'),
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Tardy');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Tardy')
+                    ])
+                  ]);
                 }
               },
 
