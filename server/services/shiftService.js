@@ -83,14 +83,30 @@ export const getActiveShift = async (ta_id) => {
   
   return { activeShift: result.length > 0 ? result[0] : null };
 };
-
 export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
-  const result = await sql`
-    INSERT INTO shifts (ta_id, clock_in, clock_out, notes)
-    VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${notes})
-    RETURNING *
-  `;
-  return result[0];
+  console.log("=== CREATE SHIFT SERVICE ===");
+  console.log("Input data:", { ta_id, clock_in, clock_out, notes });
+  console.log("ta_id type:", typeof ta_id);
+  
+  try {
+    const result = await sql`
+      INSERT INTO shifts (ta_id, clock_in, clock_out, notes, was_manual)
+      VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${notes}, true)
+      RETURNING *
+    `;
+    
+    console.log("SQL result:", result);
+    console.log("Shift created:", result[0]);
+    console.log("============================");
+    return result[0];
+  } catch (error) {
+    console.error("=== SQL ERROR ===");
+    console.error("Error:", error);
+    console.error("Error code:", error.code);
+    console.error("Error message:", error.message);
+    console.error("=================");
+    throw error;
+  }
 };
 
 // export const updateShift = async (id, { clock_out }) => {
