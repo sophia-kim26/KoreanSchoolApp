@@ -11,6 +11,10 @@ function VPTAView() {
   const [editingMonth, setEditingMonth] = useState(null);
   const [editedShifts, setEditedShifts] = useState({});
   const [saving, setSaving] = useState(false);
+  const [newShift, setNewShift] = useState({
+    clock_in: '',
+    clock_out: ''
+  });
 
   // Fetch shifts from API
   useEffect(() => {
@@ -151,6 +155,7 @@ function VPTAView() {
   const handleCloseEdit = () => {
     setEditingMonth(null);
     setEditedShifts({});
+    setNewShift({ clock_in: '', clock_out: '' });
   };
 
   const handleShiftChange = (shiftId, field, value) => {
@@ -166,8 +171,8 @@ function VPTAView() {
   const handleSaveChanges = async () => {
     setSaving(true);
     try {
-      const updates = Object.entries(editedShifts).map(([shiftId, data]) => {
-        // Only convert and send if we have valid datetime strings
+      // Update existing shifts first
+      const updatePromises = Object.entries(editedShifts).map(([shiftId, data]) => {
         const payload = {};
         
         if (data.clock_in) {
@@ -179,7 +184,6 @@ function VPTAView() {
         }
         
         console.log(`Updating shift ${shiftId}:`, payload);
-        console.log(`Raw data for shift ${shiftId}:`, data);
         
         return fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
           method: 'PUT',
@@ -190,27 +194,72 @@ function VPTAView() {
         });
       });
 
-      const responses = await Promise.all(updates);
-      
-      // Check if all requests succeeded
-      const failed = responses.filter(r => !r.ok);
-      if (failed.length > 0) {
-        throw new Error(`Failed to update ${failed.length} shift(s)`);
+      if (updatePromises.length > 0) {
+        const updateResponses = await Promise.all(updatePromises);
+        for (let i = 0; i < updateResponses.length; i++) {
+          if (!updateResponses[i].ok) {
+            const errorText = await updateResponses[i].text();
+            console.error(`Update ${i} failed:`, updateResponses[i].status, errorText);
+            throw new Error(`Failed to update shift: ${errorText}`);
+          }
+        }
+        console.log('All updates successful');
+      }
+
+      // Create new shift if data is present
+      if (newShift.clock_in && newShift.clock_out) {
+        const newShiftPayload = {
+          ta_id: parseInt(ta_id),
+          clock_in: localToISO(newShift.clock_in),
+          clock_out: localToISO(newShift.clock_out),
+        };
+
+        console.log('=== CREATING NEW SHIFT ===');
+        console.log('Payload:', JSON.stringify(newShiftPayload, null, 2));
+        console.log('Clock In ISO:', newShiftPayload.clock_in);
+        console.log('Clock Out ISO:', newShiftPayload.clock_out);
+
+        const createResponse = await fetch(`http://localhost:3001/api/shifts/manual`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newShiftPayload)
+        });
+
+        console.log('Create response status:', createResponse.status);
+        const responseText = await createResponse.text();
+        console.log('Create response body:', responseText);
+
+        if (!createResponse.ok) {
+          throw new Error(`Failed to create shift: ${createResponse.status} - ${responseText}`);
+        }
+
+        console.log('New shift created successfully');
+      } else {
+        console.log('No new shift to create', { 
+          clock_in: newShift.clock_in, 
+          clock_out: newShift.clock_out 
+        });
       }
       
       // Refresh shifts data
+      console.log('Refreshing shifts data...');
       const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
       const data = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);
       
       handleCloseEdit();
     } catch (err) {
-      console.error('Error saving changes:', err);
-      alert('Failed to save changes. Please try again.');
+      console.error('=== ERROR SAVING CHANGES ===');
+      console.error('Error object:', err);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      alert(`Failed to save changes: ${err.message}`);
     } finally {
       setSaving(false);
     }
-  };
+};
 
   const calculateEditedHours = (shiftId) => {
     const shift = editedShifts[shiftId];
@@ -632,6 +681,90 @@ function VPTAView() {
                 })()}
               </div>
             ))}
+
+            {/* Add New Shift Section */}
+            <div style={{
+              marginTop: 30,
+              padding: '20px',
+              backgroundColor: '#f0fdf4',
+              borderRadius: 8,
+              border: '2px dashed #86efac'
+            }}>
+              <div style={{ 
+                fontSize: '18px', 
+                fontWeight: '500', 
+                color: '#16a34a',
+                marginBottom: 15
+              }}>
+                Add New Shift
+              </div>
+              
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '14px', 
+                  color: '#6b7280',
+                  marginBottom: 6
+                }}>
+                  Clock In
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newShift.clock_in}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, clock_in: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '14px', 
+                  color: '#6b7280',
+                  marginBottom: 6
+                }}>
+                  Clock Out
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newShift.clock_out}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, clock_out: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                  }}
+                />
+              </div>
+
+              {newShift.clock_in && newShift.clock_out && (() => {
+                const start = new Date(newShift.clock_in);
+                const end = new Date(newShift.clock_out);
+                const hours = (end - start) / (1000 * 60 * 60);
+                return hours > 0 && (
+                  <div style={{
+                    marginTop: 12,
+                    padding: '10px',
+                    backgroundColor: '#dcfce7',
+                    borderRadius: 6,
+                    color: '#15803d',
+                    fontSize: '14px'
+                  }}>
+                    Total Hours: {hours.toFixed(2)}
+                  </div>
+                );
+              })()}
+            </div>
 
             <div style={{ 
               display: 'flex', 
