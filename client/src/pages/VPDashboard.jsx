@@ -349,66 +349,7 @@ function VPDashboard() {
                         });
                         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
                       }
-                    }, cell || 'Absent'),
-                    h('div', {
-                      id: dropdownId,
-                      style: `
-                        display: none;
-                        position: absolute;
-                        top: 100%;
-                        left: 0;
-                        margin-top: 4px;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 4px;
-                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-                        z-index: 1000;
-                        min-width: 120px;
-                      `
-                    }, [
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Present');
-                          document.getElementById(dropdownId).style.display = 'none';
-                        }
-                      }, 'Present'),
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Absent');
-                          document.getElementById(dropdownId).style.display = 'none';
-                        }
-                      }, 'Absent'),
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Tardy');
-                          document.getElementById(dropdownId).style.display = 'none';
-                        }
-                      }, 'Tardy')
-                    ])
+                    }, cell || 'Absent')
                   ]);
                 }
               },

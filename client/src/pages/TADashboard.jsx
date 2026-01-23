@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
+import { h } from "preact";
 import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
@@ -159,10 +160,11 @@ function TADashboard() {
 
   const gridData = taData.map(row => [
     row.id,
+    row.attendance,
     row.clock_in,
     row.clock_out,
     row.elapsed_time,
-    row.notes,
+    row.notes
   ]);
 
   const handleSignOut = () => {
@@ -345,7 +347,116 @@ function TADashboard() {
          <Grid
             key={JSON.stringify(data)}
             data={gridData}
-            columns={["Date", "Clock In", "Clock Out", "Elapsed Time", "Notes"]}
+            columns={[
+              "Date",
+              {
+                name: "Attendance",
+                width: '120px',
+                formatter: (cell, row) => {
+                  const taId = row.cells[0].data;
+                  const dropdownId = `dropdown-${taId}`;
+                  
+                  return h('div', {
+                    style: 'position: relative; display: inline-block;'
+                  }, [
+                    h('button', {
+                      id: `btn-${taId}`,
+                      style: `
+                        display: inline-block;
+                        padding: 6px 16px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                        font-size: 13px;
+                        background-color: ${cell === 'Present' ? '#fee2e2' : '#c4e9d1ff'};
+                        color: ${cell === 'Present' ? '#991b1b' : '#166534'};
+                        border: none;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                      `,
+                      onmouseover: function() { 
+                        this.style.opacity = '0.8'; 
+                      },
+                      onmouseout: function() { 
+                        this.style.opacity = '1'; 
+                      },
+                      onclick: (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(dropdownId);
+                        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+                        allDropdowns.forEach(d => {
+                          if (d.id !== dropdownId) d.style.display = 'none';
+                        });
+                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                      }
+                    }, cell || 'Present'),
+                    h('div', {
+                      id: dropdownId,
+                      style: `
+                        display: none;
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        margin-top: 4px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 4px;
+                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                        z-index: 1000;
+                        min-width: 120px;
+                      `
+                    }, [
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Present');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Present'),
+
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Tardy');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Tardy'),
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: () => {
+                          toggleAttendance(taId, 'Early Leave');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Early Leave'),
+                    ])
+                  ]);
+                }
+              },
+              "Clock In",
+              "Clock Out",
+              "Elapsed Time",
+              "Notes"
+            ]}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
