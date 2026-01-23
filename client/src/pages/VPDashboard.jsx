@@ -92,13 +92,13 @@ function VPDashboard() {
             if (row.querySelector('th')) return;
             
             row.addEventListener('click', (e) => {
-              //if (e.target.tagName === 'BUTTON') return;
               if (e.target.closest('button')) return;
 
-              const firstCell = row.querySelector('.gridjs-td');
-              if (firstCell) {
-                handleRowClick(firstCell.textContent);
-                alert(`View details for TA ID: ${taId}`);
+              const cells = row.querySelectorAll('.gridjs-td');
+              if (cells.length >= 8) {
+                const taId = cells[7].textContent;
+                console.log('Row clicked, TA ID:', taId);
+                navigate(`/vp/ta-view/${taId}`);
               }
             });
             
@@ -144,7 +144,6 @@ function VPDashboard() {
     e.preventDefault();
     
     try {
-      // Generate PIN and prepare data
       const dataToSend = {
         ...formData,
         ta_code: generatePIN()
@@ -176,7 +175,6 @@ function VPDashboard() {
       alert("Error adding new TA");
     }
   };
-
 
   const toggleAttendance = async (taId, currentAttendance) => {
     try {
@@ -219,10 +217,10 @@ function VPDashboard() {
 
   const handleRowClick = (taId) => {
     console.log('Clicked TA ID:', taId);
-    // Navigate to detail page or show details modal
     navigate(`/vp/ta-view/${taId}`);
   };
 
+  // ✅ FIXED: Added row.id as the 8th element
   const gridData = data.map(row => [
     row.first_name, 
     row.last_name, 
@@ -231,6 +229,7 @@ function VPDashboard() {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
+    row.id  // ✅ This is now passed to the Analytics button
   ]);
 
   if (isLoading) {
@@ -251,8 +250,6 @@ function VPDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-        
-
           <button 
             onClick={() => setShowSettingsModal(true)}
             style={{ 
@@ -344,7 +341,7 @@ function VPDashboard() {
                 name: translations[language].attendance,
                 width: '120px',
                 formatter: (cell, row) => {
-                  const taId = row.cells[0].data;
+                  const taId = row.cells[7].data;
                   return h('button', {
                     style: `
                       display: inline-block;
@@ -364,9 +361,12 @@ function VPDashboard() {
                   }, cell || 'Absent');
                 }
               },
-
               {
+<<<<<<< HEAD
                 name: translations[language].analytics,
+=======
+                name: "Analytics",
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 width: "140px",
                 formatter: (cell) => {
                   return h('button', {
@@ -381,6 +381,7 @@ function VPDashboard() {
                       font-weight: 600;
                     `,
                     onclick: (e) => {
+<<<<<<< HEAD
                       e.stopPropagation(); // IMPORTANT: prevents row click firing too
                       handleRowClick(cell); // cell is the taId we passed in gridData
                     }
@@ -388,10 +389,20 @@ function VPDashboard() {
                 }
               },
 
+=======
+                      e.stopPropagation();
+                      console.log('Analytics button clicked for TA ID:', cell);
+                      handleRowClick(cell);
+                    }
+                  }, 'View Analytics');
+                }
+              },
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
               {
                 name: translations[language].actions,
                 width: '100px',
-                formatter: (cell) => {
+                formatter: (cell, row) => {
+                  const taId = row.cells[7].data;
                   return h('button', {
                     style: `
                       padding: 6px 12px;
@@ -403,8 +414,13 @@ function VPDashboard() {
                       font-size: 12px;
                       font-weight: 500;
                     `,
+<<<<<<< HEAD
                     onclick: () => deactivateTA(cell)
                   }, translations[language].remove);
+=======
+                    onclick: () => deactivateTA(taId)
+                  }, 'Remove');
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 }
               }
             ]}
@@ -436,7 +452,7 @@ function VPDashboard() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Add New TA Modal */}
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -633,65 +649,6 @@ function VPDashboard() {
         </div>
       )}
 
-      {showSettingsModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            padding: 30,
-            borderRadius: 12,
-            width: 500,
-            maxWidth: '90%',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Settings</h2>
-            
-            <div style={{ marginBottom: 20 }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Account Information</h3>
-              <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: 8 }}>
-                Email: {user?.email || user?.name}
-              </p>
-            </div>
-
-            <div style={{ marginBottom: 20, paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Dashboard Settings</h3>
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>
-                Configure your dashboard preferences and manage your account settings here.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Settings Modal */}
       {showSettingsModal && (
         <div style={{
@@ -732,7 +689,6 @@ function VPDashboard() {
               <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
             </div>
 
-            {/* Tabs */}
             <div style={{ 
               display: 'flex', 
               gap: 0, 
@@ -795,17 +751,14 @@ function VPDashboard() {
               </button>
             </div>
 
-            {/* Settings Content */}
             <div style={{ 
               background: '#dbeafe', 
               padding: 30, 
               borderRadius: 8,
               minHeight: '400px'
             }}>
-              {/* Appearance Tab */}
               {activeTab === 'appearance' && (
                 <>
-                  {/* Language Preferences */}
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Language Preferences
@@ -840,14 +793,8 @@ function VPDashboard() {
                     </div>
                   </div>
 
-                  {/* Theme */}
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      marginBottom: 12,
-                      color: '#1e40af'
-                    }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Theme
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -876,14 +823,8 @@ function VPDashboard() {
                     </div>
                   </div>
 
-                  {/* Text/Icon Size */}
                   <div>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      marginBottom: 12,
-                      color: '#1e40af'
-                    }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Text/Icon Size
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -925,15 +866,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Navigation Tab */}
               {activeTab === 'navigation' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Keyboard Navigation
                   </h3>
                   
@@ -1025,15 +960,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Account Tab */}
               {activeTab === 'account' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Information
                   </h3>
 
@@ -1078,15 +1007,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Privacy Tab */}
               {activeTab === 'privacy' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Security
                   </h3>
 

@@ -23,7 +23,14 @@ function VPTAView() {
         setLoading(true);
         setError(null);
         
+        console.log('=== FETCHING SHIFTS ===');
+        console.log('TA ID:', ta_id);
+        console.log('TA ID type:', typeof ta_id);
+        
         const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
+        
+        console.log('Response status:', response.status);
+        console.log('Response OK:', response.ok);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -35,7 +42,17 @@ function VPTAView() {
         }
         
         const data = await response.json();
-        console.log('Fetched shifts data for TA:', ta_id, data);
+        console.log('Fetched shifts data for TA:', ta_id);
+        console.log('Raw data:', data);
+        console.log('Is array?', Array.isArray(data));
+        console.log('Number of shifts:', data?.length || 0);
+        if (data && data.length > 0) {
+          console.log('Sample shift:', data[0]);
+          console.log('Sample shift clock_in:', data[0].clock_in);
+          console.log('Sample shift clock_out:', data[0].clock_out);
+        }
+        console.log('======================');
+        
         setAllShifts(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
@@ -54,10 +71,18 @@ function VPTAView() {
   }, [ta_id]);
 
   const shifts = useMemo(() => {
+    console.log('=== SORTING SHIFTS ===');
+    console.log('allShifts:', allShifts);
+    console.log('allShifts length:', allShifts?.length || 0);
+    
     if (!allShifts || allShifts.length === 0) {
+      console.log('No shifts to sort');
       return [];
     }
-    return allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
+    const sorted = allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
+    console.log('Sorted shifts:', sorted.length);
+    console.log('=====================');
+    return sorted;
   }, [allShifts]);
 
   const calculateHours = (clockIn, clockOut) => {
@@ -104,14 +129,30 @@ function VPTAView() {
   const taInfo = shifts.length > 0 ? shifts[0] : null;
 
   const shiftsByMonth = useMemo(() => {
-    if (!shifts || shifts.length === 0) return {};
+    console.log('=== GROUPING SHIFTS BY MONTH ===');
+    console.log('shifts:', shifts);
+    console.log('shifts length:', shifts?.length || 0);
+    
+    if (!shifts || shifts.length === 0) {
+      console.log('No shifts available for grouping');
+      return {};
+    }
     
     const grouped = {};
-    shifts.forEach(shift => {
-      if (!shift.clock_in) return;
+    shifts.forEach((shift, index) => {
+      console.log(`Processing shift ${index}:`, shift);
+      console.log(`  clock_in: ${shift.clock_in} (type: ${typeof shift.clock_in})`);
+      
+      if (!shift.clock_in) {
+        console.log(`  Skipping shift ${index} - no clock_in value`);
+        return;
+      }
       
       const date = new Date(shift.clock_in);
+      console.log(`  Parsed date: ${date}`);
+      
       const monthYear = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+      console.log(`  Month/Year: ${monthYear}`);
       
       if (!grouped[monthYear]) {
         grouped[monthYear] = [];
@@ -119,13 +160,20 @@ function VPTAView() {
       grouped[monthYear].push(shift);
     });
     
+    console.log('Grouped shifts:', grouped);
+    console.log('Number of months:', Object.keys(grouped).length);
+    
     const sortedEntries = Object.entries(grouped).sort((a, b) => {
       const dateA = new Date(a[1][0].clock_in);
       const dateB = new Date(b[1][0].clock_in);
       return dateB - dateA;
     });
     
-    return Object.fromEntries(sortedEntries);
+    const result = Object.fromEntries(sortedEntries);
+    console.log('Final shiftsByMonth:', result);
+    console.log('================================');
+    
+    return result;
   }, [shifts]);
 
   const totalHours = useMemo(() => {
@@ -216,8 +264,6 @@ function VPTAView() {
 
         console.log('=== CREATING NEW SHIFT ===');
         console.log('Payload:', JSON.stringify(newShiftPayload, null, 2));
-        console.log('Clock In ISO:', newShiftPayload.clock_in);
-        console.log('Clock Out ISO:', newShiftPayload.clock_out);
 
         const createResponse = await fetch(`http://localhost:3001/api/shifts/manual`, {
           method: 'POST',
@@ -236,11 +282,6 @@ function VPTAView() {
         }
 
         console.log('New shift created successfully');
-      } else {
-        console.log('No new shift to create', { 
-          clock_in: newShift.clock_in, 
-          clock_out: newShift.clock_out 
-        });
       }
       
       // Refresh shifts data
@@ -254,12 +295,11 @@ function VPTAView() {
       console.error('=== ERROR SAVING CHANGES ===');
       console.error('Error object:', err);
       console.error('Error message:', err.message);
-      console.error('Error stack:', err.stack);
       alert(`Failed to save changes: ${err.message}`);
     } finally {
       setSaving(false);
     }
-};
+  };
 
   const calculateEditedHours = (shiftId) => {
     const shift = editedShifts[shiftId];
@@ -372,6 +412,9 @@ function VPTAView() {
             }}>
               <p style={{ fontSize: '18px', margin: 0, marginBottom: 10, fontWeight: '500' }}>
                 No shifts found for TA ID: {ta_id}
+              </p>
+              <p style={{ fontSize: '14px', margin: 0, color: '#9ca3af' }}>
+                Check the browser console for debugging information
               </p>
             </div>
           ) : (
