@@ -362,11 +362,7 @@ function VPDashboard() {
                 }
               },
               {
-<<<<<<< HEAD
                 name: translations[language].analytics,
-=======
-                name: "Analytics",
->>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 width: "140px",
                 formatter: (cell) => {
                   return h('button', {
@@ -381,15 +377,6 @@ function VPDashboard() {
                       font-weight: 600;
                     `,
                     onclick: (e) => {
-<<<<<<< HEAD
-                      e.stopPropagation(); // IMPORTANT: prevents row click firing too
-                      handleRowClick(cell); // cell is the taId we passed in gridData
-                    }
-                  }, translations[language].viewAnalytics);
-                }
-              },
-
-=======
                       e.stopPropagation();
                       console.log('Analytics button clicked for TA ID:', cell);
                       handleRowClick(cell);
@@ -397,7 +384,6 @@ function VPDashboard() {
                   }, 'View Analytics');
                 }
               },
->>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
               {
                 name: translations[language].actions,
                 width: '100px',
@@ -414,13 +400,8 @@ function VPDashboard() {
                       font-size: 12px;
                       font-weight: 500;
                     `,
-<<<<<<< HEAD
                     onclick: () => deactivateTA(cell)
                   }, translations[language].remove);
-=======
-                    onclick: () => deactivateTA(taId)
-                  }, 'Remove');
->>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 }
               }
             ]}
