@@ -10,6 +10,7 @@ function VPDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
+  const [language, setLanguage] = useState('en'); // 'en' or 'ko'
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -18,6 +19,38 @@ function VPDashboard() {
     is_active: true,
     korean_name: ""
   });
+  const translations = {
+    en: {
+      firstName: "First Name",
+      lastName: "Last Name",
+      koreanName: "Korean Name",
+      sessionDay: "Session Day",
+      active: "Active",
+      totalHours: "Total Hours",
+      attendance: "Attendance",
+      analytics: "Analytics",
+      actions: "Actions",
+      yes: "Yes",
+      no: "No",
+      viewAnalytics: "View Analytics",
+      remove: "Remove"
+    },
+    ko: {
+      firstName: "이름",
+      lastName: "성",
+      koreanName: "한국어 이름",
+      sessionDay: "수업 요일",
+      active: "활성 상태",
+      totalHours: "총 시간",
+      attendance: "출석",
+      analytics: "통계",
+      actions: "작업",
+      yes: "예",
+      no: "아니오",
+      viewAnalytics: "통계 보기",
+      remove: "삭제"
+    }
+  };
 
   const generatePIN = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -290,22 +323,22 @@ function VPDashboard() {
           <Grid
             data={gridData}
             columns={[
-              { name: "First Name", width: '120px' },
-              { name: "Last Name", width: '120px' },
-              { name: "Korean Name", width: '120px' },
-              { name: "Session Day", width: '120px' },
+              { name: translations[language].firstName, width: '120px' },
+              { name: translations[language].lastName, width: '120px' },
+              { name: translations[language].koreanName, width: '120px' },
+              { name: translations[language].sessionDay, width: '120px' },
               { 
-                name: "Active",
+                name: translations[language].active,
                 width: '80px',
                 formatter: (cell) => cell ? 'Yes' : 'No'
               },
               {
-                name: "Total Hours",
+                name: translations[language].totalHours,
                 width: '100px',
                 formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
               },
               {
-                name: "Attendance",
+                name: translations[language].attendance,
                 width: '120px',
                 formatter: (cell, row) => {
                   const taId = row.cells[7].data;
@@ -329,7 +362,11 @@ function VPDashboard() {
                 }
               },
               {
+<<<<<<< HEAD
+                name: translations[language].analytics,
+=======
                 name: "Analytics",
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 width: "140px",
                 formatter: (cell) => {
                   return h('button', {
@@ -344,6 +381,15 @@ function VPDashboard() {
                       font-weight: 600;
                     `,
                     onclick: (e) => {
+<<<<<<< HEAD
+                      e.stopPropagation(); // IMPORTANT: prevents row click firing too
+                      handleRowClick(cell); // cell is the taId we passed in gridData
+                    }
+                  }, translations[language].viewAnalytics);
+                }
+              },
+
+=======
                       e.stopPropagation();
                       console.log('Analytics button clicked for TA ID:', cell);
                       handleRowClick(cell);
@@ -351,8 +397,9 @@ function VPDashboard() {
                   }, 'View Analytics');
                 }
               },
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
               {
-                name: "Actions",
+                name: translations[language].actions,
                 width: '100px',
                 formatter: (cell, row) => {
                   const taId = row.cells[7].data;
@@ -367,11 +414,17 @@ function VPDashboard() {
                       font-size: 12px;
                       font-weight: 500;
                     `,
+<<<<<<< HEAD
+                    onclick: () => deactivateTA(cell)
+                  }, translations[language].remove);
+=======
                     onclick: () => deactivateTA(taId)
                   }, 'Remove');
+>>>>>>> b2e016134cf1513efd7d9ffdc6a9743d29946e25
                 }
               }
             ]}
+            key={language}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
@@ -711,26 +764,30 @@ function VPDashboard() {
                       Language Preferences
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{
-                        padding: '10px 30px',
-                        background: 'white',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
+                      <button 
+                        onClick={() => setLanguage('en')}
+                        style={{
+                          padding: '10px 30px',
+                          background: language === 'en' ? '#bfdbfe' : 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}>
                         English
                       </button>
-                      <button style={{
-                        padding: '10px 30px',
-                        background: 'white',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
+                      <button 
+                        onClick={() => setLanguage('ko')}
+                        style={{
+                          padding: '10px 30px',
+                          background: language === 'ko' ? '#bfdbfe' : 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}>
                         Korean
                       </button>
                     </div>
