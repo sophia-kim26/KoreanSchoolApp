@@ -279,6 +279,23 @@ function TADashboard() {
     }
   };
 
+  const toggleAttendance = async (shiftId, newStatus) => {
+    try {
+      await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attendance: newStatus
+        })
+      });
+      
+      // Refresh the data to show the updated status
+      await fetchShifts();
+    } catch (err) {
+      console.error("Failed to update attendance:", err);
+    }
+  };
+
   return (
     <div className="page-container">
       <div className="page-header" style={{ justifyContent: "flex-start", gap: "40px"}}>
@@ -344,7 +361,7 @@ function TADashboard() {
       {taData.length === 0 ? (
         <p>No data found.</p>
       ) : (
-         <Grid
+          <Grid
             key={JSON.stringify(data)}
             data={gridData}
             columns={[
@@ -353,22 +370,37 @@ function TADashboard() {
                 name: "Attendance",
                 width: '120px',
                 formatter: (cell, row) => {
-                  const taId = row.cells[0].data;
-                  const dropdownId = `dropdown-${taId}`;
+                  const shiftId = row.cells[0].data;
+                  const dropdownId = `dropdown-${shiftId}`;
+                  
+                  // Determine button color based on status
+                  let bgColor = '#c4e9d1ff'; // Present - green
+                  let textColor = '#166534';
+                  
+                  if (cell === 'Tardy') {
+                    bgColor = '#fef3c7'; // yellow
+                    textColor = '#92400e';
+                  } else if (cell === 'Early Leave') {
+                    bgColor = '#dbeafe'; // blue
+                    textColor = '#1e40af';
+                  } else if (cell === 'Absent') {
+                    bgColor = '#fee2e2'; // red
+                    textColor = '#991b1b';
+                  }
                   
                   return h('div', {
                     style: 'position: relative; display: inline-block;'
                   }, [
                     h('button', {
-                      id: `btn-${taId}`,
+                      id: `btn-${shiftId}`,
                       style: `
                         display: inline-block;
                         padding: 6px 16px;
                         border-radius: 4px;
                         font-weight: 500;
                         font-size: 13px;
-                        background-color: ${cell === 'Present' ? '#fee2e2' : '#c4e9d1ff'};
-                        color: ${cell === 'Present' ? '#991b1b' : '#166534'};
+                        background-color: ${bgColor};
+                        color: ${textColor};
                         border: none;
                         cursor: pointer;
                         transition: opacity 0.2s;
@@ -414,12 +446,12 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Present');
+                        onclick: async (e) => {
+                          e.stopPropagation();
+                          await toggleAttendance(shiftId, 'Present');
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Present'),
-
                       h('div', {
                         style: `
                           padding: 8px 12px;
@@ -429,8 +461,24 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Tardy');
+                        onclick: async (e) => {
+                          e.stopPropagation();
+                          await toggleAttendance(shiftId, 'Absent');
+                          document.getElementById(dropdownId).style.display = 'none';
+                        }
+                      }, 'Absent'),
+                      h('div', {
+                        style: `
+                          padding: 8px 12px;
+                          cursor: pointer;
+                          font-size: 13px;
+                          transition: background-color 0.2s;
+                        `,
+                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                        onclick: async (e) => {
+                          e.stopPropagation();
+                          await toggleAttendance(shiftId, 'Tardy');
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Tardy'),
@@ -443,8 +491,9 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: () => {
-                          toggleAttendance(taId, 'Early Leave');
+                        onclick: async (e) => {
+                          e.stopPropagation();
+                          await toggleAttendance(shiftId, 'Early Leave');
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Early Leave'),
