@@ -60,7 +60,15 @@ export const getAllShifts = async () => {
 };
 
 export const getShiftsForTA = async (ta_id) => {
-  return await sql`
+  console.log('=== GET SHIFTS FOR TA ===');
+  console.log('ta_id:', ta_id);
+  console.log('ta_id type:', typeof ta_id);
+  
+  // Convert to integer to ensure type match
+  const taIdInt = parseInt(ta_id);
+  console.log('ta_id as int:', taIdInt);
+  
+  const result = await sql`
     SELECT 
       shifts.*,
       ta_list.first_name,
@@ -68,9 +76,18 @@ export const getShiftsForTA = async (ta_id) => {
       ta_list.email
     FROM shifts
     INNER JOIN ta_list ON ta_list.id = shifts.ta_id
-    WHERE shifts.ta_id = ${ta_id}
+    WHERE shifts.ta_id = ${taIdInt}
     ORDER BY shifts.clock_in DESC
   `;
+  
+  console.log('Query result:', result);
+  console.log('Number of shifts found:', result.length);
+  if (result.length > 0) {
+    console.log('Sample shift:', result[0]);
+  }
+  console.log('========================');
+  
+  return result;
 };
 
 export const getActiveShift = async (ta_id) => {

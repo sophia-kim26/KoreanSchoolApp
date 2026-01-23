@@ -23,7 +23,9 @@ router.get('/', async (req, res, next) => {
 // GET /api/shifts/ta/:ta_id - get all shifts for a specific TA
 router.get('/ta/:ta_id', async (req, res, next) => {
   try {
-    const result = await getShiftsForTA(req.params.ta_id);
+    console.log('Route received ta_id:', req.params.ta_id);
+    const result = await getShiftsForTA(parseInt(req.params.ta_id));
+    console.log('Route returning:', result.length, 'shifts');
     res.json(result);
   } catch (error) {
     next(error);
