@@ -372,35 +372,36 @@ function TADashboard() {
                 formatter: (cell, row) => {
                   const shiftId = row.cells[0].data;
                   const dropdownId = `dropdown-${shiftId}`;
+                  const buttonId = `btn-${shiftId}`;
                   
                   // Determine button color based on status
-                  let bgColor = '#c4e9d1ff'; // Present - green
-                  let textColor = '#166534';
+                  const getColors = (status) => {
+                    if (status === 'Tardy') {
+                      return { bg: '#fef3c7', text: '#92400e' }; // yellow
+                    } else if (status === 'Early Leave') {
+                      return { bg: '#dbeafe', text: '#1e40af' }; // blue
+                    // } else if (status === 'Absent') {
+                    //   return { bg: '#fee2e2', text: '#991b1b' }; // red
+                    } else { // Present
+                      return { bg: '#c4e9d1ff', text: '#166534' }; // green
+                    }
+                  };
                   
-                  if (cell === 'Tardy') {
-                    bgColor = '#fef3c7'; // yellow
-                    textColor = '#92400e';
-                  } else if (cell === 'Early Leave') {
-                    bgColor = '#dbeafe'; // blue
-                    textColor = '#1e40af';
-                  } else if (cell === 'Absent') {
-                    bgColor = '#fee2e2'; // red
-                    textColor = '#991b1b';
-                  }
+                  const colors = getColors(cell);
                   
                   return h('div', {
                     style: 'position: relative; display: inline-block;'
                   }, [
                     h('button', {
-                      id: `btn-${shiftId}`,
+                      id: buttonId,
                       style: `
                         display: inline-block;
                         padding: 6px 16px;
                         border-radius: 4px;
                         font-weight: 500;
                         font-size: 13px;
-                        background-color: ${bgColor};
-                        color: ${textColor};
+                        background-color: ${colors.bg};
+                        color: ${colors.text};
                         border: none;
                         cursor: pointer;
                         transition: opacity 0.2s;
@@ -446,12 +447,35 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: async (e) => {
+                        onclick: (e) => {
                           e.stopPropagation();
-                          await toggleAttendance(shiftId, 'Present');
+                          const button = document.getElementById(buttonId);
+                          const colors = getColors('Present');
+                          button.style.backgroundColor = colors.bg;
+                          button.style.color = colors.text;
+                          button.textContent = 'Present';
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Present'),
+                      // h('div', {
+                      //   style: `
+                      //     padding: 8px 12px;
+                      //     cursor: pointer;
+                      //     font-size: 13px;
+                      //     transition: background-color 0.2s;
+                      //   `,
+                      //   onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
+                      //   onmouseout: function() { this.style.backgroundColor = 'transparent'; },
+                      //   onclick: (e) => {
+                      //     e.stopPropagation();
+                      //     const button = document.getElementById(buttonId);
+                      //     const colors = getColors('Absent');
+                      //     button.style.backgroundColor = colors.bg;
+                      //     button.style.color = colors.text;
+                      //     button.textContent = 'Absent';
+                      //     document.getElementById(dropdownId).style.display = 'none';
+                      //   }
+                      // }, 'Absent'),
                       h('div', {
                         style: `
                           padding: 8px 12px;
@@ -461,9 +485,13 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: async (e) => {
+                        onclick: (e) => {
                           e.stopPropagation();
-                          await toggleAttendance(shiftId, 'Tardy');
+                          const button = document.getElementById(buttonId);
+                          const colors = getColors('Tardy');
+                          button.style.backgroundColor = colors.bg;
+                          button.style.color = colors.text;
+                          button.textContent = 'Tardy';
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Tardy'),
@@ -476,9 +504,13 @@ function TADashboard() {
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: async (e) => {
+                        onclick: (e) => {
                           e.stopPropagation();
-                          await toggleAttendance(shiftId, 'Early Leave');
+                          const button = document.getElementById(buttonId);
+                          const colors = getColors('Early Leave');
+                          button.style.backgroundColor = colors.bg;
+                          button.style.color = colors.text;
+                          button.textContent = 'Early Leave';
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Early Leave'),
