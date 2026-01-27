@@ -463,21 +463,6 @@ function TADashboard() {
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
                         onclick: async (e) => {
                           e.stopPropagation();
-                          await toggleAttendance(shiftId, 'Absent');
-                          document.getElementById(dropdownId).style.display = 'none';
-                        }
-                      }, 'Absent'),
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: async (e) => {
-                          e.stopPropagation();
                           await toggleAttendance(shiftId, 'Tardy');
                           document.getElementById(dropdownId).style.display = 'none';
                         }
