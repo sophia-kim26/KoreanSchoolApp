@@ -180,29 +180,22 @@ function TADashboard() {
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
-  // NEW clockIn function with geolocation - KEEP THIS ONE
+  // Clock in function - IP based validation (no GPS needed)
   const clockIn = async () => {
     console.log("Clock In pressed");
     
     try {
-      // Get user's location first
-      console.log("Getting location...");
-      const location = await getUserLocation();
-      console.log("Location obtained:", location);
-
       const time = new Date();
       setClockInTime(time);
 
-      // Send location data with clock-in request
+      // Send clock-in request - backend validates IP address
       const res = await fetch("http://localhost:3001/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ta_id: currentUser.id,
           clock_in: time.toISOString(),
-          notes: "",
-          latitude: location.latitude,
-          longitude: location.longitude
+          notes: ""
         })
       });
 
