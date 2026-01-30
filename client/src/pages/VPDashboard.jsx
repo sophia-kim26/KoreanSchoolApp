@@ -7,9 +7,11 @@ import { useNavigate } from "react-router-dom";
 
 function VPDashboard() {
   const [data, setData] = useState([]);
+  const [fridayData, setFridayData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
+  const [mainTab, setMainTab] = useState('tas'); // 'tas' or 'friday'
   const [language, setLanguage] = useState('en'); // 'en' or 'ko'
   const [formData, setFormData] = useState({
     first_name: "",
@@ -61,6 +63,7 @@ function VPDashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchFridayData();
   }, []);
 
   useEffect(() => {
@@ -114,6 +117,25 @@ function VPDashboard() {
       .catch(err => {
         console.error("Fetch error:", err);
         alert("Error loading data: " + err.message);
+      });
+  };
+
+  const fetchFridayData = () => {
+    console.log("Fetching Friday data...");
+    fetch("http://localhost:3001/api/friday")
+      .then(res => {
+        console.log("Friday response status:", res.status);
+        return res.json();
+      })
+      .then(json => {
+        console.log("Received Friday data:", json);
+        const dataArray = Array.isArray(json) ? json : [];
+        setFridayData(dataArray);
+      })
+      .catch(err => {
+        console.error("Fetch Friday error:", err);
+        setFridayData([]);
+        alert("Error loading Friday data: " + err.message);
       });
   };
 
@@ -220,7 +242,6 @@ function VPDashboard() {
     navigate(`/vp/ta-view/${taId}`);
   };
 
-  // ✅ FIXED: Added row.id as the 8th element
   const gridData = data.map(row => [
     row.first_name, 
     row.last_name, 
@@ -229,8 +250,29 @@ function VPDashboard() {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.id  // ✅ This is now passed to the Analytics button
+    row.id  
   ]);
+
+  // all columns except hidden ones
+  const getFridayColumns = () => {
+    if (fridayData.length === 0) return [];
+    
+    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
+    
+    const sampleRow = fridayData[0];
+    return Object.keys(sampleRow)
+      .filter(key => !hiddenColumns.includes(key))
+      .map(key => ({
+        name: key.split('_').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' '),
+        id: key
+      }));
+  };
+
+  const fridayGridData = fridayData.map(row => {
+    return getFridayColumns().map(col => row[col.id]);
+  });
 
   if (isLoading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
@@ -248,7 +290,9 @@ function VPDashboard() {
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
+        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>
+          VP Dashboard - {mainTab === 'tas' ? 'TA List' : 'Friday Table'}
+        </h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button 
             onClick={() => setShowSettingsModal(true)}
@@ -302,135 +346,242 @@ function VPDashboard() {
         Logged in as: {user?.email || user?.name}
       </p>
 
-      <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
-        Total TAs: {data.length}
-      </p>
-      
-      {data.length === 0 ? (
-        <div>
-          <p>No data found.</p>
-          <button onClick={fetchData} style={{ padding: '10px 20px', marginTop: 10 }}>
-            Retry Load
-          </button>
-        </div>
-      ) : (
-        <div style={{ 
-          background: '#dbeafe', 
-          borderRadius: 8, 
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          overflow: 'hidden'
-        }}>
-          <Grid
-            data={gridData}
-            columns={[
-              { name: translations[language].firstName, width: '120px' },
-              { name: translations[language].lastName, width: '120px' },
-              { name: translations[language].koreanName, width: '120px' },
-              { name: translations[language].sessionDay, width: '120px' },
-              { 
-                name: translations[language].active,
-                width: '80px',
-                formatter: (cell) => cell ? 'Yes' : 'No'
-              },
-              {
-                name: translations[language].totalHours,
-                width: '100px',
-                formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
-              },
-              {
-                name: translations[language].attendance,
-                width: '120px',
-                formatter: (cell, row) => {
-                  const taId = row.cells[7].data;
-                  return h('button', {
-                    style: `
-                      display: inline-block;
-                      padding: 6px 16px;
-                      border-radius: 4px;
-                      font-weight: 500;
-                      font-size: 13px;
-                      background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                      color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                      border: none;
-                      cursor: pointer;
-                      transition: opacity 0.2s;
-                    `,
-                    onmouseover: function() { this.style.opacity = '0.8'; },
-                    onmouseout: function() { this.style.opacity = '1'; },
-                    onclick: () => toggleAttendance(taId, cell)
-                  }, cell || 'Absent');
-                }
-              },
-              {
-                name: translations[language].analytics,
-                width: "140px",
-                formatter: (cell) => {
-                  return h('button', {
-                    style: `
-                      padding: 6px 12px;
-                      background-color: #2563eb;
-                      color: white;
-                      border: none;
-                      border-radius: 4px;
-                      cursor: pointer;
-                      font-size: 12px;
-                      font-weight: 600;
-                    `,
-                    onclick: (e) => {
-                      e.stopPropagation();
-                      console.log('Analytics button clicked for TA ID:', cell);
-                      handleRowClick(cell);
+      {/* Main Tab Selector */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 0, 
+        marginBottom: 24,
+        borderBottom: '2px solid #e5e7eb'
+      }}>
+        <button 
+          onClick={() => setMainTab('tas')}
+          style={{
+            padding: '12px 24px',
+            background: mainTab === 'tas' ? '#bfdbfe' : 'transparent',
+            border: 'none',
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            color: mainTab === 'tas' ? '#1e40af' : '#6b7280'
+          }}>
+          TAs
+        </button>
+        <button 
+          onClick={() => setMainTab('friday')}
+          style={{
+            padding: '12px 24px',
+            background: mainTab === 'friday' ? '#bfdbfe' : 'transparent',
+            border: 'none',
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            color: mainTab === 'friday' ? '#1e40af' : '#6b7280'
+          }}>
+          Friday
+        </button>
+      </div>
+
+      {mainTab === 'tas' && (
+        <>
+          <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
+            Total TAs: {data.length}
+          </p>
+          
+          {data.length === 0 ? (
+            <div>
+              <p>No data found.</p>
+              <button onClick={fetchData} style={{ padding: '10px 20px', marginTop: 10 }}>
+                Retry Load
+              </button>
+            </div>
+          ) : (
+            <div style={{ 
+              background: '#dbeafe', 
+              borderRadius: 8, 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <Grid
+                data={gridData}
+                columns={[
+                  { name: translations[language].firstName, width: '120px' },
+                  { name: translations[language].lastName, width: '120px' },
+                  { name: translations[language].koreanName, width: '120px' },
+                  { name: translations[language].sessionDay, width: '120px' },
+                  { 
+                    name: translations[language].active,
+                    width: '80px',
+                    formatter: (cell) => cell ? 'Yes' : 'No'
+                  },
+                  {
+                    name: translations[language].totalHours,
+                    width: '100px',
+                    formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
+                  },
+                  {
+                    name: translations[language].attendance,
+                    width: '120px',
+                    formatter: (cell, row) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          display: inline-block;
+                          padding: 6px 16px;
+                          border-radius: 4px;
+                          font-weight: 500;
+                          font-size: 13px;
+                          background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                          color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                          border: none;
+                          cursor: pointer;
+                          transition: opacity 0.2s;
+                        `,
+                        onmouseover: function() { this.style.opacity = '0.8'; },
+                        onmouseout: function() { this.style.opacity = '1'; },
+                        onclick: () => toggleAttendance(taId, cell)
+                      }, cell || 'Absent');
                     }
-                  }, 'View Analytics');
-                }
-              },
-              {
-                name: translations[language].actions,
-                width: '100px',
-                formatter: (cell, row) => {
-                  const taId = row.cells[7].data;
-                  return h('button', {
-                    style: `
-                      padding: 6px 12px;
-                      background-color: #ef4444;
-                      color: white;
-                      border: none;
-                      border-radius: 4px;
-                      cursor: pointer;
-                      font-size: 12px;
-                      font-weight: 500;
-                    `,
-                    onclick: () => deactivateTA(cell)
-                  }, translations[language].remove);
-                }
-              }
-            ]}
-            key={language}
-            search={true}
-            pagination={{ enabled: true, limit: 10 }}
-            sort={true}
-            style={{
-              table: {
-                'font-size': '14px',
-                'border-collapse': 'collapse'
-              },
-              th: {
-                'background-color': '#93c5fd',
-                'padding': '16px 12px',
-                'text-align': 'left',
-                'font-weight': '600',
-                'color': '#1e3a8a',
-                'border-bottom': '2px solid #3b82f6'
-              },
-              td: {
-                'padding': '14px 12px',
-                'border-bottom': '1px solid #bfdbfe',
-                'color': '#1e40af',
-                'background-color': '#eff6ff'
-              }
-            }}
-          />
-        </div>
+                  },
+                  {
+                    name: translations[language].analytics,
+                    width: "140px",
+                    formatter: (cell) => {
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #2563eb;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 600;
+                        `,
+                        onclick: (e) => {
+                          e.stopPropagation();
+                          console.log('Analytics button clicked for TA ID:', cell);
+                          handleRowClick(cell);
+                        }
+                      }, 'View Analytics');
+                    }
+                  },
+                  {
+                    name: translations[language].actions,
+                    width: '100px',
+                    formatter: (cell, row) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #ef4444;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 500;
+                        `,
+                        onclick: () => deactivateTA(cell)
+                      }, translations[language].remove);
+                    }
+                  }
+                ]}
+                key={language}
+                search={true}
+                pagination={{ enabled: true, limit: 10 }}
+                sort={true}
+                style={{
+                  table: {
+                    'font-size': '14px',
+                    'border-collapse': 'collapse'
+                  },
+                  th: {
+                    'background-color': '#93c5fd',
+                    'padding': '16px 12px',
+                    'text-align': 'left',
+                    'font-weight': '600',
+                    'color': '#1e3a8a',
+                    'border-bottom': '2px solid #3b82f6'
+                  },
+                  td: {
+                    'padding': '14px 12px',
+                    'border-bottom': '1px solid #bfdbfe',
+                    'color': '#1e40af',
+                    'background-color': '#eff6ff'
+                  }
+                }}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {mainTab === 'friday' && (
+        <>
+          <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
+            Total Records: {fridayData.length}
+          </p>
+          
+          {fridayData.length === 0 ? (
+            <div>
+              <p>No Friday data found.</p>
+              <button onClick={fetchFridayData} style={{ padding: '10px 20px', marginTop: 10 }}>
+                Retry Load
+              </button>
+            </div>
+          ) : (
+            <div style={{ 
+              background: '#dbeafe', 
+              borderRadius: 8, 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <Grid
+                data={fridayGridData}
+                columns={getFridayColumns().map(col => ({
+                  name: col.name,
+                  width: '150px',
+                  formatter: (cell) => {
+                    // Handle boolean values (TRUE/FALSE)
+                    if (cell === true) return '✓';
+                    if (cell === false) return '✗';
+                    // Handle null/undefined
+                    if (cell === null || cell === undefined) return '';
+                    // Return the value as-is for other types
+                    return cell;
+                  }
+                }))}
+                search={true}
+                pagination={{ enabled: true, limit: 10 }}
+                sort={true}
+                style={{
+                  table: {
+                    'font-size': '14px',
+                    'border-collapse': 'collapse'
+                  },
+                  th: {
+                    'background-color': '#93c5fd',
+                    'padding': '16px 12px',
+                    'text-align': 'left',
+                    'font-weight': '600',
+                    'color': '#1e3a8a',
+                    'border-bottom': '2px solid #3b82f6'
+                  },
+                  td: {
+                    'padding': '14px 12px',
+                    'border-bottom': '1px solid #bfdbfe',
+                    'color': '#1e40af',
+                    'background-color': '#eff6ff'
+                  }
+                }}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Add New TA Modal */}
