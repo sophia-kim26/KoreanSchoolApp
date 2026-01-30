@@ -2,11 +2,9 @@
 const ALLOWED_IPS = [
   '127.0.0.1',           // localhost for testing
   '::1',                 // localhost IPv6
-  // Add your home IP here - find it at https://www.whatismyip.com/
-  // Example: '73.123.45.67'
   '192.168.1.13',
   '192.168.1.1'
-  // Add Korean School's IP when you know it
+  // Add Korean School's IP when I know it
 ];
 
 // Get client IP from request
@@ -19,6 +17,7 @@ const getClientIP = (req) => {
          req.ip;
 };
 
+// IP address checking
 export const validateLocation = (req, res, next) => {
   const clientIP = getClientIP(req);
   
@@ -26,7 +25,7 @@ export const validateLocation = (req, res, next) => {
   
   // Check if IP is in allowed list
   const isAllowed = ALLOWED_IPS.some(allowedIP => {
-    // Handle IPv6 localhost variations
+    // Handle some IPv6 localhost variations
     if (clientIP === '::ffff:127.0.0.1' && allowedIP === '127.0.0.1') return true;
     if (clientIP === '::1' && allowedIP === '127.0.0.1') return true;
     return clientIP === allowedIP;
