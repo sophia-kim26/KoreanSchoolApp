@@ -10,6 +10,9 @@ function VPDashboard() {
   const [fridayData, setFridayData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [generatedPin, setGeneratedPin] = useState('');
+  const [newTAName, setNewTAName] = useState('');
   const [activeTab, setActiveTab] = useState('appearance');
   const [mainTab, setMainTab] = useState('tas'); // 'tas' or 'friday'
   const [language, setLanguage] = useState('en'); // 'en' or 'ko'
@@ -21,6 +24,7 @@ function VPDashboard() {
     is_active: true,
     korean_name: ""
   });
+  
   const translations = {
     en: {
       firstName: "First Name",
@@ -166,12 +170,13 @@ function VPDashboard() {
     e.preventDefault();
     
     try {
+      const pin = generatePIN();
       const dataToSend = {
         ...formData,
-        ta_code: generatePIN()
+        ta_code: pin
       };
       
-      const response = await fetch("http://localhost:3001/api/create-account", {
+      const response = await fetch("http://localhost:3001/api/create-account-vp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -180,6 +185,13 @@ function VPDashboard() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
+        // Store the unhashed PIN and TA name for display
+        setGeneratedPin(result.unhashed_pin);
+        setNewTAName(`${formData.first_name} ${formData.last_name}`);
+        
+        // Reset form and close modal
         setFormData({
           first_name: "",
           last_name: "",
@@ -188,14 +200,25 @@ function VPDashboard() {
           is_active: true,
         });
         setShowModal(false);
+        
+        // Show PIN modal
+        setShowPinModal(true);
+        
+        // Refresh data
         fetchData();
       } else {
-        alert("Failed to add new TA");
+        const error = await response.json();
+        alert(error.message || "Failed to add new TA");
       }
     } catch (err) {
       console.error(err);
       alert("Error adding new TA");
     }
+  };
+
+  const copyPinToClipboard = () => {
+    navigator.clipboard.writeText(generatedPin);
+    alert('PIN copied to clipboard!');
   };
 
   const toggleAttendance = async (taId, currentAttendance) => {
@@ -250,7 +273,11 @@ function VPDashboard() {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
+<<<<<<< HEAD
     row.id  
+=======
+    row.id
+>>>>>>> f113e75dac238e937e2ddeb57fe71e822a61f53d
   ]);
 
   // all columns except hidden ones
@@ -445,6 +472,7 @@ function VPDashboard() {
                         onclick: () => toggleAttendance(taId, cell)
                       }, cell || 'Absent');
                     }
+<<<<<<< HEAD
                   },
                   {
                     name: translations[language].analytics,
@@ -582,6 +610,166 @@ function VPDashboard() {
             </div>
           )}
         </>
+=======
+                  }, 'View Analytics');
+                }
+              },
+              {
+                name: translations[language].actions,
+                width: '100px',
+                formatter: (cell, row) => {
+                  const taId = row.cells[7].data;
+                  return h('button', {
+                    style: `
+                      padding: 6px 12px;
+                      background-color: #ef4444;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 12px;
+                      font-weight: 500;
+                    `,
+                    onclick: () => deactivateTA(taId)
+                  }, translations[language].remove);
+                }
+              }
+            ]}
+            key={language}
+            search={true}
+            pagination={{ enabled: true, limit: 10 }}
+            sort={true}
+            style={{
+              table: {
+                'font-size': '14px',
+                'border-collapse': 'collapse'
+              },
+              th: {
+                'background-color': '#93c5fd',
+                'padding': '16px 12px',
+                'text-align': 'left',
+                'font-weight': '600',
+                'color': '#1e3a8a',
+                'border-bottom': '2px solid #3b82f6'
+              },
+              td: {
+                'padding': '14px 12px',
+                'border-bottom': '1px solid #bfdbfe',
+                'color': '#1e40af',
+                'background-color': '#eff6ff'
+              }
+            }}
+          />
+        </div>
+>>>>>>> f113e75dac238e937e2ddeb57fe71e822a61f53d
+      )}
+
+      {/* PIN Display Modal */}
+      {showPinModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 40,
+            borderRadius: 12,
+            width: 500,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 60,
+              height: 60,
+              background: '#dcfce7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '30px'
+            }}>
+              ✓
+            </div>
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: '24px', fontWeight: '600', color: '#166534' }}>
+              Account Created Successfully!
+            </h2>
+            <p style={{ marginBottom: 24, fontSize: '16px', color: '#374151' }}>
+              New TA: <strong>{newTAName}</strong>
+            </p>
+            <div style={{
+              background: '#f3f4f6',
+              padding: 20,
+              borderRadius: 8,
+              marginBottom: 24
+            }}>
+              <p style={{ marginBottom: 8, fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+                Generated PIN (Save this - it cannot be retrieved later)
+              </p>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: '#1e40af',
+                letterSpacing: '4px',
+                fontFamily: 'monospace'
+              }}>
+                {generatedPin}
+              </div>
+            </div>
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 24,
+              fontSize: '13px',
+              color: '#92400e'
+            }}>
+              ⚠️ <strong>Important:</strong> This PIN is encrypted and stored securely. Make sure to save it now - you won't be able to see it again!
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={copyPinToClipboard}
+                style={{
+                  padding: '12px 24px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                📋 Copy PIN
+              </button>
+              <button
+                onClick={() => setShowPinModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  background: '#16a34a',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Add New TA Modal */}
@@ -638,6 +826,25 @@ function VPDashboard() {
                   value={formData.last_name}
                   onChange={handleInputChange}
                   required
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Korean Name (Optional):
+                </label>
+                <input
+                  type="text"
+                  name="korean_name"
+                  value={formData.korean_name}
+                  onChange={handleInputChange}
                   style={{ 
                     width: '100%', 
                     padding: '10px 12px', 
@@ -714,7 +921,7 @@ function VPDashboard() {
                       flex: 1,
                       padding: '10px',
                       background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Both' ? 'white' : '#374141',
+                      color: formData.session_day === 'Both' ? 'white' : '#374151',
                       border: 'none',
                       borderRadius: 6,
                       cursor: 'pointer',

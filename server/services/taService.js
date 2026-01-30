@@ -1,4 +1,7 @@
 import { sql } from '../config/database.js';
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 10;
 
 export const getAllTAsWithStatus = async () => {
   return await sql`
@@ -29,7 +32,7 @@ export const getAllTAsWithStatus = async () => {
   `;
 };
 
-export const createAccount = async ({ first_name, last_name, email, ta_code, session_day }) => {
+export const createAccount = async ({ first_name, last_name, email, ta_code, session_day, korean_name }) => {
   // Check if email already exists
   const existing = await sql`SELECT * FROM ta_list WHERE email = ${email}`;
   if (existing.length > 0) {
@@ -37,47 +40,51 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
     error.status = 400;
     throw error;
   }
-  
-  // Check if ta_code already exists
-  const existingCode = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
-  if (existingCode.length > 0) {
-    const error = new Error('PIN already exists, please try again');
-    error.status = 400;
-    throw error;
-  }
-  
+
+  // Hash the PIN before storing
+  const hashedPin = await bcrypt.hash(ta_code, SALT_ROUNDS);
+
   const result = await sql`
-    INSERT INTO ta_list (first_name, last_name, email, ta_code, session_day, is_active, created_at) 
-    VALUES (${first_name}, ${last_name}, ${email}, ${ta_code}, ${session_day}, true, NOW()) 
-    RETURNING *
+    INSERT INTO ta_list (first_name, last_name, email, ta_code, session_day, korean_name, is_active, created_at) 
+    VALUES (${first_name}, ${last_name}, ${email}, ${hashedPin}, ${session_day}, ${korean_name || null}, true, NOW()) 
+    RETURNING id, first_name, last_name, email, session_day, korean_name, is_active, created_at
   `;
-  
+
   return { 
     success: true, 
     ta: result[0],
+    unhashed_pin: ta_code, // Return unhashed PIN for display to VP
     message: 'Account created successfully' 
   };
 };
 
 export const signIn = async (ta_code) => {
-  const result = await sql`SELECT * FROM ta_list WHERE ta_code = ${ta_code}`;
+  // Get all active TAs
+  const allTAs = await sql`SELECT * FROM ta_list WHERE is_active = true`;
   
-  if (result.length === 0) {
+  if (allTAs.length === 0) {
     const error = new Error('Invalid PIN');
     error.status = 404;
     throw error;
   }
-  
-  if (!result[0].is_active) {
-    const error = new Error('Account is inactive. Please contact administrator.');
-    error.status = 403;
-    throw error;
+
+  // Check each TA's hashed PIN
+  for (const ta of allTAs) {
+    const isMatch = await bcrypt.compare(ta_code, ta.ta_code);
+    if (isMatch) {
+      // Return TA data without the hashed PIN
+      const { ta_code: _, ...taData } = ta;
+      return { 
+        success: true, 
+        ta: taData 
+      };
+    }
   }
-  
-  return { 
-    success: true, 
-    ta: result[0] 
-  };
+
+  // No match found
+  const error = new Error('Invalid PIN');
+  error.status = 404;
+  throw error;
 };
 
 export const deactivateTA = async (id) => {
@@ -87,4 +94,33 @@ export const deactivateTA = async (id) => {
     WHERE id = ${id}
     RETURNING *
   `;
+};
+
+export const resetPin = async (id) => {
+  // Generate new 6-digit PIN
+  const newPin = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Hash the new PIN
+  const hashedPin = await bcrypt.hash(newPin, SALT_ROUNDS);
+  
+  // Update the database
+  const result = await sql`
+    UPDATE ta_list 
+    SET ta_code = ${hashedPin}
+    WHERE id = ${id}
+    RETURNING id, first_name, last_name, email
+  `;
+  
+  if (result.length === 0) {
+    const error = new Error('TA not found');
+    error.status = 404;
+    throw error;
+  }
+  
+  return {
+    success: true,
+    ta: result[0],
+    unhashed_pin: newPin,
+    message: 'PIN reset successfully'
+  };
 };

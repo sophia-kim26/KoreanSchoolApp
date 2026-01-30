@@ -1,17 +1,19 @@
-const calculateHours = (clockIn, clockOut) => {
-    if (!clockIn || !clockOut) return 0;
-    const start = new Date(clockIn);
-    const end = new Date(clockOut);
-    const hours = (end - start) / (1000 * 60 * 60);
-    return hours > 0 ? hours.toFixed(2) : 0;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
-  };import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
+const calculateHours = (clockIn, clockOut) => {
+  if (!clockIn || !clockOut) return 0;
+  const start = new Date(clockIn);
+  const end = new Date(clockOut);
+  const hours = (end - start) / (1000 * 60 * 60);
+  return hours > 0 ? hours.toFixed(2) : 0;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
+};
 
 function VPTAView() {
   // Extract ta_id from URL params
@@ -22,6 +24,9 @@ function VPTAView() {
   const [taInfo, setTaInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showResetPinModal, setShowResetPinModal] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [resettingPin, setResettingPin] = useState(false);
 
   // Fetch TA info and shifts from API
   useEffect(() => {
@@ -29,7 +34,7 @@ function VPTAView() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Fetch TA information
         const taResponse = await fetch(`http://localhost:3001/api/tas`);
         if (!taResponse.ok) {
@@ -41,13 +46,11 @@ function VPTAView() {
         if (!currentTA) {
           throw new Error(`TA with ID ${ta_id} not found`);
         }
-        
         setTaInfo(currentTA);
         console.log('TA Info:', currentTA);
-        
+
         // Fetch shifts
         const shiftsResponse = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
-        
         if (!shiftsResponse.ok) {
           throw new Error(`HTTP error! status: ${shiftsResponse.status}`);
         }
@@ -76,14 +79,43 @@ function VPTAView() {
     }
   }, [ta_id]);
 
+  const handleResetPin = async () => {
+    if (!confirm(`Are you sure you want to reset the PIN for ${taInfo.first_name} ${taInfo.last_name}?`)) {
+      return;
+    }
+
+    try {
+      setResettingPin(true);
+      const response = await fetch(`http://localhost:3001/api/reset-pin/${ta_id}`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset PIN');
+      }
+
+      const result = await response.json();
+      setNewPin(result.unhashed_pin);
+      setShowResetPinModal(true);
+    } catch (err) {
+      console.error(err);
+      alert('Error resetting PIN: ' + err.message);
+    } finally {
+      setResettingPin(false);
+    }
+  };
+
+  const copyPinToClipboard = () => {
+    navigator.clipboard.writeText(newPin);
+    alert('PIN copied to clipboard!');
+  };
+
   const shifts = useMemo(() => {
     if (!allShifts || allShifts.length === 0) {
       console.log('No shifts returned from API');
       return [];
     }
-    
     console.log(`Using ${allShifts.length} shifts from API for TA ${ta_id}`);
-    
     // Sort by date descending (newest first)
     return allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
   }, [allShifts, ta_id]);
@@ -104,14 +136,14 @@ function VPTAView() {
       }
       grouped[monthYear].push(shift);
     });
-    
+
     // Sort months in reverse chronological order
     const sortedEntries = Object.entries(grouped).sort((a, b) => {
       const dateA = new Date(a[1][0].clock_in);
       const dateB = new Date(b[1][0].clock_in);
       return dateB - dateA;
     });
-    
+
     return Object.fromEntries(sortedEntries);
   }, [shifts]);
 
@@ -275,6 +307,7 @@ function VPTAView() {
                     Edit
                   </button>
                 </div>
+
                 <div style={{
                   backgroundColor: '#ffffff',
                   borderRadius: 8,
@@ -401,7 +434,7 @@ function VPTAView() {
             </div>
 
             {/* Progress Bar */}
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', marginBottom: 25 }}>
               <div style={{
                 width: '100%',
                 height: '35px',
@@ -432,9 +465,141 @@ function VPTAView() {
                 {totalHours}/300 Hours Completed
               </div>
             </div>
+
+            {/* Reset PIN Button */}
+            <div style={{ textAlign: 'center' }}>
+              <button
+                onClick={handleResetPin}
+                disabled={resettingPin}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: resettingPin ? '#9ca3af' : '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: resettingPin ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => !resettingPin && (e.target.style.backgroundColor = '#dc2626')}
+                onMouseOut={(e) => !resettingPin && (e.target.style.backgroundColor = '#ef4444')}
+              >
+                {resettingPin ? 'Resetting...' : '🔄 Reset PIN'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Reset PIN Modal */}
+      {showResetPinModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 40,
+            borderRadius: 12,
+            width: 500,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 60,
+              height: 60,
+              background: '#dcfce7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '30px'
+            }}>
+              ✓
+            </div>
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: '24px', fontWeight: '600', color: '#166534' }}>
+              PIN Reset Successfully!
+            </h2>
+            <p style={{ marginBottom: 24, fontSize: '16px', color: '#374151' }}>
+              New PIN for: <strong>{taInfo ? `${taInfo.first_name} ${taInfo.last_name}` : 'TA'}</strong>
+            </p>
+            <div style={{
+              background: '#f3f4f6',
+              padding: 20,
+              borderRadius: 8,
+              marginBottom: 24
+            }}>
+              <p style={{ marginBottom: 8, fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+                New PIN (Save this - it cannot be retrieved later)
+              </p>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: '#1e40af',
+                letterSpacing: '4px',
+                fontFamily: 'monospace'
+              }}>
+                {newPin}
+              </div>
+            </div>
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 24,
+              fontSize: '13px',
+              color: '#92400e'
+            }}>
+              ⚠️ <strong>Important:</strong> This PIN is encrypted and stored securely. Make sure to save it now - you won't be able to see it again!
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={copyPinToClipboard}
+                style={{
+                  padding: '12px 24px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                📋 Copy PIN
+              </button>
+              <button
+                onClick={() => setShowResetPinModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  background: '#16a34a',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
