@@ -95,3 +95,32 @@ export const deactivateTA = async (id) => {
     RETURNING *
   `;
 };
+
+export const resetPin = async (id) => {
+  // Generate new 6-digit PIN
+  const newPin = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Hash the new PIN
+  const hashedPin = await bcrypt.hash(newPin, SALT_ROUNDS);
+  
+  // Update the database
+  const result = await sql`
+    UPDATE ta_list 
+    SET ta_code = ${hashedPin}
+    WHERE id = ${id}
+    RETURNING id, first_name, last_name, email
+  `;
+  
+  if (result.length === 0) {
+    const error = new Error('TA not found');
+    error.status = 404;
+    throw error;
+  }
+  
+  return {
+    success: true,
+    ta: result[0],
+    unhashed_pin: newPin,
+    message: 'PIN reset successfully'
+  };
+};
