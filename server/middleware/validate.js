@@ -4,7 +4,7 @@ const ALLOWED_IPS = [
   '::1',                 // localhost IPv6
   '192.168.1.13',
   '192.168.1.1'
-  // Add Korean School's IP when I know it
+  // Add Korean School's IP when I know it but for next time add bca ip
 ];
 
 // Get client IP from request

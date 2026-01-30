@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js';
 import tasRoutes from './routes/tas.js';
 import shiftsRoutes from './routes/shifts.js';
 import attendanceRoutes from './routes/attendance.js';
+import fridayRouter from './routes/friday.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,10 +21,11 @@ app.use(cors());
 app.use(express.json()); 
 
 // Routes
-app.use('/api', authRoutes);
-app.use('/api/tas', tasRoutes);
-app.use('/api/shifts', shiftsRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/shifts', shiftsRoutes);
+app.use('/api/tas', tasRoutes);
+app.use('/api/friday', fridayRouter);  // Mount at /api/friday, router handles /
+app.use('/api', authRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
