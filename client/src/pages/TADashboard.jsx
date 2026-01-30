@@ -493,7 +493,7 @@ function TADashboard() {
                           padding: 8px 12px;
                           cursor: pointer;
                           font-size: 13px;
-                          transition: background-color 0.2s;
+                          transition: background-color 0.2s; 
                         `,
                         onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
                         onmouseout: function() { this.style.backgroundColor = 'transparent'; },
