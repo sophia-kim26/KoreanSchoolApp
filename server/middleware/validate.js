@@ -1,50 +1,43 @@
-// Bergen County Academies coordinates
-const BCA_LOCATION = {
-  latitude: 40.9137,
-  longitude: -74.0789,
-  radiusMeters: 100 // Allow 100 meter radius around the school
+// Allowed IP addresses or network ranges
+const ALLOWED_IPS = [
+  '127.0.0.1',           // localhost for testing
+  '::1',                 // localhost IPv6
+  '192.168.1.13',
+  '192.168.1.1'
+  // Add Korean School's IP when I know it
+];
+
+// Get client IP from request
+const getClientIP = (req) => {
+  // Check various headers in order of preference
+  return req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+         req.headers['x-real-ip'] ||
+         req.connection.remoteAddress ||
+         req.socket.remoteAddress ||
+         req.ip;
 };
 
-// Calculate distance between two coordinates (Haversine formula)
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = lat1 * Math.PI / 180;
-  const φ2 = lat2 * Math.PI / 180;
-  const Δφ = (lat2 - lat1) * Math.PI / 180;
-  const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Distance in meters
-};
-
+// IP address checking
 export const validateLocation = (req, res, next) => {
-  const { latitude, longitude } = req.body;
+  const clientIP = getClientIP(req);
   
-  if (!latitude || !longitude) {
-    return res.status(400).json({ 
-      error: 'Location is required. Please enable location services.' 
-    });
-  }
+  console.log(`Clock-in attempt from IP: ${clientIP}`);
+  
+  // Check if IP is in allowed list
+  const isAllowed = ALLOWED_IPS.some(allowedIP => {
+    // Handle some IPv6 localhost variations
+    if (clientIP === '::ffff:127.0.0.1' && allowedIP === '127.0.0.1') return true;
+    if (clientIP === '::1' && allowedIP === '127.0.0.1') return true;
+    return clientIP === allowedIP;
+  });
 
-  const distance = calculateDistance(
-    latitude,
-    longitude,
-    BCA_LOCATION.latitude,
-    BCA_LOCATION.longitude
-  );
-
-  console.log(`Distance from BCA: ${distance.toFixed(2)} meters`);
-
-  if (distance > BCA_LOCATION.radiusMeters) {
+  if (!isAllowed) {
     return res.status(403).json({ 
-      error: `You must be at Bergen County Academies to clock in. Current distance: ${distance.toFixed(0)}m` 
+      error: `Clock-in not allowed from this location. Please connect to the Korean School network.` 
     });
   }
 
+  console.log(`✓ IP ${clientIP} is authorized`);
   next();
 };
 
@@ -63,7 +56,6 @@ export const validateCreateAccount = (req, res, next) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
   
-  // Basic email validation
   if (!/\S+@\S+\.\S+/.test(email)) {
     return res.status(400).json({ error: 'Invalid email format' });
   }

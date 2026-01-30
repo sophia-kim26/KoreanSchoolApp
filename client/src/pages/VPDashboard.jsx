@@ -9,16 +9,53 @@ function VPDashboard() {
   const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [generatedPin, setGeneratedPin] = useState('');
+  const [newTAName, setNewTAName] = useState('');
   const [activeTab, setActiveTab] = useState('appearance');
+  const [language, setLanguage] = useState('en'); // 'en' or 'ko'
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    ta_code: "",
     email: "",
     session_day: "",
-    is_active: true
+    is_active: true,
+    korean_name: ""
   });
   
+  const translations = {
+    en: {
+      firstName: "First Name",
+      lastName: "Last Name",
+      koreanName: "Korean Name",
+      sessionDay: "Session Day",
+      active: "Active",
+      totalHours: "Total Hours",
+      attendance: "Attendance",
+      analytics: "Analytics",
+      actions: "Actions",
+      yes: "Yes",
+      no: "No",
+      viewAnalytics: "View Analytics",
+      remove: "Remove"
+    },
+    ko: {
+      firstName: "이름",
+      lastName: "성",
+      koreanName: "한국어 이름",
+      sessionDay: "수업 요일",
+      active: "활성 상태",
+      totalHours: "총 시간",
+      attendance: "출석",
+      analytics: "통계",
+      actions: "작업",
+      yes: "예",
+      no: "아니오",
+      viewAnalytics: "통계 보기",
+      remove: "삭제"
+    }
+  };
+
   const generatePIN = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -59,13 +96,13 @@ function VPDashboard() {
             if (row.querySelector('th')) return;
             
             row.addEventListener('click', (e) => {
-              //if (e.target.tagName === 'BUTTON') return;
               if (e.target.closest('button')) return;
 
-              const firstCell = row.querySelector('.gridjs-td');
-              if (firstCell) {
-                handleRowClick(firstCell.textContent);
-                alert(`View details for TA ID: ${taId}`);
+              const cells = row.querySelectorAll('.gridjs-td');
+              if (cells.length >= 8) {
+                const taId = cells[7].textContent;
+                console.log('Row clicked, TA ID:', taId);
+                navigate(`/vp/ta-view/${taId}`);
               }
             });
             
@@ -111,13 +148,13 @@ function VPDashboard() {
     e.preventDefault();
     
     try {
-      // Generate PIN and prepare data
+      const pin = generatePIN();
       const dataToSend = {
         ...formData,
-        ta_code: generatePIN()
+        ta_code: pin
       };
       
-      const response = await fetch("http://localhost:3001/api/create-account", {
+      const response = await fetch("http://localhost:3001/api/create-account-vp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -126,18 +163,30 @@ function VPDashboard() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
+        // Store the unhashed PIN and TA name for display
+        setGeneratedPin(result.unhashed_pin);
+        setNewTAName(`${formData.first_name} ${formData.last_name}`);
+        
+        // Reset form and close modal
         setFormData({
           first_name: "",
           last_name: "",
-          ta_code: "",
-          email: "",
+          korean_name: "",
           session_day: "",
-          is_active: true
+          is_active: true,
         });
         setShowModal(false);
+        
+        // Show PIN modal
+        setShowPinModal(true);
+        
+        // Refresh data
         fetchData();
       } else {
-        alert("Failed to add new TA");
+        const error = await response.json();
+        alert(error.message || "Failed to add new TA");
       }
     } catch (err) {
       console.error(err);
@@ -145,6 +194,10 @@ function VPDashboard() {
     }
   };
 
+  const copyPinToClipboard = () => {
+    navigator.clipboard.writeText(generatedPin);
+    alert('PIN copied to clipboard!');
+  };
 
   const toggleAttendance = async (taId, currentAttendance) => {
     try {
@@ -187,21 +240,17 @@ function VPDashboard() {
 
   const handleRowClick = (taId) => {
     console.log('Clicked TA ID:', taId);
-    // Navigate to detail page or show details modal
     navigate(`/vp/ta-view/${taId}`);
   };
 
   const gridData = data.map(row => [
-    row.id, 
     row.first_name, 
     row.last_name, 
-    row.ta_code, 
-    row.email, 
+    row.korean_name,
     row.session_day, 
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.id,
     row.id
   ]);
 
@@ -223,8 +272,6 @@ function VPDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>VP Dashboard - TA List</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-        
-
           <button 
             onClick={() => setShowSettingsModal(true)}
             style={{ 
@@ -298,89 +345,72 @@ function VPDashboard() {
           <Grid
             data={gridData}
             columns={[
-              { name: "ID", width: '60px' },
-              { name: "First Name", width: '120px' },
-              { name: "Last Name", width: '120px' },
-              { name: "TA Code", width: '100px' },
-              { name: "Email", width: '220px' },
-              { name: "Session Day", width: '120px' },
+              { name: translations[language].firstName, width: '120px' },
+              { name: translations[language].lastName, width: '120px' },
+              { name: translations[language].koreanName, width: '120px' },
+              { name: translations[language].sessionDay, width: '120px' },
               { 
-                name: "Active",
+                name: translations[language].active,
                 width: '80px',
                 formatter: (cell) => cell ? 'Yes' : 'No'
               },
               {
-                name: "Total Hours",
+                name: translations[language].totalHours,
                 width: '100px',
                 formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
               },
               {
-                name: "Attendance",
+                name: translations[language].attendance,
                 width: '120px',
                 formatter: (cell, row) => {
-                  const taId = row.cells[0].data;
-                  const dropdownId = `dropdown-${taId}`;
-                  
-                  return h('div', {
-                    style: 'position: relative; display: inline-block;'
-                  }, [
-                    h('button', {
-                      id: `btn-${taId}`,
-                      style: `
-                        display: inline-block;
-                        padding: 6px 16px;
-                        border-radius: 4px;
-                        font-weight: 500;
-                        font-size: 13px;
-                        background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                        color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                        border: none;
-                        cursor: pointer;
-                        transition: opacity 0.2s;
-                      `,
-                      onmouseover: function() { this.style.opacity = '0.8'; },
-                      onmouseout: function() { this.style.opacity = '1'; },
-                      onclick: (e) => {
-                        e.stopPropagation();
-                        const dropdown = document.getElementById(dropdownId);
-                        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
-                        allDropdowns.forEach(d => {
-                          if (d.id !== dropdownId) d.style.display = 'none';
-                        });
-                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                      }
-                    }, cell || 'Absent')
-                  ]);
+                  const taId = row.cells[7].data;
+                  return h('button', {
+                    style: `
+                      display: inline-block;
+                      padding: 6px 16px;
+                      border-radius: 4px;
+                      font-weight: 500;
+                      font-size: 13px;
+                      background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                      color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                      border: none;
+                      cursor: pointer;
+                      transition: opacity 0.2s;
+                    `,
+                    onmouseover: function() { this.style.opacity = '0.8'; },
+                    onmouseout: function() { this.style.opacity = '1'; },
+                    onclick: () => toggleAttendance(taId, cell)
+                  }, cell || 'Absent');
                 }
               },
-
               {
-  name: "Analytics",
-  width: "140px",
-  formatter: (cell) => {
-    return h('button', {
-      style: `
-        padding: 6px 12px;
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-      `,
-      onclick: (e) => {
-        e.stopPropagation(); // IMPORTANT: prevents row click firing too
-        handleRowClick(cell); // cell is the taId we passed in gridData
-      }
-    }, 'View Analytics');
-  }
-},
-
-              {
-                name: "Actions",
-                width: '100px',
+                name: translations[language].analytics,
+                width: "140px",
                 formatter: (cell) => {
+                  return h('button', {
+                    style: `
+                      padding: 6px 12px;
+                      background-color: #2563eb;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 12px;
+                      font-weight: 600;
+                    `,
+                    onclick: (e) => {
+                      e.stopPropagation();
+                      console.log('Analytics button clicked for TA ID:', cell);
+                      handleRowClick(cell);
+                    }
+                  }, 'View Analytics');
+                }
+              },
+              {
+                name: translations[language].actions,
+                width: '100px',
+                formatter: (cell, row) => {
+                  const taId = row.cells[7].data;
                   return h('button', {
                     style: `
                       padding: 6px 12px;
@@ -392,11 +422,12 @@ function VPDashboard() {
                       font-size: 12px;
                       font-weight: 500;
                     `,
-                    onclick: () => deactivateTA(cell)
-                  }, 'Remove');
+                    onclick: () => deactivateTA(taId)
+                  }, translations[language].remove);
                 }
               }
             ]}
+            key={language}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
             sort={true}
@@ -424,7 +455,115 @@ function VPDashboard() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* PIN Display Modal */}
+      {showPinModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 40,
+            borderRadius: 12,
+            width: 500,
+            maxWidth: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 60,
+              height: 60,
+              background: '#dcfce7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '30px'
+            }}>
+              ✓
+            </div>
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: '24px', fontWeight: '600', color: '#166534' }}>
+              Account Created Successfully!
+            </h2>
+            <p style={{ marginBottom: 24, fontSize: '16px', color: '#374151' }}>
+              New TA: <strong>{newTAName}</strong>
+            </p>
+            <div style={{
+              background: '#f3f4f6',
+              padding: 20,
+              borderRadius: 8,
+              marginBottom: 24
+            }}>
+              <p style={{ marginBottom: 8, fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+                Generated PIN (Save this - it cannot be retrieved later)
+              </p>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: '#1e40af',
+                letterSpacing: '4px',
+                fontFamily: 'monospace'
+              }}>
+                {generatedPin}
+              </div>
+            </div>
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 24,
+              fontSize: '13px',
+              color: '#92400e'
+            }}>
+              ⚠️ <strong>Important:</strong> This PIN is encrypted and stored securely. Make sure to save it now - you won't be able to see it again!
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={copyPinToClipboard}
+                style={{
+                  padding: '12px 24px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                📋 Copy PIN
+              </button>
+              <button
+                onClick={() => setShowPinModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  background: '#16a34a',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New TA Modal */}
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -478,6 +617,25 @@ function VPDashboard() {
                   value={formData.last_name}
                   onChange={handleInputChange}
                   required
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    borderRadius: 6, 
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Korean Name (Optional):
+                </label>
+                <input
+                  type="text"
+                  name="korean_name"
+                  value={formData.korean_name}
+                  onChange={handleInputChange}
                   style={{ 
                     width: '100%', 
                     padding: '10px 12px', 
@@ -554,7 +712,7 @@ function VPDashboard() {
                       flex: 1,
                       padding: '10px',
                       background: formData.session_day === 'Both' ? '#2563eb' : '#e5e7eb',
-                      color: formData.session_day === 'Both' ? 'white' : '#374141',
+                      color: formData.session_day === 'Both' ? 'white' : '#374151',
                       border: 'none',
                       borderRadius: 6,
                       cursor: 'pointer',
@@ -621,65 +779,6 @@ function VPDashboard() {
         </div>
       )}
 
-      {showSettingsModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            padding: 30,
-            borderRadius: 12,
-            width: 500,
-            maxWidth: '90%',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Settings</h2>
-            
-            <div style={{ marginBottom: 20 }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Account Information</h3>
-              <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: 8 }}>
-                Email: {user?.email || user?.name}
-              </p>
-            </div>
-
-            <div style={{ marginBottom: 20, paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: 12 }}>Dashboard Settings</h3>
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>
-                Configure your dashboard preferences and manage your account settings here.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid #e5e7eb' }}>
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Settings Modal */}
       {showSettingsModal && (
         <div style={{
@@ -720,7 +819,6 @@ function VPDashboard() {
               <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
             </div>
 
-            {/* Tabs */}
             <div style={{ 
               display: 'flex', 
               gap: 0, 
@@ -783,60 +881,50 @@ function VPDashboard() {
               </button>
             </div>
 
-            {/* Settings Content */}
             <div style={{ 
               background: '#dbeafe', 
               padding: 30, 
               borderRadius: 8,
               minHeight: '400px'
             }}>
-              {/* Appearance Tab */}
               {activeTab === 'appearance' && (
                 <>
-                  {/* Language Preferences */}
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      marginBottom: 12,
-                      color: '#1e40af'
-                    }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Language Preferences
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{
-                        padding: '10px 30px',
-                        background: 'white',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
+                      <button 
+                        onClick={() => setLanguage('en')}
+                        style={{
+                          padding: '10px 30px',
+                          background: language === 'en' ? '#bfdbfe' : 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}>
                         English
                       </button>
-                      <button style={{
-                        padding: '10px 30px',
-                        background: 'white',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#6b7280'
-                      }}>
+                      <button 
+                        onClick={() => setLanguage('ko')}
+                        style={{
+                          padding: '10px 30px',
+                          background: language === 'ko' ? '#bfdbfe' : 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}>
                         Korean
                       </button>
                     </div>
                   </div>
 
-                  {/* Theme */}
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      marginBottom: 12,
-                      color: '#1e40af'
-                    }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Theme
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -865,14 +953,8 @@ function VPDashboard() {
                     </div>
                   </div>
 
-                  {/* Text/Icon Size */}
                   <div>
-                    <h3 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      marginBottom: 12,
-                      color: '#1e40af'
-                    }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Text/Icon Size
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -914,15 +996,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Navigation Tab */}
               {activeTab === 'navigation' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Keyboard Navigation
                   </h3>
                   
@@ -1014,15 +1090,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Account Tab */}
               {activeTab === 'account' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Information
                   </h3>
 
@@ -1067,15 +1137,9 @@ function VPDashboard() {
                 </>
               )}
 
-              {/* Privacy Tab */}
               {activeTab === 'privacy' && (
                 <>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: 20,
-                    color: '#1e40af'
-                  }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>
                     Security
                   </h3>
 
