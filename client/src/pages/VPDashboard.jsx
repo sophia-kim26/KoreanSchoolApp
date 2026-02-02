@@ -14,8 +14,11 @@ function VPDashboard() {
   const [generatedPin, setGeneratedPin] = useState('');
   const [newTAName, setNewTAName] = useState('');
   const [activeTab, setActiveTab] = useState('appearance');
-  const [mainTab, setMainTab] = useState('tas'); // 'tas' or 'friday'
-  const [language, setLanguage] = useState('en'); // 'en' or 'ko'
+  const [mainTab, setMainTab] = useState('tas');
+  const [language, setLanguage] = useState('en');
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDates, setSelectedDates] = useState(new Set());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -64,6 +67,47 @@ function VPDashboard() {
 
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
   const navigate = useNavigate();
+
+  // Calendar helper functions
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    return { daysInMonth, startingDayOfWeek };
+  };
+
+  const toggleDate = (day) => {
+    const dateStr = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}-${day}`;
+    const newSelected = new Set(selectedDates);
+    
+    if (newSelected.has(dateStr)) {
+      newSelected.delete(dateStr);
+    } else {
+      newSelected.add(dateStr);
+    }
+    
+    setSelectedDates(newSelected);
+  };
+
+  const isDateSelected = (day) => {
+    const dateStr = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}-${day}`;
+    return selectedDates.has(dateStr);
+  };
+
+  const changeMonth = (offset) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setCurrentMonth(newDate);
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   useEffect(() => {
     fetchData();
@@ -309,6 +353,8 @@ function VPDashboard() {
       </div>
     );
   }
+
+  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -1035,8 +1081,194 @@ function VPDashboard() {
                       </button>
                     </div>
                   </div>
+
+                  <div style={{ marginBottom: 30 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                      Schedule
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setCurrentMonth(new Date());
+                        setShowCalendar(true);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        background: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      📅 Set Days
+                    </button>
+                    {selectedDates.size > 0 && (
+                      <p style={{ marginTop: 12, fontSize: '14px', color: '#374151' }}>
+                        <strong>{selectedDates.size}</strong> day{selectedDates.size !== 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calendar Popup Modal */}
+      {showCalendar && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1002
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 12,
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+            maxWidth: '450px',
+            width: '90%',
+            padding: 24
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#1e40af' }}>Select Days</h3>
+              <button
+                onClick={() => setShowCalendar(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '0 8px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <button
+                onClick={() => changeMonth(-1)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#e5e7eb',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600'
+                }}
+              >
+                ←
+              </button>
+              <span style={{ fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+              </span>
+              <button
+                onClick={() => changeMonth(1)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#e5e7eb',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600'
+                }}
+              >
+                →
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 12 }}>
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} style={{ textAlign: 'center', padding: '8px 0', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+              {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} style={{ aspectRatio: '1', padding: 8 }} />
+              ))}
+              
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const selected = isDateSelected(day);
+                
+                return (
+                  <button
+                    key={day}
+                    onClick={() => toggleDate(day)}
+                    style={{
+                      aspectRatio: '1',
+                      padding: 8,
+                      background: selected ? '#2563eb' : '#f3f4f6',
+                      color: selected ? 'white' : '#374151',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: selected ? '600' : '500',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => {
+                      if (!selected) e.currentTarget.style.background = '#e5e7eb';
+                    }}
+                    onMouseOut={(e) => {
+                      if (!selected) e.currentTarget.style.background = '#f3f4f6';
+                    }}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button
+                onClick={() => setSelectedDates(new Set())}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => setShowCalendar(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
