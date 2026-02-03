@@ -82,11 +82,21 @@ router.put('/:id', async (req, res, next) => {
     console.log("=== PUT REQUEST DEBUG ===");
     console.log("Shift ID:", req.params.id);
     console.log("Request body:", JSON.stringify(req.body, null, 2));
-    console.log("clock_in:", req.body.clock_in);
-    console.log("clock_out:", req.body.clock_out);
     
-    const { clock_in, clock_out } = req.body;
-    const result = await updateShift(req.params.id, { clock_in, clock_out });
+    // Extract ALL possible fields that might be updated
+    const { clock_in, clock_out, notes, elapsed_time, attendance } = req.body;
+    
+    // Build update object with only the fields that were sent
+    const updateData = {};
+    if (clock_in !== undefined) updateData.clock_in = clock_in;
+    if (clock_out !== undefined) updateData.clock_out = clock_out;
+    if (notes !== undefined) updateData.notes = notes;
+    if (elapsed_time !== undefined) updateData.elapsed_time = elapsed_time;
+    if (attendance !== undefined) updateData.attendance = attendance;
+    
+    console.log("Update data being sent:", updateData);
+    
+    const result = await updateShift(req.params.id, updateData);
     
     console.log("Update successful:", result);
     console.log("========================");
@@ -97,4 +107,5 @@ router.put('/:id', async (req, res, next) => {
     next(error);
   }
 });
+
 export default router;

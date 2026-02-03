@@ -63,6 +63,11 @@ function TADashboard() {
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
   const [activeShiftId, setActiveShiftId] = useState(null);
 
+  // New states for notes editing
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [editingShiftId, setEditingShiftId] = useState(null);
+  const [editingNotes, setEditingNotes] = useState('');
+
   const overlayStyle = {
     position: "fixed",
     top: 0,
@@ -111,6 +116,55 @@ function TADashboard() {
       }
     } catch (err) {
       console.error("Failed to check active shift:", err);
+    }
+  };
+
+  // Function to update notes in database
+  const updateNotes = async (shiftId, notes) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          notes: notes
+        })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to update notes');
+      }
+      
+      console.log("Notes updated successfully for shift:", shiftId);
+      
+      // Immediately update the local state to reflect the change
+      setData(prevData => 
+        prevData.map(shift => 
+          shift.id === shiftId 
+            ? { ...shift, notes: notes }
+            : shift
+        )
+      );
+      
+    } catch (err) {
+      console.error("Failed to update notes:", err);
+      alert("Failed to update notes. Please try again.");
+    }
+  };
+
+  // Handler for opening notes modal
+  const handleEditNotes = (shiftId, currentNotes) => {
+    setEditingShiftId(shiftId);
+    setEditingNotes(currentNotes || '');
+    setShowNotesModal(true);
+  };
+
+  // Handler for saving notes
+  const handleSaveNotes = async () => {
+    if (editingShiftId) {
+      await updateNotes(editingShiftId, editingNotes);
+      setShowNotesModal(false);
+      setEditingShiftId(null);
+      setEditingNotes('');
     }
   };
 
@@ -373,8 +427,6 @@ function TADashboard() {
                       return { bg: '#fef3c7', text: '#92400e' }; // yellow
                     } else if (status === 'Early Leave') {
                       return { bg: '#dbeafe', text: '#1e40af' }; // blue
-                    // } else if (status === 'Absent') {
-                    //   return { bg: '#fee2e2', text: '#991b1b' }; // red
                     } else { // Present
                       return { bg: '#c4e9d1ff', text: '#166534' }; // green
                     }
@@ -450,25 +502,6 @@ function TADashboard() {
                           document.getElementById(dropdownId).style.display = 'none';
                         }
                       }, 'Present'),
-                      // h('div', {
-                      //   style: `
-                      //     padding: 8px 12px;
-                      //     cursor: pointer;
-                      //     font-size: 13px;
-                      //     transition: background-color 0.2s;
-                      //   `,
-                      //   onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                      //   onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                      //   onclick: (e) => {
-                      //     e.stopPropagation();
-                      //     const button = document.getElementById(buttonId);
-                      //     const colors = getColors('Absent');
-                      //     button.style.backgroundColor = colors.bg;
-                      //     button.style.color = colors.text;
-                      //     button.textContent = 'Absent';
-                      //     document.getElementById(dropdownId).style.display = 'none';
-                      //   }
-                      // }, 'Absent'),
                       h('div', {
                         style: `
                           padding: 8px 12px;
@@ -514,7 +547,54 @@ function TADashboard() {
               "Clock In",
               "Clock Out",
               "Elapsed Time",
-              "Notes"
+              {
+                name: "Notes",
+                formatter: (cell, row) => {
+                  const shiftId = row.cells[0].data;
+                  const currentNotes = cell || '';
+                  
+                  return h('div', {
+                    style: 'display: flex; align-items: center; gap: 8px;'
+                  }, [
+                    h('span', {
+                      style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
+                    }, currentNotes || 'No notes'),
+                    h('button', {
+                      style: `
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        padding: 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #6b7280;
+                        transition: color 0.2s;
+                      `,
+                      onmouseover: function() { this.style.color = '#1e40af'; },
+                      onmouseout: function() { this.style.color = '#6b7280'; },
+                      onclick: (e) => {
+                        e.stopPropagation();
+                        handleEditNotes(shiftId, currentNotes);
+                      },
+                      title: 'Edit notes'
+                    }, 
+                    // Pencil icon SVG
+                    h('svg', {
+                      width: '16',
+                      height: '16',
+                      viewBox: '0 0 24 24',
+                      fill: 'none',
+                      stroke: 'currentColor',
+                      'stroke-width': '2',
+                      'stroke-linecap': 'round',
+                      'stroke-linejoin': 'round'
+                    }, [
+                      h('path', { d: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z' })
+                    ]))
+                  ]);
+                }
+              }
             ]}
             search={true}
             pagination={{ enabled: true, limit: 10 }}
@@ -525,6 +605,64 @@ function TADashboard() {
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
       {currentUser && <Chart currentUser={currentUser}/>}
+
+      {/* Notes Edit Modal */}
+      {showNotesModal && (
+        <div style={overlayStyle}>
+          <div style={{
+            ...modalStyle,
+            minWidth: '400px',
+            textAlign: 'left'
+          }}>
+            <h2 style={{ marginBottom: '20px' }}>Edit Notes</h2>
+            <textarea
+              value={editingNotes}
+              onChange={(e) => setEditingNotes(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSaveNotes();
+                }
+              }}
+              placeholder="Enter notes here..."
+              style={{
+                width: '100%',
+                minHeight: '120px',
+                padding: '10px',
+                borderRadius: '4px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                marginBottom: '20px'
+              }}
+              autoFocus
+            />
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px', 
+              justifyContent: 'flex-end' 
+            }}>
+              <button
+                onClick={handleSaveNotes}
+                className="btn-primary"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setShowNotesModal(false);
+                  setEditingShiftId(null);
+                  setEditingNotes('');
+                }}
+                className="btn-danger"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Clock In Confirmation */}
       {showClockInConfirm && (

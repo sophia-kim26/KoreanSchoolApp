@@ -147,24 +147,79 @@ export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
 //   return result[0];
 // };
 
-export const updateShift = async (id, { clock_in, clock_out }) => {
-  console.log("Updating shift:", id, "with data:", { clock_in, clock_out });
+// export const updateShift = async (id, { clock_in, clock_out, notes, elapsed_time, attendance }) => {
+//   console.log("Updating shift:", id, "with data:", { clock_in, clock_out, notes, elapsed_time, attendance });
   
-  const result = await sql`
-    UPDATE shifts
-    SET 
-      clock_in = ${clock_in},
-      clock_out = ${clock_out}
-    WHERE id = ${id}
-    RETURNING *
-  `;
+//   const result = await sql`
+//     UPDATE shifts
+//     SET 
+//       clock_in = ${clock_in},
+//       clock_out = ${clock_out}
+//       notes = ${notes},
+//       elapsed_time = ${elapsed_time},
+//       attendance = ${attendance}
+//     WHERE id = ${id}
+//     RETURNING *
+//   `;
   
-  console.log("Update result:", result);
+//   console.log("Update result:", result);
   
-  if (result.length === 0) {
-    const error = new Error('Shift not found');
-    error.status = 404;
+//   if (result.length === 0) {
+//     const error = new Error('Shift not found');
+//     error.status = 404;
+//     throw error;
+//   }
+//   return result[0];
+// };
+
+export const updateShift = async (id, updateData) => {
+  console.log("=== UPDATE SHIFT SERVICE ===");
+  console.log("Shift ID:", id);
+  console.log("Update data received:", updateData);
+  
+  try {
+    // First get the current shift data
+    const current = await sql`SELECT * FROM shifts WHERE id = ${id}`;
+    
+    if (current.length === 0) {
+      const error = new Error('Shift not found');
+      error.status = 404;
+      throw error;
+    }
+    
+    // Merge current data with updates (only update fields that are provided)
+    const merged = {
+      clock_in: updateData.clock_in !== undefined ? updateData.clock_in : current[0].clock_in,
+      clock_out: updateData.clock_out !== undefined ? updateData.clock_out : current[0].clock_out,
+      notes: updateData.notes !== undefined ? updateData.notes : current[0].notes,
+      elapsed_time: updateData.elapsed_time !== undefined ? updateData.elapsed_time : current[0].elapsed_time,
+      attendance: updateData.attendance !== undefined ? updateData.attendance : current[0].attendance
+    };
+    
+    console.log("Merged data for update:", merged);
+    
+    // Now update with all fields
+    const result = await sql`
+      UPDATE shifts
+      SET 
+        clock_in = ${merged.clock_in},
+        clock_out = ${merged.clock_out},
+        notes = ${merged.notes},
+        elapsed_time = ${merged.elapsed_time},
+        attendance = ${merged.attendance}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    
+    console.log("Update successful:", result[0]);
+    console.log("============================");
+    
+    return result[0];
+  } catch (error) {
+    console.error("=== UPDATE ERROR ===");
+    console.error("Error:", error);
+    console.error("====================");
     throw error;
   }
-  return result[0];
 };
+
