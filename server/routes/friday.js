@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    console.log('Friday route hit!');
     const result = await getAllFridayData();
     res.json(result);
   } catch (error) {
