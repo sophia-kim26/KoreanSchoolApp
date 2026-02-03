@@ -80,8 +80,14 @@ function VPDashboard() {
     return { daysInMonth, startingDayOfWeek };
   };
 
+  const formatDateKey = (year, month, day) => {
+    const m = (month + 1).toString().padStart(2, '0');
+    const d = day.toString().padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  };
+
   const toggleDate = (day) => {
-    const dateStr = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}-${day}`;
+    const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const newSelected = new Set(selectedDates);
     
     if (newSelected.has(dateStr)) {
@@ -94,7 +100,7 @@ function VPDashboard() {
   };
 
   const isDateSelected = (day) => {
-    const dateStr = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}-${day}`;
+    const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     return selectedDates.has(dateStr);
   };
 
@@ -111,6 +117,7 @@ function VPDashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchSavedDates();
     fetchFridayData();
   }, []);
 
@@ -119,6 +126,42 @@ function VPDashboard() {
       navigate('/vp/login');
     }
   }, [isLoading, isAuthenticated, navigate]);
+
+  const fetchSavedDates = () => {
+    fetch("http://localhost:3001/api/friday/get-calendar-dates") 
+      .then(res => res.json())
+      .then(json => {
+        if (json.dates && Array.isArray(json.dates)) {
+          setSelectedDates(new Set(json.dates));
+        }
+      })
+      .catch(err => console.log("No saved dates found or error fetching them"));
+  };
+
+  const handleSaveDates = async () => {
+    try {
+      const datesArray = Array.from(selectedDates);
+      
+      const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dates: datesArray })
+      });
+
+      if (response.ok) {
+        setShowCalendar(false);
+        await fetchFridayData(); 
+        alert("Dates saved! The table now shows only selected dates.");
+      } else {
+        const err = await response.json(); 
+        console.error("Server Error:", err);
+        alert("Failed to save dates.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving dates.");
+    }
+  };
 
   const fetchData = () => {
     console.log("Fetching data...");
@@ -320,16 +363,26 @@ function VPDashboard() {
     row.id  
   ]);
 
-  // all columns except hidden ones
   const getFridayColumns = () => {
     if (fridayData.length === 0) return [];
     
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     
     const sampleRow = fridayData[0];
-    return Object.keys(sampleRow)
-      .filter(key => !hiddenColumns.includes(key))
-      .map(key => ({
+    const keys = Object.keys(sampleRow).filter(key => !hiddenColumns.includes(key));
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    const dateKeys = keys.filter(key => dateRegex.test(key));
+    const otherKeys = keys.filter(key => !dateRegex.test(key));
+    
+    const filteredDateKeys = dateKeys.filter(dateKey => selectedDates.has(dateKey));
+    
+    filteredDateKeys.sort();
+    
+    const finalKeys = [...otherKeys, ...filteredDateKeys];
+
+    return finalKeys.map(key => ({
         name: key.split('_').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' '),
@@ -597,7 +650,7 @@ function VPDashboard() {
           
           {fridayData.length === 0 ? (
             <div>
-              <p>No Friday data found.</p>
+              <p>No Friday data found. Please select dates in Settings.</p>
               <button onClick={fetchFridayData} style={{ padding: '10px 20px', marginTop: 10 }}>
                 Retry Load
               </button>
@@ -615,12 +668,9 @@ function VPDashboard() {
                   name: col.name,
                   width: '150px',
                   formatter: (cell) => {
-                    // Handle boolean values (TRUE/FALSE)
                     if (cell === true) return '✓';
                     if (cell === false) return '✗';
-                    // Handle null/undefined
                     if (cell === null || cell === undefined) return '';
-                    // Return the value as-is for other types
                     return cell;
                   }
                 }))}
@@ -1254,7 +1304,7 @@ function VPDashboard() {
                 Clear All
               </button>
               <button
-                onClick={() => setShowCalendar(false)}
+                onClick={handleSaveDates}
                 style={{
                   flex: 1,
                   padding: '12px',
