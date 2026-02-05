@@ -213,10 +213,10 @@ function TADashboard() {
     : [];
 
   const gridData = taData.map(row => [
-    row.id,
+    row.id, // or format a date field
     row.attendance,
-    row.clock_in,
-    row.clock_out,
+    row.clock_in ? new Date(row.clock_in).toLocaleString() : 'N/A',
+    row.clock_out ? new Date(row.clock_out).toLocaleString() : 'N/A',
     row.elapsed_time,
     row.notes
   ]);
@@ -272,7 +272,7 @@ function TADashboard() {
       setClockedIn(true);
       setActiveShiftId(newShift.id);
       console.log("Shift created with ID:", newShift.id);
-      
+      fetchShifts();
       alert("Successfully clocked in!");
       
     } catch (err) {
@@ -321,6 +321,7 @@ function TADashboard() {
       console.log(`Shift ${activeShiftId} updated with clock-out time`);
       await fetchShifts();
       setActiveShiftId(null);
+      fetchShifts();
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
