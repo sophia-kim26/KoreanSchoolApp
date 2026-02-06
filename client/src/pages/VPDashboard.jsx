@@ -138,30 +138,46 @@ function VPDashboard() {
       .catch(err => console.log("No saved dates found or error fetching them"));
   };
 
-  const handleSaveDates = async () => {
-    try {
-      const datesArray = Array.from(selectedDates);
-      
-      const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dates: datesArray })
-      });
+  // Replace your handleSaveDates function with this version that has better error logging:
 
-      if (response.ok) {
-        setShowCalendar(false);
-        await fetchFridayData(); 
-        alert("Dates saved! The table now shows only selected dates.");
-      } else {
-        const err = await response.json(); 
-        console.error("Server Error:", err);
-        alert("Failed to save dates.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error saving dates.");
+  // Replace your handleSaveDates function with this version:
+
+const handleSaveDates = async () => {
+  try {
+    const datesArray = Array.from(selectedDates);
+    console.log('Saving dates:', datesArray);
+    
+    const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dates: datesArray })
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers.get('content-type'));
+    
+    // Get the raw text first to see what we're actually receiving
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+
+    if (response.ok) {
+      // Try to parse as JSON
+      const responseData = JSON.parse(responseText);
+      console.log('Parsed response:', responseData);
+      
+      setShowCalendar(false);
+      await fetchFridayData(); 
+      alert("Dates saved! The table now shows only selected dates.");
+    } else {
+      console.error("Server returned error status:", response.status);
+      console.error("Response body:", responseText);
+      alert(`Failed to save dates. Status: ${response.status}. Check console for details.`);
     }
-  };
+  } catch (err) {
+    console.error('Error in handleSaveDates:', err);
+    alert(`Error saving dates: ${err.message}`);
+  }
+};
 
   const fetchData = () => {
     console.log("Fetching data...");
