@@ -382,26 +382,30 @@ const handleSaveDates = async () => {
   const getFridayColumns = () => {
     if (fridayData.length === 0) return [];
     
+    const sampleRow = fridayData[0];
+    const keys = Object.keys(sampleRow);
+    
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     
-    const sampleRow = fridayData[0];
-    const keys = Object.keys(sampleRow).filter(key => !hiddenColumns.includes(key));
+    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+    const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
     
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const selectedDatesWithUnderscores = new Set(
+      Array.from(selectedDates).map(date => date.replace(/-/g, '_'))
+    );
+    
+    const dateKeys = keys.filter(key => dateRegex.test(key) && selectedDatesWithUnderscores.has(key));
+    
+    dateKeys.sort();
 
-    const dateKeys = keys.filter(key => dateRegex.test(key));
-    const otherKeys = keys.filter(key => !dateRegex.test(key));
-    
-    const filteredDateKeys = dateKeys.filter(dateKey => selectedDates.has(dateKey));
-    
-    filteredDateKeys.sort();
-    
-    const finalKeys = [...otherKeys, ...filteredDateKeys];
+    const finalKeys = [...nonDateKeys, ...dateKeys];
 
     return finalKeys.map(key => ({
-        name: key.split('_').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' '),
+        name: dateRegex.test(key) 
+          ? key.replace(/_/g, '-') 
+          : key.split('_').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' '), 
         id: key
       }));
   };
