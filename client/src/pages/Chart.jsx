@@ -17,6 +17,40 @@ import {
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
 export default function Chart( {currentUser} ) {
+    const [parents, setParents] = useState([]);
+
+    // Fetch parent data when component mounts
+    useEffect(() => {
+      const fetchParents = async () => {
+        if (!currentUser?.id) {
+          console.log('No currentUser.id available');
+          return;
+        }
+        
+        console.log('Fetching parents for TA ID:', currentUser.id);
+        
+        try {
+          const res = await fetch(`http://localhost:3001/api/parents/ta/${currentUser.id}`);
+          console.log('Response status:', res.status);
+          
+          if (res.ok) {
+            const data = await res.json();
+            console.log('Parent data received:', data);
+            setParents(data);
+          } else {
+            const errorText = await res.text();
+            console.error('Failed to fetch parents. Status:', res.status, 'Error:', errorText);
+            setParents([]);
+          }
+        } catch (error) {
+          console.error('Error fetching parents:', error);
+          setParents([]);
+        }
+      };
+
+      fetchParents();
+    }, [currentUser?.id]);
+
     const taInfo = {
       firstName: currentUser.first_name || "First Name",
       lastName: currentUser?.last_name || "Last Name",
@@ -31,18 +65,12 @@ export default function Chart( {currentUser} ) {
       notes: currentUser?.notes || "No notes",
       hoursCompleted: 250,
       totalHoursRequired: 300,
-      parents: [
+      parents: parents.length > 0 ? parents : [
         {
-          koreanName: currentUser?.parent1_korean_name || "한국이름",
-          englishName: currentUser?.parent1_english_name || "Parent Name",
-          phone: currentUser?.parent1_phone || "123-456-7890",
-          email: currentUser?.parent1_email || "parent1@example.com"
-        },
-        {
-          koreanName: currentUser?.parent2_korean_name || "한국이름",
-          englishName: currentUser?.parent2_english_name || "Parent Name",
-          phone: currentUser?.parent2_phone || "123-456-7890",
-          email: currentUser?.parent2_email || "parent2@example.com"
+          koreanName: "한국이름",
+          englishName: "Parent Name",
+          phone: "123-456-7890",
+          email: "parent@example.com"
         }
       ]
     };
@@ -157,10 +185,10 @@ export default function Chart( {currentUser} ) {
                   backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
                   borderBottom: "1px solid #e5e7eb"
                 }}>
-                  <td style={{ padding: "10px" }}>{parent.koreanName}</td>
-                  <td style={{ padding: "10px" }}>{parent.englishName}</td>
-                  <td style={{ padding: "10px" }}>{parent.phone}</td>
-                  <td style={{ padding: "10px" }}>{parent.email}</td>
+                  <td style={{ padding: "10px" }}>{parent.koreanName || parent.korean_name || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.englishName || parent.english_name || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.phone || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.email || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
