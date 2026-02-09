@@ -47,6 +47,28 @@ const getUserLocation = () => {
   });
 };
 
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  });
+};
+
+// Helper function to format time only
+const formatTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
+
 function TADashboard() {
   const [data, setData] = useState([]);
   const [clockedIn, setClockedIn] = useState(false);
@@ -212,11 +234,13 @@ function TADashboard() {
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
+  // Updated grid data with formatted date and time
   const gridData = taData.map(row => [
-    row.id, // or format a date field
+    row.id, // Keep id for internal use
+    formatDate(row.clock_in), // Date column - just the date
     row.attendance,
-    row.clock_in ? new Date(row.clock_in).toLocaleString() : 'N/A',
-    row.clock_out ? new Date(row.clock_out).toLocaleString() : 'N/A',
+    formatTime(row.clock_in), // Clock In - just the time
+    formatTime(row.clock_out), // Clock Out - just the time
     row.elapsed_time,
     row.notes
   ]);
@@ -272,7 +296,7 @@ function TADashboard() {
       setClockedIn(true);
       setActiveShiftId(newShift.id);
       console.log("Shift created with ID:", newShift.id);
-      fetchShifts();
+      
       alert("Successfully clocked in!");
       
     } catch (err) {
@@ -321,7 +345,6 @@ function TADashboard() {
       console.log(`Shift ${activeShiftId} updated with clock-out time`);
       await fetchShifts();
       setActiveShiftId(null);
-      fetchShifts();
     } catch (err) {
       console.error("Failed to clock out:", err);
     }
@@ -413,12 +436,16 @@ function TADashboard() {
             key={JSON.stringify(data)}
             data={gridData}
             columns={[
+              {
+                name: "ID",
+                hidden: true // Hide the ID column but keep it for row identification
+              },
               "Date",
               {
                 name: "Attendance",
                 width: '120px',
                 formatter: (cell, row) => {
-                  const shiftId = row.cells[0].data;
+                  const shiftId = row.cells[0].data; // Get ID from first (hidden) column
                   const dropdownId = `dropdown-${shiftId}`;
                   const buttonId = `btn-${shiftId}`;
                   
@@ -551,7 +578,7 @@ function TADashboard() {
               {
                 name: "Notes",
                 formatter: (cell, row) => {
-                  const shiftId = row.cells[0].data;
+                  const shiftId = row.cells[0].data; // Get ID from first (hidden) column
                   const currentNotes = cell || '';
                   
                   return h('div', {

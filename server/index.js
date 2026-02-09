@@ -8,6 +8,7 @@ import tasRoutes from './routes/tas.js';
 import shiftsRoutes from './routes/shifts.js';
 import attendanceRoutes from './routes/attendance.js';
 import fridayRouter from './routes/friday.js';
+import parentRoutes from './routes/parents.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,7 @@ app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
 app.use('/api/friday', fridayRouter);  // Mount at /api/friday, router handles /
 app.use('/api', authRoutes);
+app.use('/api/parents', parentRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
