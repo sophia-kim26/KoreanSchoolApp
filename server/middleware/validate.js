@@ -1,9 +1,7 @@
 // Allowed IP addresses or network ranges
 const ALLOWED_IPS = [
   '127.0.0.1',           // localhost for testing
-  '::1',                 // localhost IPv6
-  '192.168.1.13',
-  '192.168.1.1'
+  '::1'                 // localhost IPv6
   // Add Korean School's IP when I know it but for next time add bca ip
 ];
 
