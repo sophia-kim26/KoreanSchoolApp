@@ -27,6 +27,12 @@ function VPDashboard() {
     is_active: true,
     korean_name: ""
   });
+  const [metrics, setMetrics] = useState({
+    attendance: 0,
+    absence: 0,
+    tardiness: 0,
+    earlyDeparture: 0
+  });
   
   const translations = {
     en: {
@@ -195,6 +201,7 @@ const handleSaveDates = async () => {
           return b.is_active - a.is_active;
         });
         setData(sorted);
+        calculateMetrics(sorted);
 
         setTimeout(() => {
           const rows = document.querySelectorAll('.gridjs-tr');
@@ -225,6 +232,24 @@ const handleSaveDates = async () => {
         console.error("Fetch error:", err);
         alert("Error loading data: " + err.message);
       });
+  };
+
+  const calculateMetrics = (data) => {
+    // You'll need to adjust this based on how your data tracks these metrics
+    const attendance = data.filter(ta => ta.attendance === 'Present').length;
+    const absence = data.filter(ta => ta.attendance === 'Absent').length;
+    
+    // For tardiness and early departure, you'll need to check if you have this data
+    // If you track clock-in/clock-out times, you can calculate from there
+    const tardiness = 0; // Replace with actual calculation
+    const earlyDeparture = 0; // Replace with actual calculation
+    
+    setMetrics({
+      attendance,
+      absence,
+      tardiness,
+      earlyDeparture
+    });
   };
 
   const fetchFridayData = () => {
@@ -376,6 +401,10 @@ const handleSaveDates = async () => {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
+    row.attendance_count || 0,  // Total times present
+    row.absence_count || 0,      // Total times absent
+    row.tardiness_count || 0,    // Total times tardy
+    row.early_departure_count || 0, // Total early departures
     row.id  
   ]);
 
@@ -541,122 +570,238 @@ const handleSaveDates = async () => {
               </button>
             </div>
           ) : (
-            <div style={{ 
-              background: '#dbeafe', 
-              borderRadius: 8, 
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              overflow: 'hidden'
-            }}>
-              <Grid
-                data={gridData}
-                columns={[
-                  { name: translations[language].firstName, width: '120px' },
-                  { name: translations[language].lastName, width: '120px' },
-                  { name: translations[language].koreanName, width: '120px' },
-                  { name: translations[language].sessionDay, width: '120px' },
-                  { 
-                    name: translations[language].active,
-                    width: '80px',
-                    formatter: (cell) => cell ? 'Yes' : 'No'
-                  },
-                  {
-                    name: translations[language].totalHours,
-                    width: '100px',
-                    formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
-                  },
-                  {
-                    name: translations[language].attendance,
-                    width: '120px',
-                    formatter: (cell, row) => {
-                      const taId = row.cells[7].data;
-                      return h('button', {
-                        style: `
-                          display: inline-block;
-                          padding: 6px 16px;
-                          border-radius: 4px;
-                          font-weight: 500;
-                          font-size: 13px;
-                          background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                          color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                          border: none;
-                          cursor: pointer;
-                          transition: opacity 0.2s;
-                        `,
-                        onmouseover: function() { this.style.opacity = '0.8'; },
-                        onmouseout: function() { this.style.opacity = '1'; },
-                        onclick: () => toggleAttendance(taId, cell)
-                      }, cell || 'Absent');
+            <div style={{ display: 'flex', gap: 20 }}>
+              {/* Table Container */}
+              <div style={{ 
+                flex: 1,
+                background: '#dbeafe', 
+                borderRadius: 8, 
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                overflow: 'hidden'
+              }}>
+                <Grid
+                  data={gridData}
+                  columns={[
+                    { name: translations[language].firstName, width: '120px' },
+                    { name: translations[language].lastName, width: '120px' },
+                    { name: translations[language].koreanName, width: '120px' },
+                    { name: translations[language].sessionDay, width: '120px' },
+                    { 
+                      name: translations[language].active,
+                      width: '80px',
+                      formatter: (cell) => cell ? 'Yes' : 'No'
+                    },
+                    {
+                      name: translations[language].totalHours,
+                      width: '100px',
+                      formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
+                    },
+                    {
+                      name: translations[language].attendance,
+                      width: '120px',
+                      formatter: (cell, row) => {
+                        const taId = row.cells[11].data; // Updated index
+                        return h('button', {
+                          style: `
+                            display: inline-block;
+                            padding: 6px 16px;
+                            border-radius: 4px;
+                            font-weight: 500;
+                            font-size: 13px;
+                            background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                            color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                            border: none;
+                            cursor: pointer;
+                            transition: opacity 0.2s;
+                          `,
+                          onmouseover: function() { this.style.opacity = '0.8'; },
+                          onmouseout: function() { this.style.opacity = '1'; },
+                          onclick: () => toggleAttendance(taId, cell)
+                        }, cell || 'Absent');
+                      }
+                    },
+                    {
+                      name: 'Attendance',
+                      width: '100px',
+                      formatter: (cell) => h('div', {
+                        style: 'text-align: center; font-weight: 600; color: #166534;'
+                      }, cell || '0')
+                    },
+                    {
+                      name: 'Absence',
+                      width: '100px',
+                      formatter: (cell) => h('div', {
+                        style: 'text-align: center; font-weight: 600; color: #991b1b;'
+                      }, cell || '0')
+                    },
+                    {
+                      name: 'Tardiness',
+                      width: '100px',
+                      formatter: (cell) => h('div', {
+                        style: 'text-align: center; font-weight: 600; color: #92400e;'
+                      }, cell || '0')
+                    },
+                    {
+                      name: 'Early Departure',
+                      width: '120px',
+                      formatter: (cell) => h('div', {
+                        style: 'text-align: center; font-weight: 600; color: #3730a3;'
+                      }, cell || '0')
+                    },
+                    {
+                      name: translations[language].analytics,
+                      width: "140px",
+                      formatter: (cell) => {
+                        return h('button', {
+                          style: `
+                            padding: 6px 12px;
+                            background-color: #2563eb;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            font-weight: 600;
+                          `,
+                          onclick: (e) => {
+                            e.stopPropagation();
+                            console.log('Analytics button clicked for TA ID:', cell);
+                            handleRowClick(cell);
+                          }
+                        }, 'View Analytics');
+                      }
+                    },
+                    {
+                      name: translations[language].actions,
+                      width: '100px',
+                      formatter: (cell, row) => {
+                        const taId = row.cells[11].data; // Updated index
+                        return h('button', {
+                          style: `
+                            padding: 6px 12px;
+                            background-color: #ef4444;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            font-weight: 500;
+                          `,
+                          onclick: () => deactivateTA(cell)
+                        }, translations[language].remove);
+                      }
                     }
-                  },
-                  {
-                    name: translations[language].analytics,
-                    width: "140px",
-                    formatter: (cell) => {
-                      return h('button', {
-                        style: `
-                          padding: 6px 12px;
-                          background-color: #2563eb;
-                          color: white;
-                          border: none;
-                          border-radius: 4px;
-                          cursor: pointer;
-                          font-size: 12px;
-                          font-weight: 600;
-                        `,
-                        onclick: (e) => {
-                          e.stopPropagation();
-                          console.log('Analytics button clicked for TA ID:', cell);
-                          handleRowClick(cell);
-                        }
-                      }, 'View Analytics');
+                  ]}
+                  key={language}
+                  search={true}
+                  pagination={{ enabled: true, limit: 10 }}
+                  sort={true}
+                  style={{
+                    table: {
+                      'font-size': '14px',
+                      'border-collapse': 'collapse'
+                    },
+                    th: {
+                      'background-color': '#93c5fd',
+                      'padding': '16px 12px',
+                      'text-align': 'left',
+                      'font-weight': '600',
+                      'color': '#1e3a8a',
+                      'border-bottom': '2px solid #3b82f6'
+                    },
+                    td: {
+                      'padding': '14px 12px',
+                      'border-bottom': '1px solid #bfdbfe',
+                      'color': '#1e40af',
+                      'background-color': '#eff6ff'
                     }
-                  },
-                  {
-                    name: translations[language].actions,
-                    width: '100px',
-                    formatter: (cell, row) => {
-                      const taId = row.cells[7].data;
-                      return h('button', {
-                        style: `
-                          padding: 6px 12px;
-                          background-color: #ef4444;
-                          color: white;
-                          border: none;
-                          border-radius: 4px;
-                          cursor: pointer;
-                          font-size: 12px;
-                          font-weight: 500;
-                        `,
-                        onclick: () => deactivateTA(cell)
-                      }, translations[language].remove);
-                    }
-                  }
-                ]}
-                key={language}
-                search={true}
-                pagination={{ enabled: true, limit: 10 }}
-                sort={true}
-                style={{
-                  table: {
-                    'font-size': '14px',
-                    'border-collapse': 'collapse'
-                  },
-                  th: {
-                    'background-color': '#93c5fd',
-                    'padding': '16px 12px',
-                    'text-align': 'left',
-                    'font-weight': '600',
-                    'color': '#1e3a8a',
-                    'border-bottom': '2px solid #3b82f6'
-                  },
-                  td: {
-                    'padding': '14px 12px',
-                    'border-bottom': '1px solid #bfdbfe',
-                    'color': '#1e40af',
-                    'background-color': '#eff6ff'
-                  }
-                }}
-              />
+                  }}
+                />
+              </div>
+
+              {/* Metrics Panel */}
+              <div style={{
+                width: '250px',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: 8,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  padding: 20
+                }}>
+                  <h3 style={{ 
+                    margin: '0 0 20px 0', 
+                    fontSize: '18px', 
+                    fontWeight: '600',
+                    color: '#1e40af'
+                  }}>
+                    Today's Metrics
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Attendance */}
+                    <div style={{
+                      padding: 16,
+                      background: '#dcfce7',
+                      borderRadius: 8,
+                      borderLeft: '4px solid #16a34a'
+                    }}>
+                      <div style={{ fontSize: '12px', color: '#166534', fontWeight: '500', marginBottom: 4 }}>
+                        Attendance
+                      </div>
+                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534' }}>
+                        {metrics.attendance}
+                      </div>
+                    </div>
+
+                    {/* Absence */}
+                    <div style={{
+                      padding: 16,
+                      background: '#fee2e2',
+                      borderRadius: 8,
+                      borderLeft: '4px solid #dc2626'
+                    }}>
+                      <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '500', marginBottom: 4 }}>
+                        Absence
+                      </div>
+                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#991b1b' }}>
+                        {metrics.absence}
+                      </div>
+                    </div>
+
+                    {/* Tardiness */}
+                    <div style={{
+                      padding: 16,
+                      background: '#fef3c7',
+                      borderRadius: 8,
+                      borderLeft: '4px solid #f59e0b'
+                    }}>
+                      <div style={{ fontSize: '12px', color: '#92400e', fontWeight: '500', marginBottom: 4 }}>
+                        Tardiness
+                      </div>
+                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#92400e' }}>
+                        {metrics.tardiness}
+                      </div>
+                    </div>
+
+                    {/* Early Departure */}
+                    <div style={{
+                      padding: 16,
+                      background: '#e0e7ff',
+                      borderRadius: 8,
+                      borderLeft: '4px solid #6366f1'
+                    }}>
+                      <div style={{ fontSize: '12px', color: '#3730a3', fontWeight: '500', marginBottom: 4 }}>
+                        Early Departure
+                      </div>
+                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#3730a3' }}>
+                        {metrics.earlyDeparture}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </>
