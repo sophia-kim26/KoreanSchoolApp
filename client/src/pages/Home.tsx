@@ -1,18 +1,16 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavigateFunction } from "react-router-dom";
 import './style/global.css';
 import logo from '../assets/logo.png';
 
-function Home() {
-  const navigate = useNavigate();
+function Home(): React.ReactElement {
+  const navigate: NavigateFunction = useNavigate();
 
-  const handleClickVP = () => {
-    console.log('VP Button Clicked');
+  const handleClickVP = (): void => {
     navigate('/vp/login');
   };
 
-  const handleClickTA = () => {
-    console.log('TA Button Clicked');
+  const handleClickTA = (): void => {
     navigate('/ta/login');
   };
 

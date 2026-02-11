@@ -1,24 +1,26 @@
-import React from "react";
+import * as React from "react";
 import { Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  ChartData,
+  ChartOptions
 } from "chart.js";
 
 ChartJS.register(Tooltip, Legend, ArcElement);
 
-export default function DoughnutChart() {
+export default function DoughnutChart(): JSX.Element {
   // sample data
-  const hoursCompleted = 250;
-  const totalHoursRequired = 300;
+  const hoursCompleted: number = 250;
+  const totalHoursRequired: number = 300;
 
   // calculate percentages
-  const presentPercentage = Math.round(hoursCompleted/totalHoursRequired*100);
-  const absentPercentage = 100-presentPercentage;
+  const presentPercentage: number = Math.round(hoursCompleted/totalHoursRequired*100);
+  const absentPercentage: number = 100-presentPercentage;
 
-  const doughnutData = {
+  const doughnutData: ChartData<'doughnut'> = {
     labels: ['Present', 'Absent'],
     datasets: [
       {
@@ -28,9 +30,9 @@ export default function DoughnutChart() {
         cutout: '75%'
       }
     ]
-  }
+  };
 
-  const doughnutOptions = {
+  const doughnutOptions: ChartOptions<'doughnut'> = {
     plugins: {
       legend: {
         display: false
@@ -39,7 +41,7 @@ export default function DoughnutChart() {
         enabled: false
       }
     }
-  }
+  };
 
   return (
     <div style={{ 
