@@ -3,23 +3,95 @@ import { Grid } from "gridjs-react";
 import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavigateFunction } from "react-router-dom";
 
-function VPDashboard() {
-  const [data, setData] = useState([]);
-  const [fridayData, setFridayData] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [generatedPin, setGeneratedPin] = useState('');
-  const [newTAName, setNewTAName] = useState('');
-  const [activeTab, setActiveTab] = useState('appearance');
-  const [mainTab, setMainTab] = useState('tas');
-  const [language, setLanguage] = useState('en');
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedDates, setSelectedDates] = useState(new Set());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [formData, setFormData] = useState({
+// Type definitions
+interface TAData {
+  id: number;
+  first_name: string;
+  last_name: string;
+  korean_name: string;
+  session_day: string;
+  is_active: boolean;
+  total_hours: number | string;
+  attendance: string;
+  attendance_count: number;
+  absence_count: number;
+  tardiness_count: number;
+  early_departure_count: number;
+  ta_code: string;
+  email: string;
+  created_at: string;
+  phone?: string;
+}
+
+interface FridayData {
+  [key: string]: any;
+}
+
+interface FormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  session_day: string;
+  is_active: boolean;
+  korean_name: string;
+}
+
+interface Metrics {
+  attendance: number;
+  absence: number;
+  tardiness: number;
+  earlyDeparture: number;
+}
+
+interface Translations {
+  [key: string]: {
+    firstName: string;
+    lastName: string;
+    koreanName: string;
+    sessionDay: string;
+    active: string;
+    totalHours: string;
+    attendance: string;
+    analytics: string;
+    actions: string;
+    yes: string;
+    no: string;
+    viewAnalytics: string;
+    remove: string;
+  };
+}
+
+interface CreateAccountResponse {
+  success: boolean;
+  unhashed_pin: string;
+  message?: string;
+}
+
+interface CalendarDatesResponse {
+  dates?: string[];
+}
+
+type Language = 'en' | 'ko';
+type ActiveTab = 'appearance';
+type MainTab = 'tas' | 'friday';
+
+function VPDashboard(): React.ReactElement {
+  const [data, setData] = useState<TAData[]>([]);
+  const [fridayData, setFridayData] = useState<FridayData[]>([]);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [showPinModal, setShowPinModal] = useState<boolean>(false);
+  const [generatedPin, setGeneratedPin] = useState<string>('');
+  const [newTAName, setNewTAName] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('appearance');
+  const [mainTab, setMainTab] = useState<MainTab>('tas');
+  const [language, setLanguage] = useState<Language>('en');
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
     email: "",
@@ -27,14 +99,14 @@ function VPDashboard() {
     is_active: true,
     korean_name: ""
   });
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<Metrics>({
     attendance: 0,
     absence: 0,
     tardiness: 0,
     earlyDeparture: 0
   });
   
-  const translations = {
+  const translations: Translations = {
     en: {
       firstName: "First Name",
       lastName: "Last Name",
@@ -67,15 +139,15 @@ function VPDashboard() {
     }
   };
 
-  const generatePIN = () => {
+  const generatePIN = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
-  const navigate = useNavigate();
+  const navigate: NavigateFunction = useNavigate();
 
   // Calendar helper functions
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date): { daysInMonth: number; startingDayOfWeek: number } => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -86,13 +158,13 @@ function VPDashboard() {
     return { daysInMonth, startingDayOfWeek };
   };
 
-  const formatDateKey = (year, month, day) => {
+  const formatDateKey = (year: number, month: number, day: number): string => {
     const m = (month + 1).toString().padStart(2, '0');
     const d = day.toString().padStart(2, '0');
     return `${year}-${m}-${d}`;
   };
 
-  const toggleDate = (day) => {
+  const toggleDate = (day: number): void => {
     const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const newSelected = new Set(selectedDates);
     
@@ -105,18 +177,18 @@ function VPDashboard() {
     setSelectedDates(newSelected);
   };
 
-  const isDateSelected = (day) => {
+  const isDateSelected = (day: number): boolean => {
     const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     return selectedDates.has(dateStr);
   };
 
-  const changeMonth = (offset) => {
+  const changeMonth = (offset: number): void => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + offset);
     setCurrentMonth(newDate);
   };
 
-  const monthNames = [
+  const monthNames: string[] = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
@@ -133,10 +205,10 @@ function VPDashboard() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  const fetchSavedDates = () => {
+  const fetchSavedDates = (): void => {
     fetch("http://localhost:3001/api/friday/get-calendar-dates") 
       .then(res => res.json())
-      .then(json => {
+      .then((json: CalendarDatesResponse) => {
         if (json.dates && Array.isArray(json.dates)) {
           setSelectedDates(new Set(json.dates));
         }
@@ -144,61 +216,46 @@ function VPDashboard() {
       .catch(err => console.log("No saved dates found or error fetching them"));
   };
 
-  // Replace your handleSaveDates function with this version that has better error logging:
-
-  // Replace your handleSaveDates function with this version:
-
-const handleSaveDates = async () => {
-  try {
-    const datesArray = Array.from(selectedDates);
-    console.log('Saving dates:', datesArray);
-    
-    const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dates: datesArray })
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers.get('content-type'));
-    
-    // Get the raw text first to see what we're actually receiving
-    const responseText = await response.text();
-    console.log('Raw response:', responseText);
-
-    if (response.ok) {
-      // Try to parse as JSON
-      const responseData = JSON.parse(responseText);
-      console.log('Parsed response:', responseData);
+  const handleSaveDates = async (): Promise<void> => {
+    try {
+      const datesArray = Array.from(selectedDates);
       
-      setShowCalendar(false);
-      await fetchFridayData(); 
-      alert("Dates saved! The table now shows only selected dates.");
-    } else {
-      console.error("Server returned error status:", response.status);
-      console.error("Response body:", responseText);
-      alert(`Failed to save dates. Status: ${response.status}. Check console for details.`);
-    }
-  } catch (err) {
-    console.error('Error in handleSaveDates:', err);
-    alert(`Error saving dates: ${err.message}`);
-  }
-};
+      const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dates: datesArray })
+      });
+      
+      const responseText = await response.text();
 
-  const fetchData = () => {
-    console.log("Fetching data...");
+      if (response.ok) {
+        const responseData = JSON.parse(responseText);
+        
+        setShowCalendar(false);
+        await fetchFridayData(); 
+        alert("Dates saved! The table now shows only selected dates.");
+      } else {
+        console.error("Server returned error status:", response.status);
+        console.error("Response body:", responseText);
+        alert(`Failed to save dates. Status: ${response.status}. Check console for details.`);
+      }
+    } catch (err) {
+      console.error('Error in handleSaveDates:', err);
+      alert(`Error saving dates: ${(err as Error).message}`);
+    }
+  };
+
+  const fetchData = (): void => {
     fetch("http://localhost:3001/api/tas")
       .then(res => {
-        console.log("Response status:", res.status);
         return res.json();
       })
-      .then(json => {
-        console.log("Received data:", json);
+      .then((json: TAData[]) => {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
             return a.id - b.id;
           }
-          return b.is_active - a.is_active;
+          return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
         });
         setData(sorted);
         calculateMetrics(sorted);
@@ -209,21 +266,22 @@ const handleSaveDates = async () => {
             if (row.querySelector('th')) return;
             
             row.addEventListener('click', (e) => {
-              if (e.target.closest('button')) return;
+              if ((e.target as HTMLElement).closest('button')) return;
 
               const cells = row.querySelectorAll('.gridjs-td');
               if (cells.length >= 8) {
                 const taId = cells[7].textContent;
-                console.log('Row clicked, TA ID:', taId);
-                navigate(`/vp/ta-view/${taId}`);
+                if (taId) {
+                  navigate(`/vp/ta-view/${taId}`);
+                }
               }
             });
             
             row.addEventListener('mouseenter', () => {
-              row.style.backgroundColor = '#dbeafe';
+              (row as HTMLElement).style.backgroundColor = '#dbeafe';
             });
             row.addEventListener('mouseleave', () => {
-              row.style.backgroundColor = '#eff6ff';
+              (row as HTMLElement).style.backgroundColor = '#eff6ff';
             });
           });
         }, 100);
@@ -234,15 +292,12 @@ const handleSaveDates = async () => {
       });
   };
 
-  const calculateMetrics = (data) => {
-    // You'll need to adjust this based on how your data tracks these metrics
+  const calculateMetrics = (data: TAData[]): void => {
     const attendance = data.filter(ta => ta.attendance === 'Present').length;
     const absence = data.filter(ta => ta.attendance === 'Absent').length;
     
-    // For tardiness and early departure, you'll need to check if you have this data
-    // If you track clock-in/clock-out times, you can calculate from there
-    const tardiness = 0; // Replace with actual calculation
-    const earlyDeparture = 0; // Replace with actual calculation
+    const tardiness = 0;
+    const earlyDeparture = 0;
     
     setMetrics({
       attendance,
@@ -252,15 +307,12 @@ const handleSaveDates = async () => {
     });
   };
 
-  const fetchFridayData = () => {
-    console.log("Fetching Friday data...");
+  const fetchFridayData = (): void => {
     fetch("http://localhost:3001/api/friday")
       .then(res => {
-        console.log("Friday response status:", res.status);
         return res.json();
       })
-      .then(json => {
-        console.log("Received Friday data:", json);
+      .then((json: FridayData[] | FridayData) => {
         const dataArray = Array.isArray(json) ? json : [];
         setFridayData(dataArray);
       })
@@ -271,7 +323,7 @@ const handleSaveDates = async () => {
       });
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = (): void => {
     logout({ 
       logoutParams: { 
         returnTo: window.location.origin
@@ -279,7 +331,7 @@ const handleSaveDates = async () => {
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -287,14 +339,14 @@ const handleSaveDates = async () => {
     }));
   };
 
-  const handleSessionDaySelect = (day) => {
+  const handleSessionDaySelect = (day: string): void => {
     setFormData(prev => ({
       ...prev,
       session_day: day
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     try {
@@ -313,26 +365,23 @@ const handleSaveDates = async () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const result: CreateAccountResponse = await response.json();
         
-        // Store the unhashed PIN and TA name for display
         setGeneratedPin(result.unhashed_pin);
         setNewTAName(`${formData.first_name} ${formData.last_name}`);
         
-        // Reset form and close modal
         setFormData({
           first_name: "",
           last_name: "",
           korean_name: "",
+          email: "",
           session_day: "",
           is_active: true,
         });
         setShowModal(false);
         
-        // Show PIN modal
         setShowPinModal(true);
         
-        // Refresh data
         fetchData();
       } else {
         const error = await response.json();
@@ -344,12 +393,12 @@ const handleSaveDates = async () => {
     }
   };
 
-  const copyPinToClipboard = () => {
+  const copyPinToClipboard = (): void => {
     navigator.clipboard.writeText(generatedPin);
     alert('PIN copied to clipboard!');
   };
 
-  const toggleAttendance = async (taId, currentAttendance) => {
+  const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
     try {
       if (currentAttendance === 'Present') {
         await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
@@ -369,7 +418,7 @@ const handleSaveDates = async () => {
     }
   };
 
-  const deactivateTA = async (taId) => {
+  const deactivateTA = async (taId: number): Promise<void> => {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
@@ -388,12 +437,11 @@ const handleSaveDates = async () => {
     }
   };
 
-  const handleRowClick = (taId) => {
-    console.log('Clicked TA ID:', taId);
+  const handleRowClick = (taId: number): void => {
     navigate(`/vp/ta-view/${taId}`);
   };
 
-  const gridData = data.map(row => [
+  const gridData: (string | number | boolean)[][] = data.map(row => [
     row.first_name, 
     row.last_name, 
     row.korean_name,
@@ -401,14 +449,14 @@ const handleSaveDates = async () => {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.attendance_count || 0,  // Total times present
-    row.absence_count || 0,      // Total times absent
-    row.tardiness_count || 0,    // Total times tardy
-    row.early_departure_count || 0, // Total early departures
+    row.attendance_count || 0,
+    row.absence_count || 0,
+    row.tardiness_count || 0,
+    row.early_departure_count || 0,
     row.id  
   ]);
 
-  const getFridayColumns = () => {
+  const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
     
     const sampleRow = fridayData[0];
@@ -439,7 +487,7 @@ const handleSaveDates = async () => {
       }));
   };
 
-  const fridayGridData = fridayData.map(row => {
+  const fridayGridData: any[][] = fridayData.map(row => {
     return getFridayColumns().map(col => row[col.id]);
   });
 
@@ -589,18 +637,18 @@ const handleSaveDates = async () => {
                     { 
                       name: translations[language].active,
                       width: '80px',
-                      formatter: (cell) => cell ? 'Yes' : 'No'
+                      formatter: (cell: any) => cell ? 'Yes' : 'No'
                     },
                     {
                       name: translations[language].totalHours,
                       width: '100px',
-                      formatter: (cell) => `${parseFloat(cell || 0).toFixed(2)}h`
+                      formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h`
                     },
                     {
                       name: translations[language].attendance,
                       width: '120px',
-                      formatter: (cell, row) => {
-                        const taId = row.cells[11].data; // Updated index
+                      formatter: (cell: any, row: any) => {
+                        const taId = row.cells[11].data;
                         return h('button', {
                           style: `
                             display: inline-block;
@@ -614,8 +662,8 @@ const handleSaveDates = async () => {
                             cursor: pointer;
                             transition: opacity 0.2s;
                           `,
-                          onmouseover: function() { this.style.opacity = '0.8'; },
-                          onmouseout: function() { this.style.opacity = '1'; },
+                          onmouseover: function(this: HTMLElement) { this.style.opacity = '0.8'; },
+                          onmouseout: function(this: HTMLElement) { this.style.opacity = '1'; },
                           onclick: () => toggleAttendance(taId, cell)
                         }, cell || 'Absent');
                       }
@@ -623,35 +671,35 @@ const handleSaveDates = async () => {
                     {
                       name: 'Attendance',
                       width: '100px',
-                      formatter: (cell) => h('div', {
+                      formatter: (cell: any) => h('div', {
                         style: 'text-align: center; font-weight: 600; color: #166534;'
                       }, cell || '0')
                     },
                     {
                       name: 'Absence',
                       width: '100px',
-                      formatter: (cell) => h('div', {
+                      formatter: (cell: any) => h('div', {
                         style: 'text-align: center; font-weight: 600; color: #991b1b;'
                       }, cell || '0')
                     },
                     {
                       name: 'Tardiness',
                       width: '100px',
-                      formatter: (cell) => h('div', {
+                      formatter: (cell: any) => h('div', {
                         style: 'text-align: center; font-weight: 600; color: #92400e;'
                       }, cell || '0')
                     },
                     {
                       name: 'Early Departure',
                       width: '120px',
-                      formatter: (cell) => h('div', {
+                      formatter: (cell: any) => h('div', {
                         style: 'text-align: center; font-weight: 600; color: #3730a3;'
                       }, cell || '0')
                     },
                     {
                       name: translations[language].analytics,
                       width: "140px",
-                      formatter: (cell) => {
+                      formatter: (cell: any) => {
                         return h('button', {
                           style: `
                             padding: 6px 12px;
@@ -663,9 +711,8 @@ const handleSaveDates = async () => {
                             font-size: 12px;
                             font-weight: 600;
                           `,
-                          onclick: (e) => {
+                          onclick: (e: Event) => {
                             e.stopPropagation();
-                            console.log('Analytics button clicked for TA ID:', cell);
                             handleRowClick(cell);
                           }
                         }, 'View Analytics');
@@ -674,8 +721,8 @@ const handleSaveDates = async () => {
                     {
                       name: translations[language].actions,
                       width: '100px',
-                      formatter: (cell, row) => {
-                        const taId = row.cells[11].data; // Updated index
+                      formatter: (cell: any, row: any) => {
+                        const taId = row.cells[11].data;
                         return h('button', {
                           style: `
                             padding: 6px 12px;
@@ -694,7 +741,7 @@ const handleSaveDates = async () => {
                   ]}
                   key={language}
                   search={true}
-                  pagination={{ enabled: true, limit: 10 }}
+                  pagination={{ limit: 10 }}
                   sort={true}
                   style={{
                     table: {
@@ -832,7 +879,7 @@ const handleSaveDates = async () => {
                 columns={getFridayColumns().map(col => ({
                   name: col.name,
                   width: '150px',
-                  formatter: (cell) => {
+                  formatter: (cell: any) => {
                     if (cell === true) return '✓';
                     if (cell === false) return '✗';
                     if (cell === null || cell === undefined) return '';
@@ -840,7 +887,7 @@ const handleSaveDates = async () => {
                   }
                 }))}
                 search={true}
-                pagination={{ enabled: true, limit: 10 }}
+                pagination={{ limit: 10 }}
                 sort={true}
                 style={{
                   table: {

@@ -60,13 +60,9 @@ export const getAllShifts = async () => {
 };
 
 export const getShiftsForTA = async (ta_id) => {
-  console.log('=== GET SHIFTS FOR TA ===');
-  console.log('ta_id:', ta_id);
-  console.log('ta_id type:', typeof ta_id);
-  
+
   // Convert to integer to ensure type match
   const taIdInt = parseInt(ta_id);
-  console.log('ta_id as int:', taIdInt);
   
   const result = await sql`
     SELECT 
@@ -79,14 +75,7 @@ export const getShiftsForTA = async (ta_id) => {
     WHERE shifts.ta_id = ${taIdInt}
     ORDER BY shifts.clock_in DESC
   `;
-  
-  console.log('Query result:', result);
-  console.log('Number of shifts found:', result.length);
-  if (result.length > 0) {
-    console.log('Sample shift:', result[0]);
-  }
-  console.log('========================');
-  
+
   return result;
 };
 
@@ -101,10 +90,7 @@ export const getActiveShift = async (ta_id) => {
   return { activeShift: result.length > 0 ? result[0] : null };
 };
 export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
-  console.log("=== CREATE SHIFT SERVICE ===");
-  console.log("Input data:", { ta_id, clock_in, clock_out, notes });
-  console.log("ta_id type:", typeof ta_id);
-  
+
   try {
     const result = await sql`
       INSERT INTO shifts (ta_id, clock_in, clock_out, notes, was_manual)
@@ -112,16 +98,11 @@ export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
       RETURNING *
     `;
     
-    console.log("SQL result:", result);
-    console.log("Shift created:", result[0]);
-    console.log("============================");
     return result[0];
   } catch (error) {
-    console.error("=== SQL ERROR ===");
     console.error("Error:", error);
     console.error("Error code:", error.code);
     console.error("Error message:", error.message);
-    console.error("=================");
     throw error;
   }
 };
@@ -173,9 +154,6 @@ export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
 // };
 
 export const updateShift = async (id, updateData) => {
-  console.log("=== UPDATE SHIFT SERVICE ===");
-  console.log("Shift ID:", id);
-  console.log("Update data received:", updateData);
   
   try {
     // First get the current shift data
@@ -195,9 +173,7 @@ export const updateShift = async (id, updateData) => {
       elapsed_time: updateData.elapsed_time !== undefined ? updateData.elapsed_time : current[0].elapsed_time,
       attendance: updateData.attendance !== undefined ? updateData.attendance : current[0].attendance
     };
-    
-    console.log("Merged data for update:", merged);
-    
+        
     // Now update with all fields
     const result = await sql`
       UPDATE shifts
@@ -210,10 +186,7 @@ export const updateShift = async (id, updateData) => {
       WHERE id = ${id}
       RETURNING *
     `;
-    
-    console.log("Update successful:", result[0]);
-    console.log("============================");
-    
+
     return result[0];
   } catch (error) {
     console.error("=== UPDATE ERROR ===");

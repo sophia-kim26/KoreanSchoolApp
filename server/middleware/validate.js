@@ -18,9 +18,7 @@ const getClientIP = (req) => {
 // IP address checking
 export const validateLocation = (req, res, next) => {
   const clientIP = getClientIP(req);
-  
-  console.log(`Clock-in attempt from IP: ${clientIP}`);
-  
+    
   // Check if IP is in allowed list
   const isAllowed = ALLOWED_IPS.some(allowedIP => {
     // Handle some IPv6 localhost variations
@@ -35,7 +33,6 @@ export const validateLocation = (req, res, next) => {
     });
   }
 
-  console.log(`✓ IP ${clientIP} is authorized`);
   next();
 };
 

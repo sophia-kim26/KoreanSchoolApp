@@ -39,7 +39,6 @@ function VPTAView() {
           throw new Error(`TA with ID ${ta_id} not found`);
         }
         setTaInfo(currentTA);
-        console.log('TA Info:', currentTA);
 
         // Fetch shifts
         const shiftsResponse = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
@@ -53,7 +52,6 @@ function VPTAView() {
         }
         
         const shiftsData = await shiftsResponse.json();
-        console.log('Fetched shifts data for TA:', ta_id, shiftsData);
         setAllShifts(Array.isArray(shiftsData) ? shiftsData : []);
       } catch (err) {
         setError(err.message);
@@ -194,9 +192,7 @@ function VPTAView() {
         if (data.clock_out) {
           payload.clock_out = localToISO(data.clock_out);
         }
-        
-        console.log(`Updating shift ${shiftId}:`, payload);
-        
+                
         return fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
           method: 'PUT',
           headers: {
@@ -215,7 +211,6 @@ function VPTAView() {
             throw new Error(`Failed to update shift: ${errorText}`);
           }
         }
-        console.log('All updates successful');
       }
 
       // Create new shift if data is present
@@ -226,9 +221,6 @@ function VPTAView() {
           clock_out: localToISO(newShift.clock_out),
         };
 
-        console.log('=== CREATING NEW SHIFT ===');
-        console.log('Payload:', JSON.stringify(newShiftPayload, null, 2));
-
         const createResponse = await fetch(`http://localhost:3001/api/shifts/manual`, {
           method: 'POST',
           headers: {
@@ -237,19 +229,14 @@ function VPTAView() {
           body: JSON.stringify(newShiftPayload)
         });
 
-        console.log('Create response status:', createResponse.status);
         const responseText = await createResponse.text();
-        console.log('Create response body:', responseText);
 
         if (!createResponse.ok) {
           throw new Error(`Failed to create shift: ${createResponse.status} - ${responseText}`);
         }
-
-        console.log('New shift created successfully');
       }
       
       // Refresh shifts data
-      console.log('Refreshing shifts data...');
       const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
       const data = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);

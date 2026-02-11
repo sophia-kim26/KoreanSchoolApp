@@ -11,7 +11,7 @@ import {
 
 ChartJS.register(Tooltip, Legend, ArcElement);
 
-export default function DoughnutChart(): JSX.Element {
+export default function DoughnutChart() {
   // sample data
   const hoursCompleted: number = 250;
   const totalHoursRequired: number = 300;
@@ -27,12 +27,12 @@ export default function DoughnutChart(): JSX.Element {
         data: [presentPercentage, absentPercentage],
         backgroundColor: ['#5b8dc4', '#f5f5dc'],
         borderWidth: 0,
-        cutout: '75%'
       }
     ]
   };
 
   const doughnutOptions: ChartOptions<'doughnut'> = {
+    cutout: '75%' as any,
     plugins: {
       legend: {
         display: false

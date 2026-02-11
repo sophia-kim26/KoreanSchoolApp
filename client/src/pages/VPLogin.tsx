@@ -11,7 +11,7 @@ export default function VPLogin() {
   useEffect(() => {
     sessionStorage.setItem("appWasOpen", "true");
 
-    const handleBeforeUnload = () => {
+    const handleBeforeUnload = (): void => {
       sessionStorage.removeItem("appWasOpen");
     };
 
@@ -27,11 +27,11 @@ export default function VPLogin() {
   }, [isLoading, isAuthenticated, navigate]);
 
   // ✅ DO NOT override redirect_uri here
-  const handleLogin = () => {
+  const handleLogin = (): void => {
     loginWithRedirect();
   };
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     logout({
       logoutParams: {
         returnTo: window.location.origin

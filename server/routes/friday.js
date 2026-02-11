@@ -7,7 +7,6 @@ import {
 
 const router = express.Router();
 
-// Test route to verify router is working
 router.get('/test', (req, res) => {
   res.json({ message: 'Friday router is working!' });
 });
@@ -69,8 +68,5 @@ router.post('/save-calendar-dates', async (req, res, next) => {
     });
   }
 });
-
-// Log that the router module loaded successfully
-console.log('Friday router module loaded successfully');
 
 export default router;

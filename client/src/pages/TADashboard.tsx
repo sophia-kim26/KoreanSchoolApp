@@ -19,6 +19,10 @@ interface ElapsedTime {
   minutes: number;
 }
 
+interface TADashboardProps {
+  taId: number;
+}
+
 interface Shift {
   id: number;
   ta_id: number;
@@ -107,7 +111,7 @@ const formatTime = (dateString: string | null): string => {
   });
 };
 
-function TADashboard(): React.ReactElement {
+function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [data, setData] = useState<Shift[]>([]);
   const [clockedIn, setClockedIn] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
@@ -128,24 +132,24 @@ function TADashboard(): React.ReactElement {
   const [editingShiftId, setEditingShiftId] = useState<number | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
 
-  const overlayStyle: React.CSSProperties = {
-    position: "fixed",
+  const overlayStyle = {
+    position: "fixed" as const,
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
     backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    display: "flex" as const,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
     zIndex: 1000,
   };
 
-  const modalStyle: React.CSSProperties = {
+  const modalStyle = {
     backgroundColor: "#fff",
     padding: "30px",
     borderRadius: "8px",
-    textAlign: "center",
+    textAlign: "center" as const,
     minWidth: "300px",
   };
 
@@ -207,6 +211,7 @@ function TADashboard(): React.ReactElement {
       alert("Failed to update notes. Please try again.");
     }
   };
+  
 
   // Handler for opening notes modal
   const handleEditNotes = (shiftId: number, currentNotes: string): void => {
