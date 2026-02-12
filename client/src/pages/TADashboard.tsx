@@ -133,7 +133,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [editingNotes, setEditingNotes] = useState<string>('');
   
   // Assigned classroom state
-  const [assignedClassroom, setAssignedClassroom] = useState<string>('벚꽃반');
+  const [assignedClassroom, setAssignedClassroom] = useState<string>('제비꽃반');
 
   const overlayStyle = {
     position: "fixed" as const,
