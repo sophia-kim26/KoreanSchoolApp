@@ -573,7 +573,22 @@ function VPDashboard(): React.ReactElement {
                     { name: translations[language].lastName, width: '120px' },
                     { name: translations[language].koreanName, width: '120px' },
                     { name: translations[language].sessionDay, width: '120px' },
-                    { name: translations[language].classroom, width: '120px' },
+                    {
+                      name: translations[language].classroom,
+                      width: '150px',
+                      formatter: (cell: any) => {
+                        return h('select', {
+                          style: 'width:100%;padding:14px 12px;border:none;border-bottom:1px solid #bfdbfe;font-size:14px;background:#eff6ff;cursor:pointer;color:#1e40af;font-family:inherit;appearance:none;outline:none;',
+                          onclick: (e: Event) => e.stopPropagation(),
+                          onchange: () => {} // Does nothing
+                        }, [
+                          h('option', { value: cell || '', selected: true }, cell || 'N/A'),
+                          ...CLASSROOMS.map(classroom => 
+                            h('option', { value: classroom }, classroom)
+                          )
+                        ]);
+                      }
+                    },
                     { name: translations[language].active, width: '80px', formatter: (cell: any) => cell ? 'Yes' : 'No' },
                     { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                     {
