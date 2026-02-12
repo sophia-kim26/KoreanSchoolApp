@@ -74,28 +74,34 @@ export const getCalendarDates = async () => {
 
 export const saveCalendarDates = async (dates) => {
   console.log('saveCalendarDates called with:', dates);
-  
-  try {
-    console.log('Deleting existing dates...');
-    await sql`DELETE FROM calendar_dates`;
 
-    if (dates && dates.length > 0) {
-      console.log(`Inserting ${dates.length} new dates...`);
-      
-      for (const date of dates) {
-        console.log('Inserting date:', date);
-        await sql`INSERT INTO calendar_dates (date) VALUES (${date})`;
+  if (!Array.isArray(dates)) {
+    throw new Error('dates must be an array');
+  }
+
+  try {
+    await sql.begin(async (tx) => {
+      console.log('Deleting existing dates...');
+      await tx`DELETE FROM calendar_dates`;
+
+      if (dates.length > 0) {
+        console.log(`Batch inserting ${dates.length} dates...`);
+
+        await tx`
+          INSERT INTO calendar_dates (date)
+          SELECT * FROM UNNEST(${dates}::date[])
+        `;
       }
-    }
+    });
 
     console.log('Save completed successfully');
-    return { 
-      success: true, 
-      count: dates.length 
+
+    return {
+      success: true,
+      count: dates.length
     };
   } catch (error) {
     console.error('Error in saveCalendarDates:', error);
-    console.error('Error details:', error.message);
     throw error;
   }
 };
