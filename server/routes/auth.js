@@ -25,10 +25,19 @@ router.post('/create-account-vp', validateCreateAccount, async (req, res, next) 
   }
 });
 
-// Sign in endpoint with rate limiting
-router.post('/signin', loginLimiter, async (req, res, next) => {
+// POST /api/signin
+router.post('/signin', async (req, res, next) => {
   try {
-    const result = await signIn(req.body.ta_code);
+    const { email, ta_code } = req.body;
+    
+    if (!email || !ta_code) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and PIN are required'
+      });
+    }
+
+    const result = await signIn(email, ta_code);
     res.json(result);
   } catch (error) {
     next(error);

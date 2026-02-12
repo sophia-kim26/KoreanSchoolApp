@@ -346,44 +346,80 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   };
 
 
-  const clockOut = async (): Promise<void> => {
+const clockOut = async (): Promise<void> => {
+  console.log("=== CLOCK OUT STARTED ===");
+  console.log("Active Shift ID:", activeShiftId);
+  console.log("Clock In Time:", clockInTime);
+  
+  const time = new Date();
+  setClockOutTime(time);
+
+  let calculatedElapsed: ElapsedTime | null = null;
+  let elapsedTimeText = "";
+
+  if (clockInTime) {
+    const diff = time.getTime() - clockInTime.getTime();
+    const totalMinutes = Math.floor(diff / 1000 / 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    calculatedElapsed = { hours, minutes }; 
+    setElapsed(calculatedElapsed);
+    
+    // Format as text: "2hr30min"
+    elapsedTimeText = `${hours}hr${minutes.toString().padStart(2, '0')}min`;
+    console.log("Calculated elapsed time:", elapsedTimeText);
+  }
+
+  if (!activeShiftId) {
+    console.error("No active shift ID found.");
+    alert("Error: No active shift found to clock out.");
+    return;
+  }
+
+  try {
+    const requestBody = {
+      clock_out: time.toISOString(),
+      elapsed_time: elapsedTimeText
+    };
+    
+    console.log("Sending PUT request to:", `http://localhost:3001/api/shifts/${activeShiftId}`);
+    console.log("Request body:", JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`http://localhost:3001/api/shifts/${activeShiftId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody)
+    });
+
+    console.log("Response status:", response.status);
+    console.log("Response ok:", response.ok);
+    
+    const responseData = await response.json();
+    console.log("Response data:", responseData);
+
+    if (!response.ok) {
+      throw new Error(responseData.error || 'Failed to clock out');
+    }
+
+    console.log("Fetching updated shifts...");
+    await fetchShifts();
+    
+    console.log("Resetting state...");
     setClockedIn(false);
-
-    const time = new Date();
-    setClockOutTime(time);
-
-    let calculatedElapsed: ElapsedTime | null = null;
-
-    if (clockInTime) {
-      const diff = time.getTime() - clockInTime.getTime();
-      const totalMinutes = Math.floor(diff / 1000 / 60);
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      calculatedElapsed = { hours, minutes }; 
-      setElapsed(calculatedElapsed);
-    }
-
-    if (!activeShiftId) {
-      console.error("No active shift ID found.");
-      return;
-    }
-
-    try {
-      await fetch(`http://localhost:3001/api/shifts/${activeShiftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clock_out: time,
-          elapsed_time: calculatedElapsed ? calculatedElapsed.hours : 0
-        })
-      });
-
-      await fetchShifts();
-      setActiveShiftId(null);
-    } catch (err) {
-      console.error("Failed to clock out:", err);
-    }
-  };
+    setActiveShiftId(null);
+    setClockInTime(null);
+    
+    alert("Successfully clocked out!");
+    console.log("=== CLOCK OUT COMPLETED ===");
+    
+  } catch (err) {
+    console.error("=== CLOCK OUT FAILED ===");
+    console.error("Error:", err);
+    console.error("Error message:", (err as Error).message);
+    console.error("Error stack:", (err as Error).stack);
+    alert((err as Error).message || "Failed to clock out. Please try again.");
+  }
+};
 
   const toggleAttendance = async (shiftId: number, newStatus: string): Promise<void> => {
     try {
