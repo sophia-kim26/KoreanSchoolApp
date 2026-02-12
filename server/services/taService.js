@@ -53,38 +53,38 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
   return { 
     success: true, 
     ta: result[0],
-    unhashed_pin: ta_code, // Return unhashed PIN for display to VP
+    unhashed_pin: ta_code,
     message: 'Account created successfully' 
   };
 };
 
-export const signIn = async (ta_code) => {
-  // Get all active TAs
-  const allTAs = await sql`SELECT * FROM ta_list WHERE is_active = true`;
+export const signIn = async (email, ta_code) => {
+  // Query for a single TA by email
+  const tas = await sql`SELECT * FROM ta_list WHERE email = ${email} AND is_active = true`;
   
-  if (allTAs.length === 0) {
-    const error = new Error('Invalid PIN');
+  if (tas.length === 0) {
+    const error = new Error('Invalid email or PIN');
     error.status = 404;
     throw error;
   }
 
-  // Check each TA's hashed PIN
-  for (const ta of allTAs) {
-    const isMatch = await bcrypt.compare(ta_code, ta.ta_code);
-    if (isMatch) {
-      // Return TA data without the hashed PIN
-      const { ta_code: _, ...taData } = ta;
-      return { 
-        success: true, 
-        ta: taData 
-      };
-    }
+  const ta = tas[0];
+
+  // Perform a single bcrypt comparison
+  const isMatch = await bcrypt.compare(ta_code, ta.ta_code);
+  
+  if (!isMatch) {
+    const error = new Error('Invalid email or PIN');
+    error.status = 404;
+    throw error;
   }
 
-  // No match found
-  const error = new Error('Invalid PIN');
-  error.status = 404;
-  throw error;
+  // Return TA data without the hashed PIN
+  const { ta_code: _, ...taData } = ta;
+  return { 
+    success: true, 
+    ta: taData 
+  };
 };
 
 export const deactivateTA = async (id) => {
@@ -99,10 +99,10 @@ export const deactivateTA = async (id) => {
 export const resetPin = async (id) => {
   // Generate new 6-digit PIN
   const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-  
+
   // Hash the new PIN
   const hashedPin = await bcrypt.hash(newPin, SALT_ROUNDS);
-  
+
   // Update the database
   const result = await sql`
     UPDATE ta_list 
@@ -110,17 +110,38 @@ export const resetPin = async (id) => {
     WHERE id = ${id}
     RETURNING id, first_name, last_name, email
   `;
-  
+
   if (result.length === 0) {
     const error = new Error('TA not found');
     error.status = 404;
     throw error;
   }
-  
+
   return {
     success: true,
     ta: result[0],
     unhashed_pin: newPin,
     message: 'PIN reset successfully'
+  };
+};
+
+export const updateClassroom = async (id, classroom) => {
+  const result = await sql`
+    UPDATE ta_list 
+    SET classroom = ${classroom}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+
+  if (result.length === 0) {
+    const error = new Error('TA not found');
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    success: true,
+    ta: result[0],
+    message: 'Classroom updated successfully'
   };
 };
