@@ -131,6 +131,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
   const [editingShiftId, setEditingShiftId] = useState<number | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
+  
+  // Assigned classroom state
+  const [assignedClassroom, setAssignedClassroom] = useState<string>('벚꽃반');
 
   const overlayStyle = {
     position: "fixed" as const,
@@ -481,6 +484,22 @@ const clockOut = async (): Promise<void> => {
               Sign Out
             </button>
           </div>
+      </div>
+
+      {/* Assigned Classroom Box */}
+      <div style={{
+        marginTop: "20px",
+        marginBottom: "20px",
+        padding: "12px 20px",
+        backgroundColor: "#e0f2fe",
+        border: "2px solid #0ea5e9",
+        borderRadius: "8px",
+        display: "inline-block",
+        fontSize: "16px",
+        fontWeight: "500",
+        color: "#0c4a6e"
+      }}>
+        <strong>Assigned Classroom:</strong> {assignedClassroom}
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
