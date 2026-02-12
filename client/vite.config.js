@@ -11,6 +11,9 @@ export default defineConfig({
       // This isn't needed for routing, but I'm showing the structure
     }
   },
+  env: {
+    AUTH0_BASE_URL: process.env.VERCEL_URL || process.env.AUTH0_BASE_URL,
+  },
   // This is important - but might not work in dev server
   // You may need the historyApiFallback approach below instead
 });

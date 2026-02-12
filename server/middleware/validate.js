@@ -2,8 +2,7 @@
 const ALLOWED_IPS = [
   '127.0.0.1',           // localhost for testing
   '::1',                 // localhost IPv6
-  '192.168.1.13',
-  '192.168.1.1'
+  '69.121.204.146'      // my public ip address last night
   // Add Korean School's IP when I know it but for next time add bca ip
 ];
 
@@ -20,9 +19,7 @@ const getClientIP = (req) => {
 // IP address checking
 export const validateLocation = (req, res, next) => {
   const clientIP = getClientIP(req);
-  
-  console.log(`Clock-in attempt from IP: ${clientIP}`);
-  
+    
   // Check if IP is in allowed list
   const isAllowed = ALLOWED_IPS.some(allowedIP => {
     // Handle some IPv6 localhost variations
@@ -37,7 +34,6 @@ export const validateLocation = (req, res, next) => {
     });
   }
 
-  console.log(`✓ IP ${clientIP} is authorized`);
   next();
 };
 

@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { useParams } from "react-router-dom";
+import type { ChartOptions } from 'chart.js';
+
 import {
   Chart as ChartJS,
   BarElement,
@@ -13,10 +15,67 @@ import {
   ArcElement
 } from "chart.js";
 
+// Add type definitions
+interface Parent {
+  koreanName?: string;
+  korean_name?: string;
+  englishName?: string;
+  english_name?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface CurrentUser {
+  id: string | number;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  highschool?: string;
+  grade?: string | number;
+  age?: string | number;
+  gender?: string;
+  address?: string;
+  emergencyPhone?: string;
+  notes?: string;
+}
+
+interface ChartProps {
+  currentUser: CurrentUser;
+}
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart( {currentUser} ) {
+export default function Chart({ currentUser }: ChartProps) {
+    const [parents, setParents] = useState<Parent[]>([]);
+
+    // Fetch parent data when component mounts
+    useEffect(() => {
+      const fetchParents = async () => {
+        if (!currentUser?.id) {
+          return;
+        }
+                
+        try {
+          const res = await fetch(`${process.env.REACT_APP_API_URL}/api/parents/ta/${currentUser.id}`);
+          
+          if (res.ok) {
+            const data: Parent[] = await res.json();
+            setParents(data);
+          } else {
+            const errorText = await res.text();
+            console.error('Failed to fetch parents. Status:', res.status, 'Error:', errorText);
+            setParents([]);
+          }
+        } catch (error) {
+          console.error('Error fetching parents:', error);
+          setParents([]);
+        }
+      };
+
+      fetchParents();
+    }, [currentUser?.id]);
+
     const taInfo = {
       firstName: currentUser.first_name || "First Name",
       lastName: currentUser?.last_name || "Last Name",
@@ -31,23 +90,17 @@ export default function Chart( {currentUser} ) {
       notes: currentUser?.notes || "No notes",
       hoursCompleted: 250,
       totalHoursRequired: 300,
-      parents: [
+      parents: parents.length > 0 ? parents : [
         {
-          koreanName: currentUser?.parent1_korean_name || "한국이름",
-          englishName: currentUser?.parent1_english_name || "Parent Name",
-          phone: currentUser?.parent1_phone || "123-456-7890",
-          email: currentUser?.parent1_email || "parent1@example.com"
-        },
-        {
-          koreanName: currentUser?.parent2_korean_name || "한국이름",
-          englishName: currentUser?.parent2_english_name || "Parent Name",
-          phone: currentUser?.parent2_phone || "123-456-7890",
-          email: currentUser?.parent2_email || "parent2@example.com"
+          koreanName: "한국이름",
+          englishName: "Parent Name",
+          phone: "123-456-7890",
+          email: "parent@example.com"
         }
       ]
     };
 
-  const dataValues = [12, 19, 40, 30, 5]
+  const dataValues: number[] = [12, 19, 40, 30, 5];
 
   // bar graph
   const barData = {
@@ -61,36 +114,11 @@ export default function Chart( {currentUser} ) {
     ]
   };
 
-  
-
-  const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
-
-  const barOptions = {
-    y: {
-      min : 0,
-      max : 50,
-      ticks: {
-        stepSize: 5
-      },
-      title: {
-        display: true,
-        text: "Hours"
-      },
-      grid: {
-        // grid line color won't change idk why
-        color: () => "#feefbfff"
-      }
-    },
-    x: {
-      grid: {
-        color: "#feefbfff"
-      }
-    }
-  }
+  const totalHours: number = dataValues.reduce((sum, val) => sum + val, 0);
 
   // doughnut chart data (attendance)
-  const presentPercentage = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
-  const absentPercentage = 100-presentPercentage;
+  const presentPercentage: number = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
+  const absentPercentage: number = 100-presentPercentage;
 
   const doughnutData = {
     labels: ['Present', 'Absent'],
@@ -102,9 +130,9 @@ export default function Chart( {currentUser} ) {
         cutout: '75%'
       }
     ]
-  }
+  };
 
-  const doughnutOptions = {
+  const doughnutOptions: ChartOptions<'doughnut'> = {
     plugins: {
       legend: {
         display: false
@@ -113,7 +141,31 @@ export default function Chart( {currentUser} ) {
         enabled: false
       }
     }
-  }
+  };
+
+  const barOptions: ChartOptions<'bar'> = {
+    scales: {
+      y: {
+        min: 0,
+        max: 50,
+        ticks: {
+          stepSize: 5
+        },
+        title: {
+          display: true,
+          text: "Hours"
+        },
+        grid: {
+          color: "#feefbfff"
+        }
+      },
+      x: {
+        grid: {
+          color: "#feefbfff"
+        }
+      }
+    }
+  };
 
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
@@ -157,10 +209,10 @@ export default function Chart( {currentUser} ) {
                   backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
                   borderBottom: "1px solid #e5e7eb"
                 }}>
-                  <td style={{ padding: "10px" }}>{parent.koreanName}</td>
-                  <td style={{ padding: "10px" }}>{parent.englishName}</td>
-                  <td style={{ padding: "10px" }}>{parent.phone}</td>
-                  <td style={{ padding: "10px" }}>{parent.email}</td>
+                  <td style={{ padding: "10px" }}>{parent.koreanName || parent.korean_name || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.englishName || parent.english_name || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.phone || 'N/A'}</td>
+                  <td style={{ padding: "10px" }}>{parent.email || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
@@ -219,18 +271,6 @@ export default function Chart( {currentUser} ) {
             Notes: {taInfo.notes}
           </p>
         </div>
-
-        {/* hours info
-        <div style={{ marginBottom: "20px", color: "#5b8dc4", fontSize: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-            <span>Hours Per Day:</span>
-            <span>{taInfo.hoursPerDay}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Time:</span>
-            <span>{taInfo.time}</span>
-          </div>
-        </div> */}
 
         {/* progress bar */}
         <div style={{ marginTop: "20px" }}>

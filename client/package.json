@@ -12,8 +12,7 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.10.0",
-    "@clerk/clerk-react": "^5.56.2",
+    "@auth0/auth0-react": "^2.13.0",
     "@neondatabase/serverless": "^1.0.2",
     "@tailwindcss/vite": "^4.1.18",
     "bcrypt": "^6.0.0",

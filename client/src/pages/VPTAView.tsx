@@ -1,28 +1,57 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+// Type Definitions
+interface Shift {
+  id: number;
+  ta_id: number;
+  clock_in: string;
+  clock_out: string | null;
+}
+
+interface TA {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
+interface EditedShift {
+  clock_in: string;
+  clock_out: string;
+}
+
+interface NewShift {
+  clock_in: string;
+  clock_out: string;
+}
+
+interface RouteParams {
+  ta_id: string;
+  [key: string]: string | undefined;
+}
+
 function VPTAView() {
-  const { ta_id } = useParams();
+  const { ta_id } = useParams<RouteParams>();
   const navigate = useNavigate();
   
-  const [allShifts, setAllShifts] = useState([]);
-  const [taInfo, setTaInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editingMonth, setEditingMonth] = useState(null);
-  const [editedShifts, setEditedShifts] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [newShift, setNewShift] = useState({
+  const [allShifts, setAllShifts] = useState<Shift[]>([]);
+  const [taInfo, setTaInfo] = useState<TA | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingMonth, setEditingMonth] = useState<string | null>(null);
+  const [editedShifts, setEditedShifts] = useState<Record<number, EditedShift>>({});
+  const [saving, setSaving] = useState<boolean>(false);
+  const [newShift, setNewShift] = useState<NewShift>({
     clock_in: '',
     clock_out: ''
   });
-  const [showResetPinModal, setShowResetPinModal] = useState(false);
-  const [newPin, setNewPin] = useState('');
-  const [resettingPin, setResettingPin] = useState(false);
+  const [showResetPinModal, setShowResetPinModal] = useState<boolean>(false);
+  const [newPin, setNewPin] = useState<string>('');
+  const [resettingPin, setResettingPin] = useState<boolean>(false);
 
   // Fetch TA info and shifts from API
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       try {
         setLoading(true);
         setError(null);
@@ -32,14 +61,13 @@ function VPTAView() {
         if (!taResponse.ok) {
           throw new Error(`Failed to fetch TA info: ${taResponse.status}`);
         }
-        const allTAs = await taResponse.json();
-        const currentTA = allTAs.find(ta => ta.id === parseInt(ta_id));
+        const allTAs: TA[] = await taResponse.json();
+        const currentTA = allTAs.find(ta => ta.id === parseInt(ta_id || '0'));
         
         if (!currentTA) {
           throw new Error(`TA with ID ${ta_id} not found`);
         }
         setTaInfo(currentTA);
-        console.log('TA Info:', currentTA);
 
         // Fetch shifts
         const shiftsResponse = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
@@ -52,11 +80,11 @@ function VPTAView() {
           throw new Error("Server returned non-JSON response. Is the backend running on http://localhost:3001?");
         }
         
-        const shiftsData = await shiftsResponse.json();
-        console.log('Fetched shifts data for TA:', ta_id, shiftsData);
+        const shiftsData: Shift[] = await shiftsResponse.json();
         setAllShifts(Array.isArray(shiftsData) ? shiftsData : []);
       } catch (err) {
-        setError(err.message);
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
         console.error("Fetch error:", err);
       } finally {
         setLoading(false);
@@ -75,25 +103,25 @@ function VPTAView() {
     if (!allShifts || allShifts.length === 0) {
       return [];
     }
-    return allShifts.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
+    return allShifts.sort((a, b) => new Date(b.clock_in).getTime() - new Date(a.clock_in).getTime());
   }, [allShifts]);
 
-  const calculateHours = (clockIn, clockOut) => {
-    if (!clockIn || !clockOut) return 0;
+  const calculateHours = (clockIn: string | null, clockOut: string | null): string => {
+    if (!clockIn || !clockOut) return '0';
     const start = new Date(clockIn);
     const end = new Date(clockOut);
-    const hours = (end - start) / (1000 * 60 * 60);
-    return hours > 0 ? hours.toFixed(2) : 0;
+    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    return hours > 0 ? hours.toFixed(2) : '0';
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`;
   };
 
   // Format date for datetime-local input (no timezone conversion)
-  const formatDateTimeLocal = (dateString) => {
+  const formatDateTimeLocal = (dateString: string | null): string => {
     if (!dateString) return '';
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -105,7 +133,7 @@ function VPTAView() {
   };
 
   // Convert datetime-local input to ISO string preserving local time
-  const localToISO = (localDateTimeString) => {
+  const localToISO = (localDateTimeString: string): string | null => {
     if (!localDateTimeString) return null;
     const withSeconds = localDateTimeString.includes(':') && localDateTimeString.split(':').length === 2
       ? `${localDateTimeString}:00`
@@ -118,7 +146,7 @@ function VPTAView() {
   const shiftsByMonth = useMemo(() => {
     if (!shifts || shifts.length === 0) return {};
     
-    const grouped = {};
+    const grouped: Record<string, Shift[]> = {};
     shifts.forEach(shift => {
       if (!shift.clock_in) return;
       
@@ -134,7 +162,7 @@ function VPTAView() {
     const sortedEntries = Object.entries(grouped).sort((a, b) => {
       const dateA = new Date(a[1][0].clock_in);
       const dateB = new Date(b[1][0].clock_in);
-      return dateB - dateA;
+      return dateB.getTime() - dateA.getTime();
     });
     
     return Object.fromEntries(sortedEntries);
@@ -152,9 +180,9 @@ function VPTAView() {
   const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
   const absentPercentage = 100 - presentPercentage;
 
-  const handleEditMonth = (month, monthShifts) => {
+  const handleEditMonth = (month: string, monthShifts: Shift[]): void => {
     setEditingMonth(month);
-    const initialEdits = {};
+    const initialEdits: Record<number, EditedShift> = {};
     monthShifts.forEach(shift => {
       initialEdits[shift.id] = {
         clock_in: formatDateTimeLocal(shift.clock_in),
@@ -164,13 +192,13 @@ function VPTAView() {
     setEditedShifts(initialEdits);
   };
 
-  const handleCloseEdit = () => {
+  const handleCloseEdit = (): void => {
     setEditingMonth(null);
     setEditedShifts({});
     setNewShift({ clock_in: '', clock_out: '' });
   };
 
-  const handleShiftChange = (shiftId, field, value) => {
+  const handleShiftChange = (shiftId: number, field: keyof EditedShift, value: string): void => {
     setEditedShifts(prev => ({
       ...prev,
       [shiftId]: {
@@ -180,23 +208,21 @@ function VPTAView() {
     }));
   };
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (): Promise<void> => {
     setSaving(true);
     try {
       // Update existing shifts first
       const updatePromises = Object.entries(editedShifts).map(([shiftId, data]) => {
-        const payload = {};
+        const payload: Partial<Shift> = {};
         
         if (data.clock_in) {
-          payload.clock_in = localToISO(data.clock_in);
+          payload.clock_in = localToISO(data.clock_in) || '';
         }
         
         if (data.clock_out) {
           payload.clock_out = localToISO(data.clock_out);
         }
-        
-        console.log(`Updating shift ${shiftId}:`, payload);
-        
+                
         return fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
           method: 'PUT',
           headers: {
@@ -215,19 +241,15 @@ function VPTAView() {
             throw new Error(`Failed to update shift: ${errorText}`);
           }
         }
-        console.log('All updates successful');
       }
 
       // Create new shift if data is present
       if (newShift.clock_in && newShift.clock_out) {
         const newShiftPayload = {
-          ta_id: parseInt(ta_id),
+          ta_id: parseInt(ta_id || '0'),
           clock_in: localToISO(newShift.clock_in),
           clock_out: localToISO(newShift.clock_out),
         };
-
-        console.log('=== CREATING NEW SHIFT ===');
-        console.log('Payload:', JSON.stringify(newShiftPayload, null, 2));
 
         const createResponse = await fetch(`http://localhost:3001/api/shifts/manual`, {
           method: 'POST',
@@ -237,45 +259,41 @@ function VPTAView() {
           body: JSON.stringify(newShiftPayload)
         });
 
-        console.log('Create response status:', createResponse.status);
         const responseText = await createResponse.text();
-        console.log('Create response body:', responseText);
 
         if (!createResponse.ok) {
           throw new Error(`Failed to create shift: ${createResponse.status} - ${responseText}`);
         }
-
-        console.log('New shift created successfully');
       }
       
       // Refresh shifts data
-      console.log('Refreshing shifts data...');
       const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
-      const data = await response.json();
+      const data: Shift[] = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);
       
       handleCloseEdit();
     } catch (err) {
       console.error('=== ERROR SAVING CHANGES ===');
       console.error('Error object:', err);
-      alert(`Failed to save changes: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      alert(`Failed to save changes: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const calculateEditedHours = (shiftId) => {
+  const calculateEditedHours = (shiftId: number): string | null => {
     const shift = editedShifts[shiftId];
     if (!shift || !shift.clock_in || !shift.clock_out) return null;
     
     const start = new Date(shift.clock_in);
     const end = new Date(shift.clock_out);
-    const hours = (end - start) / (1000 * 60 * 60);
-    return hours > 0 ? hours.toFixed(2) : 0;
+    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    return hours > 0 ? hours.toFixed(2) : '0';
   };
 
-  const handleResetPin = async () => {
-    if (!confirm(`Are you sure you want to reset the PIN for ${taInfo.first_name} ${taInfo.last_name}?`)) {
+  const handleResetPin = async (): Promise<void> => {
+    if (!confirm(`Are you sure you want to reset the PIN for ${taInfo?.first_name} ${taInfo?.last_name}?`)) {
       return;
     }
 
@@ -289,18 +307,19 @@ function VPTAView() {
         throw new Error('Failed to reset PIN');
       }
 
-      const result = await response.json();
+      const result: { unhashed_pin: string } = await response.json();
       setNewPin(result.unhashed_pin);
       setShowResetPinModal(true);
     } catch (err) {
       console.error(err);
-      alert('Error resetting PIN: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      alert('Error resetting PIN: ' + errorMessage);
     } finally {
       setResettingPin(false);
     }
   };
 
-  const copyPinToClipboard = () => {
+  const copyPinToClipboard = (): void => {
     navigator.clipboard.writeText(newPin);
     alert('PIN copied to clipboard!');
   };
@@ -379,8 +398,8 @@ function VPTAView() {
           marginBottom: 30,
           fontWeight: '400'
         }}
-        onMouseOver={(e) => e.target.style.color = '#4a7298'}
-        onMouseOut={(e) => e.target.style.color = '#5b8bb8'}
+        onMouseOver={(e) => (e.currentTarget.style.color = '#4a7298')}
+        onMouseOut={(e) => (e.currentTarget.style.color = '#5b8bb8')}
       >
         <span style={{ fontSize: '24px' }}>←</span> Back to Homescreen
       </button>
@@ -443,8 +462,8 @@ function VPTAView() {
                       cursor: 'pointer',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#f0cd6b'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#f5d77e'}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f0cd6b')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f5d77e')}
                   >
                     Edit
                   </button>
@@ -472,7 +491,7 @@ function VPTAView() {
                       >
                         <span>{formatDate(shift.clock_in)}</span>
                         <span style={{ fontWeight: '400' }}>
-                          {shift.clock_out && hours > 0
+                          {shift.clock_out && parseFloat(hours) > 0
                             ? `${hours} Hours`
                             : shift.clock_out 
                             ? '0.00 Hours'
@@ -617,8 +636,8 @@ function VPTAView() {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseOver={(e) => !resettingPin && (e.target.style.backgroundColor = '#dc2626')}
-                onMouseOut={(e) => !resettingPin && (e.target.style.backgroundColor = '#ef4444')}
+                onMouseOver={(e) => !resettingPin && (e.currentTarget.style.backgroundColor = '#dc2626')}
+                onMouseOut={(e) => !resettingPin && (e.currentTarget.style.backgroundColor = '#ef4444')}
               >
                 {resettingPin ? 'Resetting...' : '🔄 Reset PIN'}
               </button>
@@ -811,7 +830,7 @@ function VPTAView() {
               {newShift.clock_in && newShift.clock_out && (() => {
                 const start = new Date(newShift.clock_in);
                 const end = new Date(newShift.clock_out);
-                const hours = (end - start) / (1000 * 60 * 60);
+                const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
                 return hours > 0 && (
                   <div style={{
                     marginTop: 12,
