@@ -45,9 +45,9 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
   const hashedPin = await bcrypt.hash(ta_code, SALT_ROUNDS);
 
   const result = await sql`
-    INSERT INTO ta_list (first_name, last_name, email, ta_code, session_day, korean_name, is_active, created_at) 
+    INSERT INTO ta_list (first_name, last_name, email, ta_code, session_day, korean_name, classroom, is_active, created_at) 
     VALUES (${first_name}, ${last_name}, ${email}, ${hashedPin}, ${session_day}, ${korean_name || null}, true, NOW()) 
-    RETURNING id, first_name, last_name, email, session_day, korean_name, is_active, created_at
+    RETURNING id, first_name, last_name, email, session_day, korean_name, classroom, is_active, created_at
   `;
 
   return { 
