@@ -6,12 +6,13 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 
 // Type definitions
-interface TAData {
+interface __TAData__ {
   id: number;
   first_name: string;
   last_name: string;
   korean_name: string;
   session_day: string;
+  classroom?: string;
   is_active: boolean;
   total_hours: number | string;
   attendance: string;
@@ -25,11 +26,11 @@ interface TAData {
   phone?: string;
 }
 
-interface FridayData {
+interface __FridayData__ {
   [key: string]: any;
 }
 
-interface FormData {
+interface __FormData__ {
   first_name: string;
   last_name: string;
   email: string;
@@ -38,19 +39,20 @@ interface FormData {
   korean_name: string;
 }
 
-interface Metrics {
+interface __Metrics__ {
   attendance: number;
   absence: number;
   tardiness: number;
   earlyDeparture: number;
 }
 
-interface Translations {
+interface __Translations__ {
   [key: string]: {
     firstName: string;
     lastName: string;
     koreanName: string;
     sessionDay: string;
+    classroom: string;
     active: string;
     totalHours: string;
     attendance: string;
@@ -63,35 +65,36 @@ interface Translations {
   };
 }
 
-interface CreateAccountResponse {
+interface __CreateAccountResponse__ {
   success: boolean;
   unhashed_pin: string;
   message?: string;
 }
 
-interface CalendarDatesResponse {
+interface __CalendarDatesResponse__ {
   dates?: string[];
 }
 
-type Language = 'en' | 'ko';
-type ActiveTab = 'appearance';
-type MainTab = 'tas' | 'friday';
+type __Language__ = 'en' | 'ko';
+type __ActiveTab__ = 'appearance';
+type __MainTab__ = 'tas' | 'friday';
 
-function VPDashboard(): React.ReactElement {
-  const [data, setData] = useState<TAData[]>([]);
-  const [fridayData, setFridayData] = useState<FridayData[]>([]);
+function VPDashboard(): __React__.__ReactElement__ {
+  const [data, setData] = useState<__TAData__[]>([]);
+  const [fridayData, setFridayData] = useState<__FridayData__[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showPinModal, setShowPinModal] = useState<boolean>(false);
   const [generatedPin, setGeneratedPin] = useState<string>('');
   const [newTAName, setNewTAName] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<ActiveTab>('appearance');
-  const [mainTab, setMainTab] = useState<MainTab>('tas');
-  const [language, setLanguage] = useState<Language>('en');
+  const [activeTab, setActiveTab] = useState<__ActiveTab__>('appearance');
+  const [mainTab, setMainTab] = useState<__MainTab__>('tas');
+  const [language, setLanguage] = useState<__Language__>('en');
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
-  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [formData, setFormData] = useState<FormData>({
+  const [selectedDates, setSelectedDates] = useState<__Set__<string>>(new Set());
+  const [currentMonth, setCurrentMonth] = useState<__Date__>(new Date());
+  
+  const [formData, setFormData] = useState<__FormData__>({
     first_name: "",
     last_name: "",
     email: "",
@@ -99,19 +102,21 @@ function VPDashboard(): React.ReactElement {
     is_active: true,
     korean_name: ""
   });
-  const [metrics, setMetrics] = useState<Metrics>({
+
+  const [metrics, setMetrics] = useState<__Metrics__>({
     attendance: 0,
     absence: 0,
     tardiness: 0,
     earlyDeparture: 0
   });
-  
-  const translations: Translations = {
+
+  const translations: __Translations__ = {
     en: {
       firstName: "First Name",
       lastName: "Last Name",
       koreanName: "Korean Name",
       sessionDay: "Session Day",
+      classroom: "Classroom",
       active: "Active",
       totalHours: "Total Hours",
       attendance: "Attendance",
@@ -127,6 +132,7 @@ function VPDashboard(): React.ReactElement {
       lastName: "성",
       koreanName: "한국어 이름",
       sessionDay: "수업 요일",
+      classroom: "교실",
       active: "활성 상태",
       totalHours: "총 시간",
       attendance: "출석",
@@ -144,17 +150,16 @@ function VPDashboard(): React.ReactElement {
   };
 
   const { isLoading, isAuthenticated, user, logout } = useAuth0();
-  const navigate: NavigateFunction = useNavigate();
+  const navigate: __NavigateFunction__ = useNavigate();
 
   // Calendar helper functions
-  const getDaysInMonth = (date: Date): { daysInMonth: number; startingDayOfWeek: number } => {
+  const getDaysInMonth = (date: __Date__): { daysInMonth: number; startingDayOfWeek: number } => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-    
     return { daysInMonth, startingDayOfWeek };
   };
 
@@ -167,13 +172,11 @@ function VPDashboard(): React.ReactElement {
   const toggleDate = (day: number): void => {
     const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const newSelected = new Set(selectedDates);
-    
     if (newSelected.has(dateStr)) {
       newSelected.delete(dateStr);
     } else {
       newSelected.add(dateStr);
     }
-    
     setSelectedDates(newSelected);
   };
 
@@ -208,7 +211,7 @@ function VPDashboard(): React.ReactElement {
   const fetchSavedDates = (): void => {
     fetch("http://localhost:3001/api/friday/get-calendar-dates") 
       .then(res => res.json())
-      .then((json: CalendarDatesResponse) => {
+      .then((json: __CalendarDatesResponse__) => {
         if (json.dates && Array.isArray(json.dates)) {
           setSelectedDates(new Set(json.dates));
         }
@@ -216,21 +219,18 @@ function VPDashboard(): React.ReactElement {
       .catch(err => console.log("No saved dates found or error fetching them"));
   };
 
-  const handleSaveDates = async (): Promise<void> => {
+  const handleSaveDates = async (): __Promise__<void> => {
     try {
       const datesArray = Array.from(selectedDates);
-      
       const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dates: datesArray })
       });
-      
-      const responseText = await response.text();
 
+      const responseText = await response.text();
       if (response.ok) {
         const responseData = JSON.parse(responseText);
-        
         setShowCalendar(false);
         await fetchFridayData(); 
         alert("Dates saved! The table now shows only selected dates.");
@@ -250,7 +250,7 @@ function VPDashboard(): React.ReactElement {
       .then(res => {
         return res.json();
       })
-      .then((json: TAData[]) => {
+      .then((json: __TAData__[]) => {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
             return a.id - b.id;
@@ -264,24 +264,21 @@ function VPDashboard(): React.ReactElement {
           const rows = document.querySelectorAll('.gridjs-tr');
           rows.forEach(row => {
             if (row.querySelector('th')) return;
-            
             row.addEventListener('click', (e) => {
-              if ((e.target as HTMLElement).closest('button')) return;
-
+              if ((e.target as __HTMLElement__).closest('button')) return;
               const cells = row.querySelectorAll('.gridjs-td');
               if (cells.length >= 8) {
-                const taId = cells[7].textContent;
+                const taId = cells[12].textContent; // Updated from 11 to 12
                 if (taId) {
                   navigate(`/vp/ta-view/${taId}`);
                 }
               }
             });
-            
             row.addEventListener('mouseenter', () => {
-              (row as HTMLElement).style.backgroundColor = '#dbeafe';
+              (row as __HTMLElement__).style.backgroundColor = '#dbeafe';
             });
             row.addEventListener('mouseleave', () => {
-              (row as HTMLElement).style.backgroundColor = '#eff6ff';
+              (row as __HTMLElement__).style.backgroundColor = '#eff6ff';
             });
           });
         }, 100);
@@ -292,13 +289,12 @@ function VPDashboard(): React.ReactElement {
       });
   };
 
-  const calculateMetrics = (data: TAData[]): void => {
+  const calculateMetrics = (data: __TAData__[]): void => {
     const attendance = data.filter(ta => ta.attendance === 'Present').length;
     const absence = data.filter(ta => ta.attendance === 'Absent').length;
-    
     const tardiness = 0;
     const earlyDeparture = 0;
-    
+
     setMetrics({
       attendance,
       absence,
@@ -312,7 +308,7 @@ function VPDashboard(): React.ReactElement {
       .then(res => {
         return res.json();
       })
-      .then((json: FridayData[] | FridayData) => {
+      .then((json: __FridayData__[] | __FridayData__) => {
         const dataArray = Array.isArray(json) ? json : [];
         setFridayData(dataArray);
       })
@@ -331,7 +327,7 @@ function VPDashboard(): React.ReactElement {
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleInputChange = (e: __React__.__ChangeEvent__<__HTMLInputElement__>): void => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -346,16 +342,16 @@ function VPDashboard(): React.ReactElement {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (e: __React__.__FormEvent__<__HTMLFormElement__>): __Promise__<void> => {
     e.preventDefault();
-    
+
     try {
       const pin = generatePIN();
       const dataToSend = {
         ...formData,
         ta_code: pin
       };
-      
+
       const response = await fetch("http://localhost:3001/api/create-account-vp", {
         method: "POST",
         headers: {
@@ -365,11 +361,9 @@ function VPDashboard(): React.ReactElement {
       });
 
       if (response.ok) {
-        const result: CreateAccountResponse = await response.json();
-        
+        const result: __CreateAccountResponse__ = await response.json();
         setGeneratedPin(result.unhashed_pin);
         setNewTAName(`${formData.first_name} ${formData.last_name}`);
-        
         setFormData({
           first_name: "",
           last_name: "",
@@ -379,9 +373,7 @@ function VPDashboard(): React.ReactElement {
           is_active: true,
         });
         setShowModal(false);
-        
         setShowPinModal(true);
-        
         fetchData();
       } else {
         const error = await response.json();
@@ -398,7 +390,7 @@ function VPDashboard(): React.ReactElement {
     alert('PIN copied to clipboard!');
   };
 
-  const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
+  const toggleAttendance = async (taId: number, currentAttendance: string): __Promise__<void> => {
     try {
       if (currentAttendance === 'Present') {
         await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
@@ -418,14 +410,14 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const deactivateTA = async (taId: number): Promise<void> => {
+  const deactivateTA = async (taId: number): __Promise__<void> => {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
-    
+
     try {
       const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
-      
+
       if (response.ok) {
         fetchData();
       } else {
@@ -445,7 +437,8 @@ function VPDashboard(): React.ReactElement {
     row.first_name, 
     row.last_name, 
     row.korean_name,
-    row.session_day, 
+    row.session_day,
+    row.classroom || 'N/A',
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
@@ -456,15 +449,14 @@ function VPDashboard(): React.ReactElement {
     row.id  
   ]);
 
-  const getFridayColumns = (): Array<{ name: string; id: string }> => {
+  const getFridayColumns = (): __Array__<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
     
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
-    
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
-    
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+    
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
     
     const selectedDatesWithUnderscores = new Set(
@@ -472,19 +464,18 @@ function VPDashboard(): React.ReactElement {
     );
     
     const dateKeys = keys.filter(key => dateRegex.test(key) && selectedDatesWithUnderscores.has(key));
-    
     dateKeys.sort();
-
+    
     const finalKeys = [...nonDateKeys, ...dateKeys];
-
+    
     return finalKeys.map(key => ({
-        name: dateRegex.test(key) 
-          ? key.replace(/_/g, '-') 
-          : key.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' '), 
-        id: key
-      }));
+      name: dateRegex.test(key) 
+        ? key.replace(/_/g, '-') 
+        : key.split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '), 
+      id: key
+    }));
   };
 
   const fridayGridData: any[][] = fridayData.map(row => {
@@ -609,7 +600,7 @@ function VPDashboard(): React.ReactElement {
           <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
             Total TAs: {data.length}
           </p>
-          
+
           {data.length === 0 ? (
             <div>
               <p>No data found.</p>
@@ -634,6 +625,7 @@ function VPDashboard(): React.ReactElement {
                     { name: translations[language].lastName, width: '120px' },
                     { name: translations[language].koreanName, width: '120px' },
                     { name: translations[language].sessionDay, width: '120px' },
+                    { name: translations[language].classroom, width: '120px' },
                     { 
                       name: translations[language].active,
                       width: '80px',
@@ -648,7 +640,7 @@ function VPDashboard(): React.ReactElement {
                       name: translations[language].attendance,
                       width: '120px',
                       formatter: (cell: any, row: any) => {
-                        const taId = row.cells[11].data;
+                        const taId = row.cells[12].data;
                         return h('button', {
                           style: `
                             display: inline-block;
@@ -662,8 +654,8 @@ function VPDashboard(): React.ReactElement {
                             cursor: pointer;
                             transition: opacity 0.2s;
                           `,
-                          onmouseover: function(this: HTMLElement) { this.style.opacity = '0.8'; },
-                          onmouseout: function(this: HTMLElement) { this.style.opacity = '1'; },
+                          onmouseover: function(this: __HTMLElement__) { this.style.opacity = '0.8'; },
+                          onmouseout: function(this: __HTMLElement__) { this.style.opacity = '1'; },
                           onclick: () => toggleAttendance(taId, cell)
                         }, cell || 'Absent');
                       }
@@ -711,7 +703,7 @@ function VPDashboard(): React.ReactElement {
                             font-size: 12px;
                             font-weight: 600;
                           `,
-                          onclick: (e: Event) => {
+                          onclick: (e: __Event__) => {
                             e.stopPropagation();
                             handleRowClick(cell);
                           }
@@ -722,7 +714,7 @@ function VPDashboard(): React.ReactElement {
                       name: translations[language].actions,
                       width: '100px',
                       formatter: (cell: any, row: any) => {
-                        const taId = row.cells[11].data;
+                        const taId = row.cells[12].data;
                         return h('button', {
                           style: `
                             padding: 6px 12px;
@@ -859,7 +851,7 @@ function VPDashboard(): React.ReactElement {
           <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
             Total Records: {fridayData.length}
           </p>
-          
+
           {fridayData.length === 0 ? (
             <div>
               <p>No Friday data found. Please select dates in Settings.</p>
@@ -951,12 +943,15 @@ function VPDashboard(): React.ReactElement {
             }}>
               ✓
             </div>
+            
             <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: '24px', fontWeight: '600', color: '#166534' }}>
               Account Created Successfully!
             </h2>
+            
             <p style={{ marginBottom: 24, fontSize: '16px', color: '#374151' }}>
               New TA: <strong>{newTAName}</strong>
             </p>
+            
             <div style={{
               background: '#f3f4f6',
               padding: 20,
@@ -976,6 +971,7 @@ function VPDashboard(): React.ReactElement {
                 {generatedPin}
               </div>
             </div>
+            
             <div style={{
               background: '#fef3c7',
               border: '1px solid #f59e0b',
@@ -987,6 +983,7 @@ function VPDashboard(): React.ReactElement {
             }}>
               ⚠️ <strong>Important:</strong> This PIN is encrypted and stored securely. Make sure to save it now - you won't be able to see it again!
             </div>
+            
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button
                 onClick={copyPinToClipboard}
@@ -1046,6 +1043,7 @@ function VPDashboard(): React.ReactElement {
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
             <h2 style={{ marginTop: 0, marginBottom: 24, fontSize: '24px', fontWeight: '600' }}>Add New TA</h2>
+            
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
@@ -1067,6 +1065,7 @@ function VPDashboard(): React.ReactElement {
                   }}
                 />
               </div>
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                   Last Name:
@@ -1087,6 +1086,7 @@ function VPDashboard(): React.ReactElement {
                   }}
                 />
               </div>
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                   Korean Name (Optional):
@@ -1106,6 +1106,7 @@ function VPDashboard(): React.ReactElement {
                   }}
                 />
               </div>
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                   Email:
@@ -1126,6 +1127,7 @@ function VPDashboard(): React.ReactElement {
                   }}
                 />
               </div>
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                   Session Day:
@@ -1189,6 +1191,7 @@ function VPDashboard(): React.ReactElement {
                   </p>
                 )}
               </div>
+
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: '#374151' }}>
                   <input
@@ -1201,6 +1204,7 @@ function VPDashboard(): React.ReactElement {
                   Is Active
                 </label>
               </div>
+
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button
                   type="button"
@@ -1464,11 +1468,9 @@ function VPDashboard(): React.ReactElement {
               {Array.from({ length: startingDayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} style={{ aspectRatio: '1', padding: 8 }} />
               ))}
-              
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const selected = isDateSelected(day);
-                
                 return (
                   <button
                     key={day}
