@@ -47,7 +47,7 @@ export const validateClockIn = (req, res, next) => {
 };
 
 export const validateCreateAccount = (req, res, next) => {
-  const { first_name, last_name, email, ta_code, session_day } = req.body;
+  const { first_name, last_name, email, ta_code, session_day, classroom} = req.body;
   
   if (!first_name || !last_name || !email || !ta_code || !session_day) {
     return res.status(400).json({ error: 'All fields are required' });

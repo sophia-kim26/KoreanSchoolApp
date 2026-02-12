@@ -1,51 +1,86 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { useNavigate, NavigateFunction } from 'react-router-dom';
 import './style/global.css';
 import logo from '../assets/logo.png';
 import { useAuth0 } from "@auth0/auth0-react";
 
 // Type definitions
-type AuthState = 'home' | 'enterCredentials' | 'authenticated' | 'createAccountForm';
+type __AuthState__ = 'home' | 'enterCredentials' | 'authenticated' | 'createAccountForm';
 
-interface TAUser {
+interface __TAUser__ {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
     ta_code: string;
     session_day: string;
+    classroom?: string;
 }
 
-interface SignInResponse {
+interface __SignInResponse__ {
     success: boolean;
-    ta?: TAUser;
+    ta?: __TAUser__;
     error?: string;
 }
 
-interface CreateAccountResponse {
+interface __CreateAccountResponse__ {
     success: boolean;
     error?: string;
 }
+
+const CLASSROOMS = [
+    '앵두꽃반',
+    '제비꽃반',
+    '접시꽃반',
+    '초롱꽃반',
+    '풀꽃반',
+    '배꽃반',
+    '백합반',
+    '개나리반',
+    '봉선화반',
+    '수선화반',
+    'KSL1A.도라지꽃반',
+    'KSL1B.프리지아반',
+    'KSL3.붓꽃반',
+    'KSL4.유채꽃반',
+    'KSL5 은방울꽃반',
+    '진달래반',
+    '채송화반',
+    '월계수반',
+    '모란반',
+    '목련반',
+    '난초반',
+    '해바라기반',
+    '장미반',
+    '튤립반',
+    '연꽃반',
+    '국화반',
+    '무궁화반',
+];
 
 export default function TALogin(): React.ReactElement {
     const navigate: NavigateFunction = useNavigate();
-    const [authState, setAuthState] = useState<AuthState>('home');
+    const [authState, setAuthState] = useState<__AuthState__>('home');
     const [email, setEmail] = useState<string>('');
     const [pin, setPin] = useState<string>('');
-    const [currentUser, setCurrentUser] = useState<TAUser | null>(null);
+    const [currentUser, setCurrentUser] = useState<__TAUser__ | null>(null);
     const [error, setError] = useState<string>('');
     const [showNewPin, setShowNewPin] = useState<boolean>(false);
     const [newlyCreatedPin, setNewlyCreatedPin] = useState<string>('');
     const [newlyCreatedEmail, setNewlyCreatedEmail] = useState<string>('');
     const [copied, setCopied] = useState<boolean>(false);
+
+    // Create account form fields
     const [firstName, setFirstName] = useState<string>('');
     const [lastName, setLastName] = useState<string>('');
     const [formEmail, setFormEmail] = useState<string>('');
     const [sessionDay, setSessionDay] = useState<string>('');
-    
+    const [classroom, setClassroom] = useState<string>('');
+
     const emailInputRef = useRef<HTMLInputElement>(null);
     const pinInputRef = useRef<HTMLInputElement>(null);
+
     const { logout } = useAuth0();
 
     // Generate random 6-digit PIN
@@ -77,16 +112,15 @@ export default function TALogin(): React.ReactElement {
     };
 
     const handleBack = (): void => {
-        logout({ 
-            logoutParams: { 
+        logout({
+            logoutParams: {
                 returnTo: window.location.origin
-            } 
+            }
         });
     };
 
-    // Handle PIN input
+    // Handle PIN input — digits only, max 6 chars
     const handlePinChange = (value: string): void => {
-        // Only allow digits and limit to 6 characters
         const numericValue = value.replace(/\D/g, '').slice(0, 6);
         setPin(numericValue);
     };
@@ -97,7 +131,6 @@ export default function TALogin(): React.ReactElement {
             setError('Please enter both email and PIN');
             return;
         }
-
         if (pin.length !== 6) {
             setError('PIN must be 6 digits');
             return;
@@ -113,9 +146,8 @@ export default function TALogin(): React.ReactElement {
                 })
             });
 
-            const data: SignInResponse = await response.json();
+            const data: __SignInResponse__ = await response.json();
 
-            // Check for rate limit error (429 status) BEFORE checking data.success
             if (!response.ok) {
                 if (response.status === 429) {
                     setError(data.error || 'Too many login attempts. Please try again later.');
@@ -129,11 +161,9 @@ export default function TALogin(): React.ReactElement {
 
             if (data.success && data.ta) {
                 setCurrentUser(data.ta);
-                // Store current user in localStorage for the dashboard to access
                 localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
                 setAuthState('authenticated');
                 setError('');
-                // Redirect to TA Dashboard after a brief moment
                 setTimeout(() => {
                     navigate('/ta/dashboard');
                 }, 500);
@@ -142,15 +172,14 @@ export default function TALogin(): React.ReactElement {
                 setPin('');
                 setTimeout(() => pinInputRef.current?.focus(), 100);
             }
-        } catch (error) {
+        } catch (err) {
             setError('Failed to sign in. Please try again.');
             setPin('');
             setTimeout(() => pinInputRef.current?.focus(), 100);
-            console.error('Error signing in:', error);
+            console.error('Error signing in:', err);
         }
     };
 
-    // Logout
     const handleLogout = (): void => {
         setCurrentUser(null);
         setEmail('');
@@ -169,11 +198,10 @@ export default function TALogin(): React.ReactElement {
 
     const handleSubmitNewAccount = async (): Promise<void> => {
         if (!firstName || !lastName || !formEmail || !sessionDay) {
-            setError('Please fill in all fields');
+            setError('Please fill in all required fields');
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formEmail)) {
             setError('Please enter a valid email address');
@@ -191,13 +219,13 @@ export default function TALogin(): React.ReactElement {
                     last_name: lastName,
                     email: formEmail.trim(),
                     ta_code: newPin,
-                    session_day: sessionDay
+                    session_day: sessionDay,
+                    classroom: classroom || null
                 })
             });
 
-            const data: CreateAccountResponse = await response.json();
+            const data: __CreateAccountResponse__ = await response.json();
 
-            // Check for rate limit error (429 status) BEFORE checking data.success
             if (!response.ok) {
                 if (response.status === 429) {
                     setError(data.error || 'Too many account creation attempts. Please try again later.');
@@ -213,18 +241,18 @@ export default function TALogin(): React.ReactElement {
                 setShowNewPin(true);
                 setAuthState('home');
                 setError('');
-                
                 // Clear form
                 setFirstName('');
                 setLastName('');
                 setFormEmail('');
                 setSessionDay('');
+                setClassroom('');
             } else {
                 setError(data.error || 'Failed to create account');
             }
-        } catch (error) {
+        } catch (err) {
             setError('Failed to create account. Please try again.');
-            console.error('Error creating account:', error);
+            console.error('Error creating account:', err);
         }
     };
 
@@ -240,17 +268,18 @@ export default function TALogin(): React.ReactElement {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-                <img 
-                    src={logo} 
-                    alt="Logo" 
+                <img
+                    src={logo}
+                    alt="Logo"
                     className="absolute top-4 right-4 h-16 w-auto"
                 />
+
+                {/* ── HOME ── */}
                 {authState === 'home' && (
                     <div className="space-y-6">
                         <div className="text-center">
                             <h1 className="text-3xl font-bold text-gray-800">TA Authentication</h1>
                         </div>
-
                         <div className="space-y-3">
                             <button
                                 onClick={handleCreateAccount}
@@ -258,7 +287,6 @@ export default function TALogin(): React.ReactElement {
                             >
                                 Create New Account
                             </button>
-
                             <button
                                 onClick={() => {
                                     setAuthState('enterCredentials');
@@ -269,7 +297,7 @@ export default function TALogin(): React.ReactElement {
                                 Sign In
                             </button>
                             <div className="flex justify-center">
-                                <button 
+                                <button
                                     onClick={handleBack}
                                     className="btn-danger"
                                 >
@@ -280,6 +308,7 @@ export default function TALogin(): React.ReactElement {
                     </div>
                 )}
 
+                {/* ── CREATE ACCOUNT FORM ── */}
                 {authState === 'createAccountForm' && (
                     <div className="space-y-6">
                         <div className="text-center">
@@ -296,36 +325,54 @@ export default function TALogin(): React.ReactElement {
                         <div className="space-y-4">
                             <input
                                 type="text"
-                                placeholder="First Name"
+                                placeholder="First Name *"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
                             <input
                                 type="text"
-                                placeholder="Last Name"
+                                placeholder="Last Name *"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
                             <input
                                 type="email"
-                                placeholder="Email"
+                                placeholder="Email *"
                                 value={formEmail}
                                 onChange={(e) => setFormEmail(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
+
+                            {/* Session Day — required */}
                             <select
                                 value={sessionDay}
                                 onChange={(e) => setSessionDay(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-700"
                             >
-                                <option value="">Select Session Day</option>
+                                <option value="">Select Session Day *</option>
                                 <option value="Friday">Friday</option>
                                 <option value="Saturday">Saturday</option>
                                 <option value="Both">Both</option>
                             </select>
+
+                            {/* Classroom — optional */}
+                            <select
+                                value={classroom}
+                                onChange={(e) => setClassroom(e.target.value)}
+                                className="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-700"
+                            >
+                                <option value="">Select Classroom (Optional)</option>
+                                {CLASSROOMS.map((cls) => (
+                                    <option key={cls} value={cls}>
+                                        {cls}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+
+                        <p className="text-xs text-gray-400">* Required fields</p>
 
                         <button
                             onClick={handleSubmitNewAccount}
@@ -333,7 +380,6 @@ export default function TALogin(): React.ReactElement {
                         >
                             Submit
                         </button>
-
                         <button
                             onClick={() => {
                                 setAuthState('home');
@@ -346,6 +392,7 @@ export default function TALogin(): React.ReactElement {
                     </div>
                 )}
 
+                {/* ── SIGN IN ── */}
                 {authState === 'enterCredentials' && (
                     <div className="container">
                         <div className="white-box space-y-6">
@@ -390,7 +437,6 @@ export default function TALogin(): React.ReactElement {
                             >
                                 Sign In
                             </button>
-
                             <button
                                 onClick={handleBackToHome}
                                 className="w-full text-gray-600 text-sm hover:text-gray-800"
@@ -401,6 +447,7 @@ export default function TALogin(): React.ReactElement {
                     </div>
                 )}
 
+                {/* ── AUTHENTICATED / REDIRECTING ── */}
                 {authState === 'authenticated' && (
                     <div className="space-y-6">
                         <div className="text-center">
@@ -411,6 +458,7 @@ export default function TALogin(): React.ReactElement {
                 )}
             </div>
 
+            {/* ── NEW PIN MODAL ── */}
             {showNewPin && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
