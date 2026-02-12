@@ -49,6 +49,7 @@ export const getAllShifts = async () => {
       shifts.clock_in,
       shifts.clock_out,
       shifts.elapsed_time,
+      shifts.attendance,
       shifts.notes,
       ta_list.first_name,
       ta_list.last_name
@@ -60,8 +61,6 @@ export const getAllShifts = async () => {
 };
 
 export const getShiftsForTA = async (ta_id) => {
-
-  // Convert to integer to ensure type match
   const taIdInt = parseInt(ta_id);
   
   const result = await sql`
@@ -89,72 +88,23 @@ export const getActiveShift = async (ta_id) => {
   
   return { activeShift: result.length > 0 ? result[0] : null };
 };
-export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
 
+export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
   try {
     const result = await sql`
-      INSERT INTO shifts (ta_id, clock_in, clock_out, notes, was_manual)
-      VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${notes}, true)
+      INSERT INTO shifts (ta_id, clock_in, clock_out, notes, attendance, was_manual)
+      VALUES (${ta_id}, ${clock_in}, ${clock_out}, ${notes}, 'Present', true)
       RETURNING *
     `;
     
     return result[0];
   } catch (error) {
     console.error("Error:", error);
-    console.error("Error code:", error.code);
-    console.error("Error message:", error.message);
     throw error;
   }
 };
 
-// export const updateShift = async (id, { clock_out }) => {
-//   console.log("Received PUT request for shift:", id);
-  
-//   const result = await sql`
-//     UPDATE shifts
-//     SET clock_out = ${clock_out}
-//     WHERE id = ${id}
-//     RETURNING *
-//   `;
-
-//   console.log("Update result:", result);
-
-//   if (result.length === 0) {
-//     const error = new Error('Shift not found');
-//     error.status = 404;
-//     throw error;
-//   }
-
-//   return result[0];
-// };
-
-// export const updateShift = async (id, { clock_in, clock_out, notes, elapsed_time, attendance }) => {
-//   console.log("Updating shift:", id, "with data:", { clock_in, clock_out, notes, elapsed_time, attendance });
-  
-//   const result = await sql`
-//     UPDATE shifts
-//     SET 
-//       clock_in = ${clock_in},
-//       clock_out = ${clock_out}
-//       notes = ${notes},
-//       elapsed_time = ${elapsed_time},
-//       attendance = ${attendance}
-//     WHERE id = ${id}
-//     RETURNING *
-//   `;
-  
-//   console.log("Update result:", result);
-  
-//   if (result.length === 0) {
-//     const error = new Error('Shift not found');
-//     error.status = 404;
-//     throw error;
-//   }
-//   return result[0];
-// };
-
 export const updateShift = async (id, updateData) => {
-  
   try {
     // First get the current shift data
     const current = await sql`SELECT * FROM shifts WHERE id = ${id}`;
@@ -165,7 +115,7 @@ export const updateShift = async (id, updateData) => {
       throw error;
     }
     
-    // Merge current data with updates (only update fields that are provided)
+    // Merge current data with updates
     const merged = {
       clock_in: updateData.clock_in !== undefined ? updateData.clock_in : current[0].clock_in,
       clock_out: updateData.clock_out !== undefined ? updateData.clock_out : current[0].clock_out,
@@ -173,6 +123,10 @@ export const updateShift = async (id, updateData) => {
       elapsed_time: updateData.elapsed_time !== undefined ? updateData.elapsed_time : current[0].elapsed_time,
       attendance: updateData.attendance !== undefined ? updateData.attendance : current[0].attendance
     };
+
+    console.log("=== UPDATING SHIFT ===");
+    console.log("Shift ID:", id);
+    console.log("Merged data:", merged);
         
     // Now update with all fields
     const result = await sql`
@@ -187,6 +141,10 @@ export const updateShift = async (id, updateData) => {
       RETURNING *
     `;
 
+    console.log("=== UPDATE RESULT ===");
+    console.log(result[0]);
+    console.log("=====================");
+
     return result[0];
   } catch (error) {
     console.error("=== UPDATE ERROR ===");
@@ -195,4 +153,3 @@ export const updateShift = async (id, updateData) => {
     throw error;
   }
 };
-
