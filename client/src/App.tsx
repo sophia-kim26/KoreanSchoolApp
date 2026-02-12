@@ -8,11 +8,11 @@ import VPDashboard from "./pages/VPDashboard";
 import TADashboard from "./pages/TADashboard";
 import VPTAView from "./pages/VPTAView";
 
-export default function App() {
+export default function App(){
   return (
     <Auth0Provider
-      domain={import.meta.env.VITE_AUTH0_DOMAIN}
-      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
+      domain={import.meta.env.VITE_AUTH0_DOMAIN as string}
+      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
 
       // ✅ THIS is the redirect that replaces /api/auth/callback
       authorizationParams={{

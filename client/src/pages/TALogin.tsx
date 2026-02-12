@@ -1,56 +1,81 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle, RefreshCw, Copy, Check, Container } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavigateFunction } from 'react-router-dom';
 import './style/global.css';
 import logo from '../assets/logo.png';
 import { useAuth0 } from "@auth0/auth0-react";
 
+// Type definitions
+type AuthState = 'home' | 'enterPin' | 'authenticated' | 'createAccountForm';
 
-export default function TALogin() {
-    const navigate = useNavigate();
-    const [authState, setAuthState] = useState('home'); // home, enterPin, authenticated, createAccountForm
-    const [pin, setPin] = useState('');
-    const [currentUser, setCurrentUser] = useState(null);
-    const [error, setError] = useState('');
-    const [showNewPin, setShowNewPin] = useState(false);
-    const [newlyCreatedPin, setNewlyCreatedPin] = useState('');
-    const [copied, setCopied] = useState(false);
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [sessionDay, setSessionDay] = useState('');
+interface TAUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    ta_code: string;
+    session_day: string;
+}
+
+interface SignInResponse {
+    success: boolean;
+    ta?: TAUser;
+    error?: string;
+}
+
+interface CreateAccountResponse {
+    success: boolean;
+    error?: string;
+}
+
+interface PinInputProps {
+    autoFocus?: boolean;
+}
+
+export default function TALogin(): React.ReactElement {
+    const navigate: NavigateFunction = useNavigate();
+    const [authState, setAuthState] = useState<AuthState>('home');
+    const [pin, setPin] = useState<string>('');
+    const [currentUser, setCurrentUser] = useState<TAUser | null>(null);
+    const [error, setError] = useState<string>('');
+    const [showNewPin, setShowNewPin] = useState<boolean>(false);
+    const [newlyCreatedPin, setNewlyCreatedPin] = useState<string>('');
+    const [copied, setCopied] = useState<boolean>(false);
+    const [firstName, setFirstName] = useState<string>('');
+    const [lastName, setLastName] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+    const [sessionDay, setSessionDay] = useState<string>('');
     
-    const pinInputRef = useRef(null);
+    const pinInputRef = useRef<HTMLInputElement>(null);
     const { logout } = useAuth0();
 
-
     // Generate random 6-digit PIN
-    const generatePin = () => {
+    const generatePin = (): string => {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
 
-    const handleCreateAccount = () => {
+    const handleCreateAccount = (): void => {
         setAuthState('createAccountForm');
     };
 
-    const handleCopyPin = () => {
+    const handleCopyPin = (): void => {
         navigator.clipboard.writeText(newlyCreatedPin);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleCloseNewPin = () => {
+    const handleCloseNewPin = (): void => {
         setShowNewPin(false);
         setNewlyCreatedPin('');
     };
 
-    const handleGoToSignIn = () => {
+    const handleGoToSignIn = (): void => {
         setShowNewPin(false);
         setAuthState('enterPin');
         setTimeout(() => pinInputRef.current?.focus(), 100);
     };
 
-    const handleBack = () => {
+    const handleBack = (): void => {
         logout({ 
             logoutParams: { 
                 returnTo: window.location.origin
@@ -59,14 +84,14 @@ export default function TALogin() {
     };
 
     // Handle PIN input
-    const handlePinChange = (value) => {
+    const handlePinChange = (value: string): void => {
         // Only allow digits and limit to 6 characters
         const numericValue = value.replace(/\D/g, '').slice(0, 6);
         setPin(numericValue);
     };
 
     // Verify PIN and redirect to dashboard
-    const handleVerifyPin = async () => {
+    const handleVerifyPin = async (): Promise<void> => {
         try {
             const response = await fetch('http://localhost:3001/api/signin', {
                 method: 'POST',
@@ -76,7 +101,7 @@ export default function TALogin() {
                 })
             });
 
-            const data = await response.json();
+            const data: SignInResponse = await response.json();
 
             // Check for rate limit error (429 status) BEFORE checking data.success
             if (!response.ok) {
@@ -90,7 +115,7 @@ export default function TALogin() {
                 return;
             }
 
-            if (data.success) {
+            if (data.success && data.ta) {
                 setCurrentUser(data.ta);
                 // Store current user in localStorage for the dashboard to access
                 localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
@@ -114,7 +139,7 @@ export default function TALogin() {
     };
 
     // Logout
-    const handleLogout = () => {
+    const handleLogout = (): void => {
         setCurrentUser(null);
         setPin('');
         setAuthState('home');
@@ -122,7 +147,7 @@ export default function TALogin() {
         localStorage.removeItem('current_ta_user');
     };
 
-    const handleBackToHome = () => {
+    const handleBackToHome = (): void => {
         setPin('');
         setAuthState('home');
         setError('');
@@ -132,9 +157,9 @@ export default function TALogin() {
         if (authState === 'enterPin' && pin.length === 6) {
             handleVerifyPin();
         }
-    }, [pin]);
+    }, [pin, authState]);
 
-    const handleSubmitNewAccount = async () => {
+    const handleSubmitNewAccount = async (): Promise<void> => {
         if (!firstName || !lastName || !email || !sessionDay) {
             setError('Please fill in all fields');
             return;
@@ -155,7 +180,7 @@ export default function TALogin() {
                 })
             });
 
-            const data = await response.json();
+            const data: CreateAccountResponse = await response.json();
 
             // Check for rate limit error (429 status) BEFORE checking data.success
             if (!response.ok) {
@@ -187,7 +212,7 @@ export default function TALogin() {
         }
     };
 
-    const PinInput = ({ autoFocus = false }) => (
+    const PinInput: React.FC<PinInputProps> = ({ autoFocus = false }) => (
         <div className="flex justify-center">
             <input
                 ref={pinInputRef}

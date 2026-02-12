@@ -23,9 +23,7 @@ router.get('/', async (req, res, next) => {
 // GET /api/shifts/ta/:ta_id - get all shifts for a specific TA
 router.get('/ta/:ta_id', async (req, res, next) => {
   try {
-    console.log('Route received ta_id:', req.params.ta_id);
     const result = await getShiftsForTA(parseInt(req.params.ta_id));
-    console.log('Route returning:', result.length, 'shifts');
     res.json(result);
   } catch (error) {
     next(error);
@@ -55,23 +53,13 @@ router.post('/', validateShift, validateLocation, async (req, res, next) => {
 // POST /api/shifts/manual - Create shift without validation (for manual entry by VP)
 router.post('/manual', async (req, res, next) => {
   try {
-    console.log('=== MANUAL SHIFT CREATE REQUEST ===');
-    console.log('ta_id:', req.body.ta_id, 'type:', typeof req.body.ta_id);
-    console.log('clock_in:', req.body.clock_in);
-    console.log('clock_out:', req.body.clock_out);
-    console.log('notes:', req.body.notes);    
     const result = await createShift(req.body);
-    
-    console.log('Shift created successfully:', result);
-    console.log('===================================');
-    
+
     res.json(result);
   } catch (error) {
-    console.error('=== ERROR CREATING MANUAL SHIFT ===');
     console.error('Error:', error);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    console.error('===================================');
     next(error);
   }
 });
@@ -79,9 +67,6 @@ router.post('/manual', async (req, res, next) => {
 // PUT /api/shifts/:id
 router.put('/:id', async (req, res, next) => {
   try {
-    console.log("=== PUT REQUEST DEBUG ===");
-    console.log("Shift ID:", req.params.id);
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
     
     // Extract ALL possible fields that might be updated
     const { clock_in, clock_out, notes, elapsed_time, attendance } = req.body;
@@ -93,13 +78,8 @@ router.put('/:id', async (req, res, next) => {
     if (notes !== undefined) updateData.notes = notes;
     if (elapsed_time !== undefined) updateData.elapsed_time = elapsed_time;
     if (attendance !== undefined) updateData.attendance = attendance;
-    
-    console.log("Update data being sent:", updateData);
-    
+        
     const result = await updateShift(req.params.id, updateData);
-    
-    console.log("Update successful:", result);
-    console.log("========================");
     
     res.json(result);
   } catch (error) {

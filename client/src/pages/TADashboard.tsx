@@ -3,12 +3,54 @@ import { Grid } from "gridjs-react";
 import { h } from "preact";
 import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavigateFunction } from "react-router-dom";
 import logo from '../assets/logo.png';
-import Chart from "../pages/Chart.jsx";
+import Chart from "./Chart";
+
+// Type definitions
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+interface ElapsedTime {
+  hours: number;
+  minutes: number;
+}
+
+interface TADashboardProps {
+  taId: number;
+}
+
+interface Shift {
+  id: number;
+  ta_id: number;
+  clock_in: string;
+  clock_out: string | null;
+  elapsed_time: number | null;
+  attendance: string;
+  notes: string;
+}
+
+interface CurrentUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface ActiveShiftResponse {
+  activeShift: {
+    id: number;
+    clock_in: string;
+  } | null;
+}
+
+type TabType = 'appearance' | 'navigation' | 'account' | 'privacy';
 
 // Helper function to get user location - OUTSIDE the component
-const getUserLocation = () => {
+const getUserLocation = (): Promise<UserLocation> => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported by your browser'));
@@ -48,7 +90,7 @@ const getUserLocation = () => {
 };
 
 // Helper function to format date
-const formatDate = (dateString) => {
+const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
@@ -59,7 +101,7 @@ const formatDate = (dateString) => {
 };
 
 // Helper function to format time only
-const formatTime = (dateString) => {
+const formatTime = (dateString: string | null): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleTimeString('en-US', { 
@@ -69,37 +111,37 @@ const formatTime = (dateString) => {
   });
 };
 
-function TADashboard() {
-  const [data, setData] = useState([]);
-  const [clockedIn, setClockedIn] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('appearance');
+function TADashboard({ taId }: TADashboardProps): React.ReactElement {
+  const [data, setData] = useState<Shift[]>([]);
+  const [clockedIn, setClockedIn] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<TabType>('appearance');
   const { logout } = useAuth0();
-  const navigate = useNavigate();
+  const navigate: NavigateFunction = useNavigate();
 
-  const [clockInTime, setClockInTime] = useState(null);
-  const [clockOutTime, setClockOutTime] = useState(null);
-  const [elapsed, setElapsed] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showClockInConfirm, setShowClockInConfirm] = useState(false);
-  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
-  const [activeShiftId, setActiveShiftId] = useState(null);
+  const [clockInTime, setClockInTime] = useState<Date | null>(null);
+  const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
+  const [elapsed, setElapsed] = useState<ElapsedTime | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [showClockInConfirm, setShowClockInConfirm] = useState<boolean>(false);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState<boolean>(false);
+  const [activeShiftId, setActiveShiftId] = useState<number | null>(null);
 
   // New states for notes editing
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [editingShiftId, setEditingShiftId] = useState(null);
-  const [editingNotes, setEditingNotes] = useState('');
+  const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
+  const [editingShiftId, setEditingShiftId] = useState<number | null>(null);
+  const [editingNotes, setEditingNotes] = useState<string>('');
 
   const overlayStyle = {
-    position: "fixed",
+    position: "fixed" as const,
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
     backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    display: "flex" as const,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
     zIndex: 1000,
   };
 
@@ -107,30 +149,29 @@ function TADashboard() {
     backgroundColor: "#fff",
     padding: "30px",
     borderRadius: "8px",
-    textAlign: "center",
+    textAlign: "center" as const,
     minWidth: "300px",
   };
 
-  const fetchShifts = async () => {
+  const fetchShifts = async (): Promise<void> => {
     try {
       const res = await fetch("http://localhost:3001/api/shifts");
-      const json = await res.json();
+      const json: Shift[] = await res.json();
       setData(json);
     } catch (err) {
       console.error("Failed to fetch shifts:", err);
     }
   };
 
-  const checkActiveShift = async (userId) => {
+  const checkActiveShift = async (userId: number): Promise<void> => {
     try {
       const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
-      const json = await res.json();
+      const json: ActiveShiftResponse = await res.json();
       
       if (json.activeShift) {
         setClockedIn(true);
         setActiveShiftId(json.activeShift.id);
         setClockInTime(new Date(json.activeShift.clock_in));
-        console.log("Active shift found:", json.activeShift);
       } else {
         setClockedIn(false);
         setActiveShiftId(null);
@@ -142,7 +183,7 @@ function TADashboard() {
   };
 
   // Function to update notes in database
-  const updateNotes = async (shiftId, notes) => {
+  const updateNotes = async (shiftId: number, notes: string): Promise<void> => {
     try {
       const res = await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
         method: "PUT",
@@ -155,9 +196,7 @@ function TADashboard() {
       if (!res.ok) {
         throw new Error('Failed to update notes');
       }
-      
-      console.log("Notes updated successfully for shift:", shiftId);
-      
+            
       // Immediately update the local state to reflect the change
       setData(prevData => 
         prevData.map(shift => 
@@ -172,16 +211,17 @@ function TADashboard() {
       alert("Failed to update notes. Please try again.");
     }
   };
+  
 
   // Handler for opening notes modal
-  const handleEditNotes = (shiftId, currentNotes) => {
+  const handleEditNotes = (shiftId: number, currentNotes: string): void => {
     setEditingShiftId(shiftId);
     setEditingNotes(currentNotes || '');
     setShowNotesModal(true);
   };
 
   // Handler for saving notes
-  const handleSaveNotes = async () => {
+  const handleSaveNotes = async (): Promise<void> => {
     if (editingShiftId) {
       await updateNotes(editingShiftId, editingNotes);
       setShowNotesModal(false);
@@ -192,7 +232,7 @@ function TADashboard() {
 
   // autologout when you close the tab or window
   useEffect(() => {
-    const handleBeforeUnload = () => {
+    const handleBeforeUnload = (): void => {
       localStorage.removeItem('current_ta_user');
       sessionStorage.setItem('ta_session_ended', 'true');
     };
@@ -214,7 +254,8 @@ function TADashboard() {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem('current_ta_user') || 'null');
+    const userStr = localStorage.getItem('current_ta_user');
+    const user: CurrentUser | null = userStr ? JSON.parse(userStr) : null;
     if (!user) {
       navigate('/ta/login');
       return;
@@ -226,16 +267,16 @@ function TADashboard() {
   useEffect(() => {
     fetch("http://localhost:3001/api/shifts")
       .then(res => res.json())
-      .then(json => setData(json))
+      .then((json: Shift[]) => setData(json))
       .catch(err => console.error(err));
   }, []);
 
-  const taData = currentUser 
+  const taData: Shift[] = currentUser 
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
   // Updated grid data with formatted date and time
-  const gridData = taData.map(row => [
+  const gridData: (string | number | null)[][] = taData.map(row => [
     row.id, // Keep id for internal use
     formatDate(row.clock_in), // Date column - just the date
     row.attendance,
@@ -245,7 +286,7 @@ function TADashboard() {
     row.notes
   ]);
 
-  const handleSignOut = () => {
+  const handleSignOut = (): void => {
     localStorage.removeItem('current_ta_user');
     sessionStorage.removeItem('ta_session_ended');
     
@@ -256,13 +297,12 @@ function TADashboard() {
     });
   };
 
-  const taName = currentUser
+  const taName: string = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
   // Clock in function - IP based validation (no GPS needed)
-  const clockIn = async () => {
-    console.log("Clock In pressed");
+  const clockIn = async (): Promise<void> => {
     
     try {
       const time = new Date();
@@ -273,21 +313,18 @@ function TADashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ta_id: currentUser.id,
+          ta_id: currentUser!.id,
           clock_in: time.toISOString(),
           notes: ""
         })
       });
-
-      console.log("Response status:", res.status);
       
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to clock in');
       }
 
-      const newShift = await res.json();
-      console.log("New shift response:", newShift);
+      const newShift: Shift = await res.json();
 
       if (!newShift.id) {
         throw new Error("No shift ID returned from server!");
@@ -295,36 +332,32 @@ function TADashboard() {
 
       setClockedIn(true);
       setActiveShiftId(newShift.id);
-      console.log("Shift created with ID:", newShift.id);
       
       alert("Successfully clocked in!");
       
     } catch (err) {
       console.error("Failed to clock in:", err);
       setClockedIn(false);
-      alert(err.message || "Failed to clock in. Please try again.");
+      alert((err as Error).message || "Failed to clock in. Please try again.");
     }
   };
 
 
-  const clockOut = async () => {
-    console.log("Clock Out pressed");
+  const clockOut = async (): Promise<void> => {
     setClockedIn(false);
 
     const time = new Date();
     setClockOutTime(time);
 
-    let calculatedElapsed = null;
+    let calculatedElapsed: ElapsedTime | null = null;
 
     if (clockInTime) {
-      console.log("in clockInTime function");
-      const diff = time - clockInTime;
+      const diff = time.getTime() - clockInTime.getTime();
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       calculatedElapsed = { hours, minutes }; 
       setElapsed(calculatedElapsed);
-      console.log(`calculatedElapsed value: ${JSON.stringify(calculatedElapsed)}`);
     }
 
     if (!activeShiftId) {
@@ -342,7 +375,6 @@ function TADashboard() {
         })
       });
 
-      console.log(`Shift ${activeShiftId} updated with clock-out time`);
       await fetchShifts();
       setActiveShiftId(null);
     } catch (err) {
@@ -350,7 +382,7 @@ function TADashboard() {
     }
   };
 
-  const toggleAttendance = async (shiftId, newStatus) => {
+  const toggleAttendance = async (shiftId: number, newStatus: string): Promise<void> => {
     try {
       await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
         method: "PUT",
@@ -444,13 +476,13 @@ function TADashboard() {
               {
                 name: "Attendance",
                 width: '120px',
-                formatter: (cell, row) => {
+                formatter: (cell: any, row: any) => {
                   const shiftId = row.cells[0].data; // Get ID from first (hidden) column
                   const dropdownId = `dropdown-${shiftId}`;
                   const buttonId = `btn-${shiftId}`;
                   
                   // Determine button color based on status
-                  const getColors = (status) => {
+                  const getColors = (status: string): { bg: string; text: string } => {
                     if (status === 'Tardy') {
                       return { bg: '#fef3c7', text: '#92400e' }; // yellow
                     } else if (status === 'Early Leave') {
@@ -479,20 +511,22 @@ function TADashboard() {
                         cursor: pointer;
                         transition: opacity 0.2s;
                       `,
-                      onmouseover: function() { 
+                      onmouseover: function(this: HTMLElement) { 
                         this.style.opacity = '0.8'; 
                       },
-                      onmouseout: function() { 
+                      onmouseout: function(this: HTMLElement) { 
                         this.style.opacity = '1'; 
                       },
-                      onclick: (e) => {
+                      onclick: (e: Event) => {
                         e.stopPropagation();
                         const dropdown = document.getElementById(dropdownId);
                         const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
                         allDropdowns.forEach(d => {
-                          if (d.id !== dropdownId) d.style.display = 'none';
+                          if (d.id !== dropdownId) (d as HTMLElement).style.display = 'none';
                         });
-                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                        if (dropdown) {
+                          dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                        }
                       }
                     }, cell || 'Present'),
                     h('div', {
@@ -518,16 +552,19 @@ function TADashboard() {
                           font-size: 13px;
                           transition: background-color 0.2s;
                         `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e) => {
+                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+                        onclick: (e: Event) => {
                           e.stopPropagation();
                           const button = document.getElementById(buttonId);
                           const colors = getColors('Present');
-                          button.style.backgroundColor = colors.bg;
-                          button.style.color = colors.text;
-                          button.textContent = 'Present';
-                          document.getElementById(dropdownId).style.display = 'none';
+                          if (button) {
+                            (button as HTMLElement).style.backgroundColor = colors.bg;
+                            (button as HTMLElement).style.color = colors.text;
+                            (button as HTMLElement).textContent = 'Present';
+                          }
+                          const dropdown = document.getElementById(dropdownId);
+                          if (dropdown) dropdown.style.display = 'none';
                         }
                       }, 'Present'),
                       h('div', {
@@ -537,16 +574,19 @@ function TADashboard() {
                           font-size: 13px;
                           transition: background-color 0.2s;
                         `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e) => {
+                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+                        onclick: (e: Event) => {
                           e.stopPropagation();
                           const button = document.getElementById(buttonId);
                           const colors = getColors('Tardy');
-                          button.style.backgroundColor = colors.bg;
-                          button.style.color = colors.text;
-                          button.textContent = 'Tardy';
-                          document.getElementById(dropdownId).style.display = 'none';
+                          if (button) {
+                            (button as HTMLElement).style.backgroundColor = colors.bg;
+                            (button as HTMLElement).style.color = colors.text;
+                            (button as HTMLElement).textContent = 'Tardy';
+                          }
+                          const dropdown = document.getElementById(dropdownId);
+                          if (dropdown) dropdown.style.display = 'none';
                         }
                       }, 'Tardy'),
                       h('div', {
@@ -556,16 +596,19 @@ function TADashboard() {
                           font-size: 13px;
                           transition: background-color 0.2s; 
                         `,
-                        onmouseover: function() { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function() { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e) => {
+                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+                        onclick: (e: Event) => {
                           e.stopPropagation();
                           const button = document.getElementById(buttonId);
                           const colors = getColors('Early Leave');
-                          button.style.backgroundColor = colors.bg;
-                          button.style.color = colors.text;
-                          button.textContent = 'Early Leave';
-                          document.getElementById(dropdownId).style.display = 'none';
+                          if (button) {
+                            (button as HTMLElement).style.backgroundColor = colors.bg;
+                            (button as HTMLElement).style.color = colors.text;
+                            (button as HTMLElement).textContent = 'Early Leave';
+                          }
+                          const dropdown = document.getElementById(dropdownId);
+                          if (dropdown) dropdown.style.display = 'none';
                         }
                       }, 'Early Leave'),
                     ])
@@ -577,7 +620,7 @@ function TADashboard() {
               "Elapsed Time",
               {
                 name: "Notes",
-                formatter: (cell, row) => {
+                formatter: (cell: any, row: any) => {
                   const shiftId = row.cells[0].data; // Get ID from first (hidden) column
                   const currentNotes = cell || '';
                   
@@ -599,9 +642,9 @@ function TADashboard() {
                         color: #6b7280;
                         transition: color 0.2s;
                       `,
-                      onmouseover: function() { this.style.color = '#1e40af'; },
-                      onmouseout: function() { this.style.color = '#6b7280'; },
-                      onclick: (e) => {
+                      onmouseover: function(this: HTMLElement) { this.style.color = '#1e40af'; },
+                      onmouseout: function(this: HTMLElement) { this.style.color = '#6b7280'; },
+                      onclick: (e: Event) => {
                         e.stopPropagation();
                         handleEditNotes(shiftId, currentNotes);
                       },
@@ -625,7 +668,7 @@ function TADashboard() {
               }
             ]}
             search={true}
-            pagination={{ enabled: true, limit: 10 }}
+            pagination={{ limit: 10 }}
             sort={true}
           />
       )}

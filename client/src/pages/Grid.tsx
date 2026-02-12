@@ -9,11 +9,8 @@ export default function GridTable() {
         ["Laertes", "laertes@gmail.com"]
       ]}
       columns={["Name", "Email"]}
-      search={true} // enable or disable search bar
-      pagination={{
-        enabled: true,
-        limit: 5
-      }}
+      search={true}
+      pagination={true}
       sort={true}
     />
   );
