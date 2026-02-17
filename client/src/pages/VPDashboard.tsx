@@ -490,6 +490,24 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
+  const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/tas/${taId}/classroom`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classroom })
+      });
+      if (response.ok) {
+        fetchData();
+      } else {
+        alert('Failed to update classroom');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating classroom');
+    }
+  };
+
   const handleRowClick = (taId: number): void => {
     navigate(`/vp/ta-view/${taId}`);
   };
@@ -684,7 +702,104 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
                   { name: translations[language].sessionDay, width: '120px' },
-                  { name: translations[language].classroom, width: '140px' }, // ← NEW
+                  {
+                    name: translations[language].classroom,
+                    width: '160px',
+                    formatter: (cell: any, row: any) => {
+                      const taId = row.cells[8].data;
+                      const dropdownId = `classroom-dropdown-${taId}`;
+                      const labelId = `classroom-label-${taId}`;
+
+                      const dropdownList = h('div', {
+                        id: dropdownId,
+                        style: `
+                          display: none;
+                          position: fixed;
+                          background: white;
+                          border: 1px solid #bfdbfe;
+                          border-radius: 6px;
+                          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+                          z-index: 9999;
+                          max-height: 220px;
+                          overflow-y: auto;
+                          min-width: 180px;
+                        `
+                      },
+                        ...CLASSROOMS.map(name =>
+                          h('div', {
+                            style: `
+                              padding: 8px 14px;
+                              font-size: 13px;
+                              color: #1e40af;
+                              cursor: pointer;
+                              background: ${cell === name ? '#eff6ff' : 'white'};
+                              font-weight: ${cell === name ? '600' : '400'};
+                            `,
+                            onmouseover: function(this: HTMLElement) { this.style.background = '#dbeafe'; },
+                            onmouseout: function(this: HTMLElement) { this.style.background = cell === name ? '#eff6ff' : 'white'; },
+                            onclick: (e: Event) => {
+                              e.stopPropagation();
+                              const dropdown = document.getElementById(dropdownId);
+                              const label = document.getElementById(labelId);
+                              if (dropdown) dropdown.style.display = 'none';
+                              if (label) label.textContent = name;
+                              updateClassroom(taId, name);
+                            }
+                          }, name)
+                        )
+                      );
+
+                      const label = h('span', {
+                        id: labelId,
+                        style: `
+                          font-size: 14px;
+                          color: #1e40af;
+                          cursor: pointer;
+                        `
+                      }, cell || '—');
+
+                      const wrapper = h('div', {
+                        style: `position: relative;`,
+                        onclick: (e: Event) => {
+                          e.stopPropagation();
+                          const dropdown = document.getElementById(dropdownId);
+                          if (!dropdown) return;
+
+                          // Close all other open dropdowns first
+                          document.querySelectorAll('[id^="classroom-dropdown-"]').forEach((el) => {
+                            if (el.id !== dropdownId) (el as HTMLElement).style.display = 'none';
+                          });
+
+                          if (dropdown.style.display === 'none') {
+                            // Position relative to the wrapper element
+                            const trigger = (e.currentTarget as HTMLElement);
+                            const rect = trigger.getBoundingClientRect();
+                            dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+                            dropdown.style.left = `${rect.left + window.scrollX}px`;
+                            dropdown.style.display = 'block';
+
+                            // Append to body so it escapes table overflow:hidden
+                            if (!document.body.contains(dropdown)) {
+                              document.body.appendChild(dropdown);
+                            }
+
+                            // Close when clicking outside
+                            const closeHandler = (ev: MouseEvent) => {
+                              if (!dropdown.contains(ev.target as Node) && ev.target !== trigger) {
+                                dropdown.style.display = 'none';
+                                document.removeEventListener('click', closeHandler);
+                              }
+                            };
+                            setTimeout(() => document.addEventListener('click', closeHandler), 0);
+                          } else {
+                            dropdown.style.display = 'none';
+                          }
+                        }
+                      }, label, dropdownList);
+
+                      return wrapper;
+                    }
+                  },
                   { 
                     name: translations[language].active,
                     width: '80px',
