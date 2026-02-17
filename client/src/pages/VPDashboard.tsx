@@ -135,7 +135,7 @@ function VPDashboard(): React.ReactElement {
     korean_name: "",
     classroom: ""
   });
-    const [metrics, setMetrics] = useState<Metrics>({
+  const [metrics, setMetrics] = useState<Metrics>({
     attendance: 0,
     absence: 0,
   });
@@ -263,7 +263,7 @@ function VPDashboard(): React.ReactElement {
       });
       
       const responseText = await response.text();
-            if (response.ok) {
+      if (response.ok) {
         const responseData = JSON.parse(responseText);
         
         setShowCalendar(false);
@@ -304,8 +304,8 @@ function VPDashboard(): React.ReactElement {
               if ((e.target as HTMLElement).closest('button')) return;
 
               const cells = row.querySelectorAll('.gridjs-td');
-              if (cells.length >= 8) {
-                const taId = cells[7].textContent;
+              if (cells.length >= 9) {
+                const taId = cells[8].textContent;
                 if (taId) {
                   navigate(`/vp/ta-view/${taId}`);
                 }
@@ -338,23 +338,19 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fetchFridayData = (): void => {
-    // First fetch Friday data
     fetch("http://localhost:3001/api/friday")
       .then(res => res.json())
       .then(async (json: FridayData[] | FridayData) => {
         const dataArray = Array.isArray(json) ? json : [];
         
-        // Debug: Log the first row to see what columns we have
         if (dataArray.length > 0) {
           console.log('Friday data first row:', dataArray[0]);
           console.log('Friday data columns:', Object.keys(dataArray[0]));
         }
         
-        // Then fetch all TAs to get their counts
         const tasResponse = await fetch("http://localhost:3001/api/tas");
         const tasData: TAData[] = await tasResponse.json();
         
-        // Merge the count data into Friday data
         const enrichedData = dataArray.map(fridayRow => {
           const matchingTA = tasData.find(ta => ta.id === fridayRow.id);
           
@@ -498,17 +494,19 @@ function VPDashboard(): React.ReactElement {
     navigate(`/vp/ta-view/${taId}`);
   };
 
+  // classroom added at index 4; id is now at index 8
   const gridData: (string | number | boolean)[][] = data.map(row => [
-    row.first_name, 
-    row.last_name, 
-    row.korean_name,
-    row.session_day, 
-    row.is_active,
-    row.total_hours || '0.00',
-    row.attendance,
-    row.id,  
-    row.attendance_count || 0,
-    row.absence_count || 0,
+    row.first_name,       // 0
+    row.last_name,        // 1
+    row.korean_name,      // 2
+    row.session_day,      // 3
+    row.classroom || '',  // 4  ← NEW
+    row.is_active,        // 5
+    row.total_hours || '0.00', // 6
+    row.attendance,       // 7
+    row.id,               // 8  ← was 7
+    row.attendance_count || 0, // 9
+    row.absence_count || 0,    // 10
   ]);
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
@@ -517,8 +515,6 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
-    // Only hide these specific columns - count columns like attendance_count, 
-    // absence_count, tardiness_count, early_departure_count will be visible
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
@@ -535,13 +531,13 @@ function VPDashboard(): React.ReactElement {
     const finalKeys = [...nonDateKeys, ...dateKeys];
 
     return finalKeys.map(key => ({
-        name: dateRegex.test(key) 
-          ? key.replace(/_/g, '-') 
-          : key.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' '), 
-        id: key
-      }));
+      name: dateRegex.test(key) 
+        ? key.replace(/_/g, '-') 
+        : key.split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '), 
+      id: key
+    }));
   };
 
   const fridayGridData: any[][] = fridayData.map(row => {
@@ -688,6 +684,7 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
                   { name: translations[language].sessionDay, width: '120px' },
+                  { name: translations[language].classroom, width: '140px' }, // ← NEW
                   { 
                     name: translations[language].active,
                     width: '80px',
@@ -702,7 +699,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].attendance,
                     width: '120px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data; // ← was [7]
                       return h('button', {
                         style: `
                           display: inline-block;
@@ -748,7 +745,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].actions,
                     width: '100px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data; // ← was [7]
                       return h('button', {
                         style: `
                           padding: 6px 12px;
