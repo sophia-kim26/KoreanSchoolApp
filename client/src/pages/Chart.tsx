@@ -1,8 +1,7 @@
 // FOR TA DASHBOARD!!
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
-import { useParams } from "react-router-dom";
 import {
   Chart as ChartJS,
   BarElement,
@@ -13,33 +12,51 @@ import {
   ArcElement
 } from "chart.js";
 
+// --- ADDED TYPES TO FIX 'ANY' ERROR ---
+interface User {
+  id: string | number;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  highschool?: string;
+  grade?: string | number;
+  age?: string | number;
+  gender?: string;
+  address?: string;
+  emergencyPhone?: string;
+  notes?: string;
+}
+
+interface Parent {
+  koreanName?: string;
+  korean_name?: string;
+  englishName?: string;
+  english_name?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface ChartProps {
+  currentUser: User;
+}
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart( {currentUser} ) {
-    const [parents, setParents] = useState([]);
+export default function Chart({ currentUser }: ChartProps) {
+    // --- ADDED <Parent[]> TO FIX 'NEVER' ERROR ---
+    const [parents, setParents] = useState<Parent[]>([]);
 
-    // Fetch parent data when component mounts
     useEffect(() => {
       const fetchParents = async () => {
-        if (!currentUser?.id) {
-          console.log('No currentUser.id available');
-          return;
-        }
-        
-        console.log('Fetching parents for TA ID:', currentUser.id);
+        if (!currentUser?.id) return;
         
         try {
-          const res = await fetch(`http://localhost:3001/api/parents/ta/${currentUser.id}`);
-          console.log('Response status:', res.status);
-          
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
           if (res.ok) {
             const data = await res.json();
-            console.log('Parent data received:', data);
             setParents(data);
           } else {
-            const errorText = await res.text();
-            console.error('Failed to fetch parents. Status:', res.status, 'Error:', errorText);
             setParents([]);
           }
         } catch (error) {
@@ -75,9 +92,8 @@ export default function Chart( {currentUser} ) {
       ]
     };
 
-  const dataValues = [12, 19, 40, 30, 5]
+  const dataValues = [12, 19, 40, 30, 5];
 
-  // bar graph
   const barData = {
     labels: ["September", "October", "November", "December", "January"],
     datasets: [
@@ -89,34 +105,33 @@ export default function Chart( {currentUser} ) {
     ]
   };
 
-  
-
   const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
 
+  // --- WRAPPED IN 'SCALES' TO FIX GRID COLOR & TYPE ERROR ---
   const barOptions = {
-    y: {
-      min : 0,
-      max : 50,
-      ticks: {
-        stepSize: 5
+    scales: {
+      y: {
+        min : 0,
+        max : 50,
+        ticks: {
+          stepSize: 5
+        },
+        title: {
+          display: true,
+          text: "Hours"
+        },
+        grid: {
+          color: "#feefbf"
+        }
       },
-      title: {
-        display: true,
-        text: "Hours"
-      },
-      grid: {
-        // grid line color won't change idk why
-        color: () => "#feefbfff"
-      }
-    },
-    x: {
-      grid: {
-        color: "#feefbfff"
+      x: {
+        grid: {
+          color: "#feefbf"
+        }
       }
     }
-  }
+  };
 
-  // doughnut chart data (attendance)
   const presentPercentage = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
   const absentPercentage = 100-presentPercentage;
 
@@ -130,24 +145,18 @@ export default function Chart( {currentUser} ) {
         cutout: '75%'
       }
     ]
-  }
+  };
 
   const doughnutOptions = {
     plugins: {
-      legend: {
-        display: false
-      },
-      tooltip: {
-        enabled: false
-      }
+      legend: { display: false },
+      tooltip: { enabled: false }
     }
-  }
+  };
 
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
-      {/* left column: bar chart and parent info */}
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* bar chart */}
         <div style={{ width: "800px" }}>
           <Bar data={barData} options={barOptions} />
           <p style={{ marginTop: "12px", fontWeight: "bold" }}>
@@ -155,7 +164,6 @@ export default function Chart( {currentUser} ) {
           </p>
         </div>
 
-        {/* parent information - separate yellow box */}
         <div style={{
           width: "800px",
           backgroundColor: "#f5eed1",
@@ -166,11 +174,7 @@ export default function Chart( {currentUser} ) {
           <h3 style={{ fontSize: "20px", color: "#5b8dc4", marginBottom: "20px", textAlign: "center" }}>
             Parent Information
           </h3>
-          <table style={{ 
-            width: "100%", 
-            borderCollapse: "collapse",
-            fontSize: "14px"
-          }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
             <thead>
               <tr style={{ backgroundColor: "#5b8dc4", color: "white" }}>
                 <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>Korean Name</th>
@@ -196,7 +200,6 @@ export default function Chart( {currentUser} ) {
         </div>
       </div>
 
-      {/* info card */}
       <div style={{
         width: "400px",
         backgroundColor: "#f5eed1",
@@ -204,21 +207,9 @@ export default function Chart( {currentUser} ) {
         padding: "40px 30px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
       }}>
-        {/* doughnut graph / chart */}
-        <div style={{ 
-          position: "relative", 
-          width: "250px", 
-          height: "250px", 
-          margin: "0 auto 20px" 
-        }}>
+        <div style={{ position: "relative", width: "250px", height: "250px", margin: "0 auto 20px" }}>
           <Doughnut data={doughnutData} options={doughnutOptions} />
-          <div style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            textAlign: "center"
-          }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
             <div style={{ fontSize: "24px", fontWeight: "600", color: "#5b8dc4" }}>
               {presentPercentage}% Present
             </div>
@@ -228,7 +219,6 @@ export default function Chart( {currentUser} ) {
           </div>
         </div>
 
-        {/* ta info */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <h2 style={{ fontSize: "24px", color: "#5b8dc4", marginBottom: "8px" }}>
             {taInfo.firstName} {taInfo.lastName}
@@ -248,28 +238,8 @@ export default function Chart( {currentUser} ) {
           </p>
         </div>
 
-        {/* hours info
-        <div style={{ marginBottom: "20px", color: "#5b8dc4", fontSize: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-            <span>Hours Per Day:</span>
-            <span>{taInfo.hoursPerDay}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Time:</span>
-            <span>{taInfo.time}</span>
-          </div>
-        </div> */}
-
-        {/* progress bar */}
         <div style={{ marginTop: "20px" }}>
-          <div style={{
-            width: "100%",
-            height: "40px",
-            backgroundColor: "#e5e7eb",
-            borderRadius: "20px",
-            overflow: "hidden",
-            position: "relative"
-          }}>
+          <div style={{ width: "100%", height: "40px", backgroundColor: "#e5e7eb", borderRadius: "20px", overflow: "hidden", position: "relative" }}>
             <div style={{
               width: `${(taInfo.hoursCompleted / taInfo.totalHoursRequired) * 100}%`,
               height: "100%",
@@ -277,13 +247,7 @@ export default function Chart( {currentUser} ) {
               borderRadius: "20px",
               transition: "width 0.3s ease"
             }}></div>
-            <div style={{
-              position: "absolute",
-              right: "20px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              fontSize: "24px"
-            }}>
+            <div style={{ position: "absolute", right: "20px", top: "50%", transform: "translateY(-50%)", fontSize: "24px" }}>
               🏅
             </div>
           </div>
