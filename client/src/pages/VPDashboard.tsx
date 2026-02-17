@@ -18,8 +18,6 @@ interface TAData {
   attendance: string;
   attendance_count: number;
   absence_count: number;
-  tardiness_count: number;
-  early_departure_count: number;
   ta_code: string;
   email: string;
   created_at: string;
@@ -27,6 +25,12 @@ interface TAData {
 }
 
 interface FridayData {
+  id?: number;
+  first_name?: string;
+  last_name?: string;
+  korean_name?: string;
+  attendance_count?: number;
+  absence_count?: number;
   [key: string]: any;
 }
 
@@ -43,8 +47,6 @@ interface FormData {
 interface Metrics {
   attendance: number;
   absence: number;
-  tardiness: number;
-  earlyDeparture: number;
 }
 
 interface Translations {
@@ -138,8 +140,6 @@ function VPDashboard(): React.ReactElement {
   const [metrics, setMetrics] = useState<Metrics>({
     attendance: 0,
     absence: 0,
-    tardiness: 0,
-    earlyDeparture: 0
   });
 
   const translations: Translations = {
@@ -317,14 +317,56 @@ function VPDashboard(): React.ReactElement {
   const calculateMetrics = (data: TAData[]): void => {
     const attendance = data.filter(ta => ta.attendance === 'Present').length;
     const absence = data.filter(ta => ta.attendance === 'Absent').length;
+<<<<<<< HEAD
+    
+    setMetrics({
+      attendance,
+      absence,
+    });
+=======
     setMetrics({ attendance, absence, tardiness: 0, earlyDeparture: 0 });
+>>>>>>> 7c2094eb2abd43face3b9ee1763afa9690738a3a
   };
 
   const fetchFridayData = (): void => {
+    // First fetch Friday data
     fetch("http://localhost:3001/api/friday")
       .then(res => res.json())
+<<<<<<< HEAD
+      .then(async (json: FridayData[] | FridayData) => {
+        const dataArray = Array.isArray(json) ? json : [];
+        
+        // Debug: Log the first row to see what columns we have
+        if (dataArray.length > 0) {
+          console.log('Friday data first row:', dataArray[0]);
+          console.log('Friday data columns:', Object.keys(dataArray[0]));
+        }
+        
+        // Then fetch all TAs to get their counts
+        const tasResponse = await fetch("http://localhost:3001/api/tas");
+        const tasData: TAData[] = await tasResponse.json();
+        
+        // Merge the count data into Friday data
+        const enrichedData = dataArray.map(fridayRow => {
+          const matchingTA = tasData.find(ta => ta.id === fridayRow.id);
+          
+          if (matchingTA) {
+            return {
+              ...fridayRow,
+              attendance_count: matchingTA.attendance_count || 0,
+              absence_count: matchingTA.absence_count || 0,
+            };
+          }
+          
+          return fridayRow;
+        });
+        
+        console.log('Enriched Friday data first row:', enrichedData[0]);
+        setFridayData(enrichedData);
+=======
       .then((json: FridayData[] | FridayData) => {
         setFridayData(Array.isArray(json) ? json : []);
+>>>>>>> 7c2094eb2abd43face3b9ee1763afa9690738a3a
       })
       .catch(err => {
         console.error("Fetch Friday error:", err);
@@ -441,17 +483,27 @@ function VPDashboard(): React.ReactElement {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
+<<<<<<< HEAD
+    row.id  
+=======
     row.attendance_count || 0,
     row.absence_count || 0,
     row.tardiness_count || 0,
     row.early_departure_count || 0,
     row.id
+>>>>>>> 7c2094eb2abd43face3b9ee1763afa9690738a3a
   ]);
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
+<<<<<<< HEAD
+    
+    // Only hide these specific columns - count columns like attendance_count, 
+    // absence_count, tardiness_count, early_departure_count will be visible
+=======
+>>>>>>> 7c2094eb2abd43face3b9ee1763afa9690738a3a
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
@@ -564,6 +616,123 @@ function VPDashboard(): React.ReactElement {
               <button onClick={fetchData} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
             </div>
           ) : (
+<<<<<<< HEAD
+            <div style={{ 
+              background: '#dbeafe', 
+              borderRadius: 8, 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <Grid
+                data={gridData}
+                columns={[
+                  { name: translations[language].firstName, width: '120px' },
+                  { name: translations[language].lastName, width: '120px' },
+                  { name: translations[language].koreanName, width: '120px' },
+                  { name: translations[language].sessionDay, width: '120px' },
+                  { 
+                    name: translations[language].active,
+                    width: '80px',
+                    formatter: (cell: any) => cell ? 'Yes' : 'No'
+                  },
+                  {
+                    name: translations[language].totalHours,
+                    width: '100px',
+                    formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h`
+                  },
+                  {
+                    name: translations[language].attendance,
+                    width: '120px',
+                    formatter: (cell: any, row: any) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          display: inline-block;
+                          padding: 6px 16px;
+                          border-radius: 4px;
+                          font-weight: 500;
+                          font-size: 13px;
+                          background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                          color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                          border: none;
+                          cursor: pointer;
+                          transition: opacity 0.2s;
+                        `,
+                        onmouseover: function(this: HTMLElement) { this.style.opacity = '0.8'; },
+                        onmouseout: function(this: HTMLElement) { this.style.opacity = '1'; },
+                        onclick: () => toggleAttendance(taId, cell)
+                      }, cell || 'Absent');
+                    }
+                  },
+                  {
+                    name: translations[language].analytics,
+                    width: "140px",
+                    formatter: (cell: any) => {
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #2563eb;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 600;
+                        `,
+                        onclick: (e: Event) => {
+                          e.stopPropagation();
+                          handleRowClick(cell);
+                        }
+                      }, 'View Analytics');
+                    }
+                  },
+                  {
+                    name: translations[language].actions,
+                    width: '100px',
+                    formatter: (cell: any, row: any) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #ef4444;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 500;
+                        `,
+                        onclick: () => deactivateTA(cell)
+                      }, translations[language].remove);
+                    }
+                  }
+                ]}
+                key={language}
+                search={true}
+                pagination={{ limit: 10 }}
+                sort={true}
+                style={{
+                  table: {
+                    'font-size': '14px',
+                    'border-collapse': 'collapse'
+                  },
+                  th: {
+                    'background-color': '#93c5fd',
+                    'padding': '16px 12px',
+                    'text-align': 'left',
+                    'font-weight': '600',
+                    'color': '#1e3a8a',
+                    'border-bottom': '2px solid #3b82f6'
+                  },
+                  td: {
+                    'padding': '14px 12px',
+                    'border-bottom': '1px solid #bfdbfe',
+                    'color': '#1e40af',
+                    'background-color': '#eff6ff'
+                  }
+                }}
+              />
+=======
             <div style={{ display: 'flex', gap: 20 }}>
               <div style={{ flex: 1, background: '#dbeafe', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                 <Grid
@@ -657,6 +826,7 @@ function VPDashboard(): React.ReactElement {
                   </div>
                 </div>
               </div>
+>>>>>>> 7c2094eb2abd43face3b9ee1763afa9690738a3a
             </div>
           )}
         </>
