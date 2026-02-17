@@ -158,7 +158,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const fetchShifts = async (): Promise<void> => {
     try {
-      const res = await fetch("http://localhost:3001/api/shifts");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`);
       const json: Shift[] = await res.json();
       setData(json);
     } catch (err) {
@@ -168,7 +168,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const checkActiveShift = async (userId: number): Promise<void> => {
     try {
-      const res = await fetch(`http://localhost:3001/api/shifts/active/${userId}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/active/${userId}`);
       const json: ActiveShiftResponse = await res.json();
       
       if (json.activeShift) {
@@ -188,7 +188,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   // Function to update notes in database
   const updateNotes = async (shiftId: number, notes: string): Promise<void> => {
     try {
-      const res = await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -268,7 +268,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   }, [navigate]);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/shifts")
+    fetch(`${import.meta.env.VITE_API_URL}/api/shifts`)
       .then(res => res.json())
       .then((json: Shift[]) => setData(json))
       .catch(err => console.error(err));
@@ -312,7 +312,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       setClockInTime(time);
 
       // Send clock-in request - backend validates IP address
-      const res = await fetch("http://localhost:3001/api/shifts", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -382,10 +382,10 @@ const clockOut = async (): Promise<void> => {
       elapsed_time: elapsedTimeText
     };
     
-    console.log("Sending PUT request to:", `http://localhost:3001/api/shifts/${activeShiftId}`);
+    console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
     
-    const response = await fetch(`http://localhost:3001/api/shifts/${activeShiftId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody)
@@ -423,7 +423,7 @@ const clockOut = async (): Promise<void> => {
 
   const toggleAttendance = async (shiftId: number, newStatus: string): Promise<void> => {
     try {
-      await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

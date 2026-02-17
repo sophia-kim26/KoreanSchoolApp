@@ -242,7 +242,7 @@ function VPDashboard(): React.ReactElement {
   }, [isLoading, isAuthenticated, navigate]);
 
   const fetchSavedDates = (): void => {
-    fetch("http://localhost:3001/api/friday/get-calendar-dates") 
+    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`) 
       .then(res => res.json())
       .then((json: CalendarDatesResponse) => {
         if (json.dates && Array.isArray(json.dates)) {
@@ -256,7 +256,7 @@ function VPDashboard(): React.ReactElement {
     try {
       const datesArray = Array.from(selectedDates);
       
-      const response = await fetch("http://localhost:3001/api/friday/save-calendar-dates", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dates: datesArray })
@@ -281,7 +281,7 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fetchData = (): void => {
-    fetch("http://localhost:3001/api/tas")
+    fetch(`${import.meta.env.VITE_API_URL}/api/tas`)
       .then(res => {
         return res.json();
       })
@@ -338,6 +338,15 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fetchFridayData = (): void => {
+<<<<<<< HEAD
+  fetch(`${import.meta.env.VITE_API_URL}/api/friday`)
+    .then(res => res.json())
+    .then(async (json: FridayData[]) => {
+      // 1. Safety check: ensure we have data to process
+      const dataArray = Array.isArray(json) ? json : [];
+      if (dataArray.length === 0) {
+        console.warn("No Friday data received from server.");
+=======
     fetch("http://localhost:3001/api/friday")
       .then(res => res.json())
       .then(async (json: FridayData[] | FridayData) => {
@@ -370,10 +379,41 @@ function VPDashboard(): React.ReactElement {
       })
       .catch(err => {
         console.error("Fetch Friday error:", err);
+>>>>>>> a05c6f21708c52bcb0c65d44ebd1b428c5b94468
         setFridayData([]);
-        alert("Error loading Friday data: " + err.message);
+        return;
+      }
+
+      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`);
+      const tasData: TAData[] = await tasResponse.json();
+      
+      const enrichedData = dataArray.map(fridayRow => {
+        // 2. Use a fallback for matching if ID isn't the common link
+        // Check if matching by email or name is safer for your schema
+        const matchingTA = tasData.find(ta => 
+          ta.id === fridayRow.id || 
+          ta.email === fridayRow.email
+        );
+        
+        return {
+          ...fridayRow,
+          attendance_count: matchingTA?.attendance_count ?? 0,
+          absence_count: matchingTA?.absence_count ?? 0,
+        };
       });
-  };
+      
+      // 3. Only log if the array actually has content
+      if (enrichedData.length > 0) {
+        console.log('Enriched Friday data first row:', enrichedData[0]);
+      }
+      
+      setFridayData(enrichedData);
+    })
+    .catch(err => {
+      console.error("Fetch Friday error:", err);
+      setFridayData([]);
+    });
+};
 
   const handleSignOut = (): void => {
     logout({ 
@@ -408,7 +448,7 @@ function VPDashboard(): React.ReactElement {
         ta_code: pin
       };
       
-      const response = await fetch("http://localhost:3001/api/create-account-vp", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-account-vp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -454,11 +494,11 @@ function VPDashboard(): React.ReactElement {
   const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
     try {
       if (currentAttendance === 'Present') {
-        await fetch(`http://localhost:3001/api/attendance/clock-out/${taId}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-out/${taId}`, {
           method: 'POST'
         });
       } else {
-        await fetch('http://localhost:3001/api/attendance/clock-in', {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ta_id: taId })
@@ -475,7 +515,7 @@ function VPDashboard(): React.ReactElement {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
       
