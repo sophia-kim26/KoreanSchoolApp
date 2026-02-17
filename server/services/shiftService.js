@@ -56,7 +56,7 @@ export const getAllShifts = async () => {
     FROM shifts
     JOIN ta_list
       ON shifts.ta_id = ta_list.id
-    ORDER BY shifts.clock_in DESC
+    ORDER BY shifts.clock_in DESC NULLS LAST
   `;
 };
 
