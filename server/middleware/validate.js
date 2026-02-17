@@ -1,7 +1,9 @@
 // Allowed IP addresses or network ranges
 const ALLOWED_IPS = [
   '127.0.0.1',           // localhost for testing
-  '::1'                 // localhost IPv6
+  '::1',                 // localhost IPv6
+  '69.121.204.146',      // my public ip address last night
+  '168.229.254.66'      // bca byod ip address
   // Add Korean School's IP when I know it but for next time add bca ip
 ];
 
@@ -45,7 +47,7 @@ export const validateClockIn = (req, res, next) => {
 };
 
 export const validateCreateAccount = (req, res, next) => {
-  const { first_name, last_name, email, ta_code, session_day } = req.body;
+  const { first_name, last_name, email, ta_code, session_day, classroom} = req.body;
   
   if (!first_name || !last_name || !email || !ta_code || !session_day) {
     return res.status(400).json({ error: 'All fields are required' });

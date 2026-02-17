@@ -79,7 +79,7 @@ export const saveCalendarDates = async (dates) => {
       for (const date of dates) {
         await sql`INSERT INTO calendar_dates (date) VALUES (${date})`;
       }
-    }
+    };
 
     return { 
       success: true, 
@@ -87,7 +87,6 @@ export const saveCalendarDates = async (dates) => {
     };
   } catch (error) {
     console.error('Error in saveCalendarDates:', error);
-    console.error('Error details:', error.message);
     throw error;
   }
 };

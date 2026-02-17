@@ -3,8 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { useParams } from "react-router-dom";
-import type { ChartOptions } from 'chart.js';
-
 import {
   Chart as ChartJS,
   BarElement,
@@ -15,52 +13,29 @@ import {
   ArcElement
 } from "chart.js";
 
-// Add type definitions
-interface Parent {
-  koreanName?: string;
-  korean_name?: string;
-  englishName?: string;
-  english_name?: string;
-  phone?: string;
-  email?: string;
-}
-
-interface CurrentUser {
-  id: string | number;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  highschool?: string;
-  grade?: string | number;
-  age?: string | number;
-  gender?: string;
-  address?: string;
-  emergencyPhone?: string;
-  notes?: string;
-}
-
-interface ChartProps {
-  currentUser: CurrentUser;
-}
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser }: ChartProps) {
-    const [parents, setParents] = useState<Parent[]>([]);
+export default function Chart( {currentUser} ) {
+    const [parents, setParents] = useState([]);
 
     // Fetch parent data when component mounts
     useEffect(() => {
       const fetchParents = async () => {
         if (!currentUser?.id) {
+          console.log('No currentUser.id available');
           return;
         }
-                
+        
+        console.log('Fetching parents for TA ID:', currentUser.id);
+        
         try {
-          const res = await fetch(`${process.env.REACT_APP_API_URL}/api/parents/ta/${currentUser.id}`);
+          const res = await fetch(`http://localhost:3001/api/parents/ta/${currentUser.id}`);
+          console.log('Response status:', res.status);
           
           if (res.ok) {
-            const data: Parent[] = await res.json();
+            const data = await res.json();
+            console.log('Parent data received:', data);
             setParents(data);
           } else {
             const errorText = await res.text();
@@ -100,7 +75,7 @@ export default function Chart({ currentUser }: ChartProps) {
       ]
     };
 
-  const dataValues: number[] = [12, 19, 40, 30, 5];
+  const dataValues = [12, 19, 40, 30, 5]
 
   // bar graph
   const barData = {
@@ -114,11 +89,36 @@ export default function Chart({ currentUser }: ChartProps) {
     ]
   };
 
-  const totalHours: number = dataValues.reduce((sum, val) => sum + val, 0);
+  
+
+  const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
+
+  const barOptions = {
+    y: {
+      min : 0,
+      max : 50,
+      ticks: {
+        stepSize: 5
+      },
+      title: {
+        display: true,
+        text: "Hours"
+      },
+      grid: {
+        // grid line color won't change idk why
+        color: () => "#feefbfff"
+      }
+    },
+    x: {
+      grid: {
+        color: "#feefbfff"
+      }
+    }
+  }
 
   // doughnut chart data (attendance)
-  const presentPercentage: number = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
-  const absentPercentage: number = 100-presentPercentage;
+  const presentPercentage = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
+  const absentPercentage = 100-presentPercentage;
 
   const doughnutData = {
     labels: ['Present', 'Absent'],
@@ -130,9 +130,9 @@ export default function Chart({ currentUser }: ChartProps) {
         cutout: '75%'
       }
     ]
-  };
+  }
 
-  const doughnutOptions: ChartOptions<'doughnut'> = {
+  const doughnutOptions = {
     plugins: {
       legend: {
         display: false
@@ -141,31 +141,7 @@ export default function Chart({ currentUser }: ChartProps) {
         enabled: false
       }
     }
-  };
-
-  const barOptions: ChartOptions<'bar'> = {
-    scales: {
-      y: {
-        min: 0,
-        max: 50,
-        ticks: {
-          stepSize: 5
-        },
-        title: {
-          display: true,
-          text: "Hours"
-        },
-        grid: {
-          color: "#feefbfff"
-        }
-      },
-      x: {
-        grid: {
-          color: "#feefbfff"
-        }
-      }
-    }
-  };
+  }
 
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
@@ -271,6 +247,18 @@ export default function Chart({ currentUser }: ChartProps) {
             Notes: {taInfo.notes}
           </p>
         </div>
+
+        {/* hours info
+        <div style={{ marginBottom: "20px", color: "#5b8dc4", fontSize: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+            <span>Hours Per Day:</span>
+            <span>{taInfo.hoursPerDay}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Time:</span>
+            <span>{taInfo.time}</span>
+          </div>
+        </div> */}
 
         {/* progress bar */}
         <div style={{ marginTop: "20px" }}>
