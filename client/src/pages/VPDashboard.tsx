@@ -17,8 +17,6 @@ interface TAData {
   attendance: string;
   attendance_count: number;
   absence_count: number;
-  tardiness_count: number;
-  early_departure_count: number;
   ta_code: string;
   email: string;
   created_at: string;
@@ -26,6 +24,12 @@ interface TAData {
 }
 
 interface FridayData {
+  id?: number;
+  first_name?: string;
+  last_name?: string;
+  korean_name?: string;
+  attendance_count?: number;
+  absence_count?: number;
   [key: string]: any;
 }
 
@@ -41,8 +45,6 @@ interface FormData {
 interface Metrics {
   attendance: number;
   absence: number;
-  tardiness: number;
-  earlyDeparture: number;
 }
 
 interface Translations {
@@ -102,8 +104,6 @@ function VPDashboard(): React.ReactElement {
   const [metrics, setMetrics] = useState<Metrics>({
     attendance: 0,
     absence: 0,
-    tardiness: 0,
-    earlyDeparture: 0
   });
   
   const translations: Translations = {
@@ -296,25 +296,46 @@ function VPDashboard(): React.ReactElement {
     const attendance = data.filter(ta => ta.attendance === 'Present').length;
     const absence = data.filter(ta => ta.attendance === 'Absent').length;
     
-    const tardiness = 0;
-    const earlyDeparture = 0;
-    
     setMetrics({
       attendance,
       absence,
-      tardiness,
-      earlyDeparture
     });
   };
 
   const fetchFridayData = (): void => {
+    // First fetch Friday data
     fetch("http://localhost:3001/api/friday")
-      .then(res => {
-        return res.json();
-      })
-      .then((json: FridayData[] | FridayData) => {
+      .then(res => res.json())
+      .then(async (json: FridayData[] | FridayData) => {
         const dataArray = Array.isArray(json) ? json : [];
-        setFridayData(dataArray);
+        
+        // Debug: Log the first row to see what columns we have
+        if (dataArray.length > 0) {
+          console.log('Friday data first row:', dataArray[0]);
+          console.log('Friday data columns:', Object.keys(dataArray[0]));
+        }
+        
+        // Then fetch all TAs to get their counts
+        const tasResponse = await fetch("http://localhost:3001/api/tas");
+        const tasData: TAData[] = await tasResponse.json();
+        
+        // Merge the count data into Friday data
+        const enrichedData = dataArray.map(fridayRow => {
+          const matchingTA = tasData.find(ta => ta.id === fridayRow.id);
+          
+          if (matchingTA) {
+            return {
+              ...fridayRow,
+              attendance_count: matchingTA.attendance_count || 0,
+              absence_count: matchingTA.absence_count || 0,
+            };
+          }
+          
+          return fridayRow;
+        });
+        
+        console.log('Enriched Friday data first row:', enrichedData[0]);
+        setFridayData(enrichedData);
       })
       .catch(err => {
         console.error("Fetch Friday error:", err);
@@ -449,10 +470,6 @@ function VPDashboard(): React.ReactElement {
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
-    row.attendance_count || 0,
-    row.absence_count || 0,
-    row.tardiness_count || 0,
-    row.early_departure_count || 0,
     row.id  
   ]);
 
@@ -462,6 +479,8 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
+    // Only hide these specific columns - count columns like attendance_count, 
+    // absence_count, tardiness_count, early_departure_count will be visible
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
@@ -618,237 +637,121 @@ function VPDashboard(): React.ReactElement {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 20 }}>
-              {/* Table Container */}
-              <div style={{ 
-                flex: 1,
-                background: '#dbeafe', 
-                borderRadius: 8, 
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                overflow: 'hidden'
-              }}>
-                <Grid
-                  data={gridData}
-                  columns={[
-                    { name: translations[language].firstName, width: '120px' },
-                    { name: translations[language].lastName, width: '120px' },
-                    { name: translations[language].koreanName, width: '120px' },
-                    { name: translations[language].sessionDay, width: '120px' },
-                    { 
-                      name: translations[language].active,
-                      width: '80px',
-                      formatter: (cell: any) => cell ? 'Yes' : 'No'
-                    },
-                    {
-                      name: translations[language].totalHours,
-                      width: '100px',
-                      formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h`
-                    },
-                    {
-                      name: translations[language].attendance,
-                      width: '120px',
-                      formatter: (cell: any, row: any) => {
-                        const taId = row.cells[11].data;
-                        return h('button', {
-                          style: `
-                            display: inline-block;
-                            padding: 6px 16px;
-                            border-radius: 4px;
-                            font-weight: 500;
-                            font-size: 13px;
-                            background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
-                            color: ${cell === 'Present' ? '#166534' : '#991b1b'};
-                            border: none;
-                            cursor: pointer;
-                            transition: opacity 0.2s;
-                          `,
-                          onmouseover: function(this: HTMLElement) { this.style.opacity = '0.8'; },
-                          onmouseout: function(this: HTMLElement) { this.style.opacity = '1'; },
-                          onclick: () => toggleAttendance(taId, cell)
-                        }, cell || 'Absent');
-                      }
-                    },
-                    {
-                      name: 'Attendance',
-                      width: '100px',
-                      formatter: (cell: any) => h('div', {
-                        style: 'text-align: center; font-weight: 600; color: #166534;'
-                      }, cell || '0')
-                    },
-                    {
-                      name: 'Absence',
-                      width: '100px',
-                      formatter: (cell: any) => h('div', {
-                        style: 'text-align: center; font-weight: 600; color: #991b1b;'
-                      }, cell || '0')
-                    },
-                    {
-                      name: 'Tardiness',
-                      width: '100px',
-                      formatter: (cell: any) => h('div', {
-                        style: 'text-align: center; font-weight: 600; color: #92400e;'
-                      }, cell || '0')
-                    },
-                    {
-                      name: 'Early Departure',
-                      width: '120px',
-                      formatter: (cell: any) => h('div', {
-                        style: 'text-align: center; font-weight: 600; color: #3730a3;'
-                      }, cell || '0')
-                    },
-                    {
-                      name: translations[language].analytics,
-                      width: "140px",
-                      formatter: (cell: any) => {
-                        return h('button', {
-                          style: `
-                            padding: 6px 12px;
-                            background-color: #2563eb;
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 12px;
-                            font-weight: 600;
-                          `,
-                          onclick: (e: Event) => {
-                            e.stopPropagation();
-                            handleRowClick(cell);
-                          }
-                        }, 'View Analytics');
-                      }
-                    },
-                    {
-                      name: translations[language].actions,
-                      width: '100px',
-                      formatter: (cell: any, row: any) => {
-                        const taId = row.cells[11].data;
-                        return h('button', {
-                          style: `
-                            padding: 6px 12px;
-                            background-color: #ef4444;
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 12px;
-                            font-weight: 500;
-                          `,
-                          onclick: () => deactivateTA(cell)
-                        }, translations[language].remove);
-                      }
+            <div style={{ 
+              background: '#dbeafe', 
+              borderRadius: 8, 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <Grid
+                data={gridData}
+                columns={[
+                  { name: translations[language].firstName, width: '120px' },
+                  { name: translations[language].lastName, width: '120px' },
+                  { name: translations[language].koreanName, width: '120px' },
+                  { name: translations[language].sessionDay, width: '120px' },
+                  { 
+                    name: translations[language].active,
+                    width: '80px',
+                    formatter: (cell: any) => cell ? 'Yes' : 'No'
+                  },
+                  {
+                    name: translations[language].totalHours,
+                    width: '100px',
+                    formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h`
+                  },
+                  {
+                    name: translations[language].attendance,
+                    width: '120px',
+                    formatter: (cell: any, row: any) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          display: inline-block;
+                          padding: 6px 16px;
+                          border-radius: 4px;
+                          font-weight: 500;
+                          font-size: 13px;
+                          background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'};
+                          color: ${cell === 'Present' ? '#166534' : '#991b1b'};
+                          border: none;
+                          cursor: pointer;
+                          transition: opacity 0.2s;
+                        `,
+                        onmouseover: function(this: HTMLElement) { this.style.opacity = '0.8'; },
+                        onmouseout: function(this: HTMLElement) { this.style.opacity = '1'; },
+                        onclick: () => toggleAttendance(taId, cell)
+                      }, cell || 'Absent');
                     }
-                  ]}
-                  key={language}
-                  search={true}
-                  pagination={{ limit: 10 }}
-                  sort={true}
-                  style={{
-                    table: {
-                      'font-size': '14px',
-                      'border-collapse': 'collapse'
-                    },
-                    th: {
-                      'background-color': '#93c5fd',
-                      'padding': '16px 12px',
-                      'text-align': 'left',
-                      'font-weight': '600',
-                      'color': '#1e3a8a',
-                      'border-bottom': '2px solid #3b82f6'
-                    },
-                    td: {
-                      'padding': '14px 12px',
-                      'border-bottom': '1px solid #bfdbfe',
-                      'color': '#1e40af',
-                      'background-color': '#eff6ff'
+                  },
+                  {
+                    name: translations[language].analytics,
+                    width: "140px",
+                    formatter: (cell: any) => {
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #2563eb;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 600;
+                        `,
+                        onclick: (e: Event) => {
+                          e.stopPropagation();
+                          handleRowClick(cell);
+                        }
+                      }, 'View Analytics');
                     }
-                  }}
-                />
-              </div>
-
-              {/* Metrics Panel */}
-              <div style={{
-                width: '250px',
-                flexShrink: 0
-              }}>
-                <div style={{
-                  background: 'white',
-                  borderRadius: 8,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  padding: 20
-                }}>
-                  <h3 style={{ 
-                    margin: '0 0 20px 0', 
-                    fontSize: '18px', 
-                    fontWeight: '600',
-                    color: '#1e40af'
-                  }}>
-                    Today's Metrics
-                  </h3>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {/* Attendance */}
-                    <div style={{
-                      padding: 16,
-                      background: '#dcfce7',
-                      borderRadius: 8,
-                      borderLeft: '4px solid #16a34a'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#166534', fontWeight: '500', marginBottom: 4 }}>
-                        Attendance
-                      </div>
-                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534' }}>
-                        {metrics.attendance}
-                      </div>
-                    </div>
-
-                    {/* Absence */}
-                    <div style={{
-                      padding: 16,
-                      background: '#fee2e2',
-                      borderRadius: 8,
-                      borderLeft: '4px solid #dc2626'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '500', marginBottom: 4 }}>
-                        Absence
-                      </div>
-                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#991b1b' }}>
-                        {metrics.absence}
-                      </div>
-                    </div>
-
-                    {/* Tardiness */}
-                    <div style={{
-                      padding: 16,
-                      background: '#fef3c7',
-                      borderRadius: 8,
-                      borderLeft: '4px solid #f59e0b'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#92400e', fontWeight: '500', marginBottom: 4 }}>
-                        Tardiness
-                      </div>
-                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#92400e' }}>
-                        {metrics.tardiness}
-                      </div>
-                    </div>
-
-                    {/* Early Departure */}
-                    <div style={{
-                      padding: 16,
-                      background: '#e0e7ff',
-                      borderRadius: 8,
-                      borderLeft: '4px solid #6366f1'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#3730a3', fontWeight: '500', marginBottom: 4 }}>
-                        Early Departure
-                      </div>
-                      <div style={{ fontSize: '28px', fontWeight: '700', color: '#3730a3' }}>
-                        {metrics.earlyDeparture}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  },
+                  {
+                    name: translations[language].actions,
+                    width: '100px',
+                    formatter: (cell: any, row: any) => {
+                      const taId = row.cells[7].data;
+                      return h('button', {
+                        style: `
+                          padding: 6px 12px;
+                          background-color: #ef4444;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          font-weight: 500;
+                        `,
+                        onclick: () => deactivateTA(cell)
+                      }, translations[language].remove);
+                    }
+                  }
+                ]}
+                key={language}
+                search={true}
+                pagination={{ limit: 10 }}
+                sort={true}
+                style={{
+                  table: {
+                    'font-size': '14px',
+                    'border-collapse': 'collapse'
+                  },
+                  th: {
+                    'background-color': '#93c5fd',
+                    'padding': '16px 12px',
+                    'text-align': 'left',
+                    'font-weight': '600',
+                    'color': '#1e3a8a',
+                    'border-bottom': '2px solid #3b82f6'
+                  },
+                  td: {
+                    'padding': '14px 12px',
+                    'border-bottom': '1px solid #bfdbfe',
+                    'color': '#1e40af',
+                    'background-color': '#eff6ff'
+                  }
+                }}
+              />
             </div>
           )}
         </>

@@ -9,7 +9,17 @@ export const getAllFridayData = async () => {
       return [];
     }
     
-    const allData = await sql`SELECT * FROM friday ORDER BY id`;
+    // Get Friday data with attendance counts calculated
+    const allData = await sql`
+      SELECT 
+        f.*,
+        COALESCE(COUNT(CASE WHEN s.clock_out IS NOT NULL THEN 1 END), 0) as attendance_count,
+        COALESCE(COUNT(CASE WHEN s.clock_out IS NULL AND s.clock_in IS NOT NULL THEN 1 END), 0) as absence_count,
+      FROM friday f
+      LEFT JOIN shifts s ON f.id = s.ta_id
+      GROUP BY f.id
+      ORDER BY f.id
+    `;
     
     if (allData.length === 0) {
       return [];
