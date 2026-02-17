@@ -26,11 +26,11 @@ export default function VPLogin() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  // ✅ DO NOT override redirect_uri here
   const handleLogin = (): void => {
-    loginWithRedirect();
+    loginWithRedirect({
+      appState: { returnTo: "/vp/dashboard" } // This tells Auth0 where to go after success
+    });
   };
-
   const handleBack = (): void => {
     logout({
       logoutParams: {

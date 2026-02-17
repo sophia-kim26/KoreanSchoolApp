@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Auth0Provider } from "@auth0/auth0-react";
+import { useNavigate } from "react-router-dom";
 
 import Home from "./pages/Home";
 import VPLogin from "./pages/VPLogin";
@@ -9,19 +10,21 @@ import TADashboard from "./pages/TADashboard";
 import VPTAView from "./pages/VPTAView";
 
 export default function App(){
+  const navigate = useNavigate();
+
+  const onRedirectCallback = (appState: any) => {
+    navigate(appState?.returnTo || "/vp/dashboard");
+  };
+
   return (
     <Auth0Provider
       domain={import.meta.env.VITE_AUTH0_DOMAIN as string}
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
-
-      // ✅ THIS is the redirect that replaces /api/auth/callback
       authorizationParams={{
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin 
       }}
-
-      // ✅ OK for now (see note below)
-      cacheLocation="memory"
-      useRefreshTokens={false}
+      cacheLocation="localstorage"
+      onRedirectCallback={onRedirectCallback}
     >
       <BrowserRouter>
         <Routes>
