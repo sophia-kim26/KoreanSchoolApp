@@ -1,15 +1,34 @@
+import { isIPv4 } from 'net';
+
 // Allowed IP addresses or network ranges
 const ALLOWED_IPS = [
-  '127.0.0.1',           // localhost for testing
-  '::1',                 // localhost IPv6
-  '69.121.204.146',      // my public ip address last night
-  '168.229.254.66'      // bca byod ip address
-  // Add Korean School's IP when I know it but for next time add bca ip
+  '127.0.0.1',        // localhost for testing
+  '::1',              // localhost IPv6
+  '69.121.204.146',   // my home IP
 ];
+
+// CIDR ranges - allows entire subnets
+const ALLOWED_CIDR_RANGES = [
+  '168.229.254.0/24',  // BCA BYOD network (covers .0 - .255, includes .66 and .67)
+  // '192.168.1.0/24', // Add Korean School network here when you know it
+];
+
+// Check if an IP falls within a CIDR range
+const ipInCIDR = (ip, cidr) => {
+  // Only handle IPv4
+  if (!isIPv4(ip)) return false;
+
+  const [range, bits] = cidr.split('/');
+  const mask = ~(2 ** (32 - parseInt(bits)) - 1);
+
+  const ipNum = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+  const rangeNum = range.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+
+  return (ipNum & mask) === (rangeNum & mask);
+};
 
 // Get client IP from request
 const getClientIP = (req) => {
-  // Check various headers in order of preference
   return req.headers['x-forwarded-for']?.split(',')[0].trim() ||
          req.headers['x-real-ip'] ||
          req.connection.remoteAddress ||
@@ -17,19 +36,27 @@ const getClientIP = (req) => {
          req.ip;
 };
 
+// Strip IPv6 prefix from IPv4 addresses (e.g. ::ffff:168.229.254.66 → 168.229.254.66)
+const normalizeIP = (ip) => {
+  if (ip?.startsWith('::ffff:')) return ip.substring(7);
+  return ip;
+};
+
 // IP address checking
 export const validateLocation = (req, res, next) => {
-  const clientIP = getClientIP(req);
-    
-  // Check if IP is in allowed list
-  const isAllowed = ALLOWED_IPS.some(allowedIP => {
-    // Handle some IPv6 localhost variations
-    if (clientIP === '::ffff:127.0.0.1' && allowedIP === '127.0.0.1') return true;
+  const rawIP = getClientIP(req);
+  const clientIP = normalizeIP(rawIP);
+
+  // Check exact IP matches
+  const isExactMatch = ALLOWED_IPS.some(allowedIP => {
     if (clientIP === '::1' && allowedIP === '127.0.0.1') return true;
     return clientIP === allowedIP;
   });
 
-  if (!isAllowed) {
+  // Check CIDR range matches
+  const isCIDRMatch = ALLOWED_CIDR_RANGES.some(cidr => ipInCIDR(clientIP, cidr));
+
+  if (!isExactMatch && !isCIDRMatch) {
     return res.status(403).json({ 
       error: `Clock-in not allowed from this location. Please connect to the Korean School network.` 
     });
@@ -47,7 +74,7 @@ export const validateClockIn = (req, res, next) => {
 };
 
 export const validateCreateAccount = (req, res, next) => {
-  const { first_name, last_name, email, ta_code, session_day, classroom} = req.body;
+  const { first_name, last_name, email, ta_code, session_day } = req.body;
   
   if (!first_name || !last_name || !email || !ta_code || !session_day) {
     return res.status(400).json({ error: 'All fields are required' });
