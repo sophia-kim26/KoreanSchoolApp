@@ -57,7 +57,7 @@ function VPTAView() {
         setError(null);
 
         // Fetch TA information
-        const taResponse = await fetch(`http://localhost:3001/api/tas`);
+        const taResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`);
         if (!taResponse.ok) {
           throw new Error(`Failed to fetch TA info: ${taResponse.status}`);
         }
@@ -70,16 +70,11 @@ function VPTAView() {
         setTaInfo(currentTA);
 
         // Fetch shifts
-        const shiftsResponse = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
+        const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`);
         if (!shiftsResponse.ok) {
           throw new Error(`HTTP error! status: ${shiftsResponse.status}`);
         }
-        
-        const contentType = shiftsResponse.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Server returned non-JSON response. Is the backend running on http://localhost:3001?");
-        }
-        
+                
         const shiftsData: Shift[] = await shiftsResponse.json();
         setAllShifts(Array.isArray(shiftsData) ? shiftsData : []);
       } catch (err) {
@@ -223,7 +218,7 @@ function VPTAView() {
           payload.clock_out = localToISO(data.clock_out);
         }
                 
-        return fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
+        return fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -251,7 +246,7 @@ function VPTAView() {
           clock_out: localToISO(newShift.clock_out),
         };
 
-        const createResponse = await fetch(`http://localhost:3001/api/shifts/manual`, {
+        const createResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/manual`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -267,7 +262,7 @@ function VPTAView() {
       }
       
       // Refresh shifts data
-      const response = await fetch(`http://localhost:3001/api/shifts/ta/${ta_id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`);
       const data: Shift[] = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);
       
@@ -299,7 +294,7 @@ function VPTAView() {
 
     try {
       setResettingPin(true);
-      const response = await fetch(`http://localhost:3001/api/reset-pin/${ta_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/reset-pin/${ta_id}`, {
         method: 'POST'
       });
 
