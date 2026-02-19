@@ -6,8 +6,7 @@
 
   "rewrites": [
 
-    { "source": "/api/(.*)", "destination": "https://your-backend-url.com/api/$1" },
-
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
 
   ]

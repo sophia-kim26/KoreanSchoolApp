@@ -210,58 +210,229 @@ button.btn-absent {
   width: auto;
 }
 
+/* ===== DARK MODE ===== */
 body.dark-mode {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: #0f172a;
+  color: #e2e8f0;
 }
 
+/* Page structure */
 .dark-mode .page-container {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: #0f172a;
+  color: #e2e8f0;
 }
 
 .dark-mode .page-header {
-  background-color: #1f2937;
-  border-color: #374151;
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.dark-mode .page-title {
-  color: #f9fafb;
+.dark-mode .page-title,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode p,
+.dark-mode strong {
+  color: #e2e8f0;
 }
 
-/* Grid dark mode */
-.dark-mode .gridjs-wrapper,
-.dark-mode .gridjs-table {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-}
-
-.dark-mode .gridjs-thead th {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-}
-
-.dark-mode .gridjs-tr:hover td {
-  background-color: #374151 !important;
-}
-
-.dark-mode .gridjs-td {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
-}
-
-/* Classroom box */
-.dark-mode [style*="background-color: #e0f2fe"] {
+/* Classroom box - override inline style */
+.dark-mode [style*="background-color: #e0f2fe"],
+.dark-mode [style*="backgroundColor: rgb(224, 242, 254)"] {
   background-color: #1e3a5f !important;
   border-color: #3b82f6 !important;
   color: #bfdbfe !important;
 }
 
-/* Modals */
-.dark-mode [style*="backgroundColor: \"#fff\""],
+/* ===== BUTTONS ===== */
+.dark-mode .btn-primary {
+  background-color: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.dark-mode .btn-primary:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.dark-mode .btn-primary:disabled {
+  background-color: #374151;
+  color: #6b7280;
+}
+
+.dark-mode .btn-danger {
+  background-color: #dc2626;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.dark-mode .btn-settings {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #e2e8f0;
+}
+
+/* ===== GRID.JS ===== */
+.dark-mode .gridjs-wrapper {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .gridjs-table {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .gridjs-thead th {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.dark-mode .gridjs-td {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.dark-mode .gridjs-tr:hover .gridjs-td {
+  background-color: #273549 !important;
+}
+
+.dark-mode .gridjs-tr:nth-child(even) .gridjs-td {
+  background-color: #172032 !important;
+}
+
+.dark-mode .gridjs-tr:nth-child(even):hover .gridjs-td {
+  background-color: #273549 !important;
+}
+
+/* Search input */
+.dark-mode .gridjs-search input {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.dark-mode .gridjs-search input::placeholder {
+  color: #64748b !important;
+}
+
+.dark-mode .gridjs-search input:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Pagination */
+.dark-mode .gridjs-pagination {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.dark-mode .gridjs-pages button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+.dark-mode .gridjs-pages button:hover:not(:disabled) {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .gridjs-pages button.gridjs-currentPage {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.dark-mode .gridjs-pages button:disabled {
+  color: #475569 !important;
+}
+
+/* ===== MODALS ===== */
 .dark-mode [style*='background: white'],
-.dark-mode [style*='background: "white"'] {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
+.dark-mode [style*="background: white"],
+.dark-mode [style*='background-color: #fff'],
+.dark-mode [style*="background-color: #fff"],
+.dark-mode [style*="backgroundColor: \"#fff\""] {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Settings modal inner panel */
+.dark-mode [style*="background: 'white'"],
+.dark-mode [style*='background: rgb(255, 255, 255)'] {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Settings tab panel (the blue inner box) */
+.dark-mode [style*="background: #dbeafe"],
+.dark-mode [style*="background-color: #dbeafe"] {
+  background-color: #172032 !important;
+}
+
+/* Settings tab buttons */
+.dark-mode [style*="background: #bfdbfe"] {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+
+/* Info display boxes inside settings */
+.dark-mode [style*="background: white"][style*="border: 1px solid #d1d5db"],
+.dark-mode [style*='border: "1px solid #d1d5db"'] {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Textarea in notes modal */
+.dark-mode textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.dark-mode textarea::placeholder {
+  color: #64748b !important;
+}
+
+.dark-mode textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Modal overlay backdrop (no change needed, but just in case) */
+.dark-mode [style*="rgba(0,0,0,0.5)"] {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ===== CHART ===== */
+.dark-mode canvas {
+  filter: invert(0.85) hue-rotate(180deg);
+}
+
+/* ===== SCROLLBAR ===== */
+.dark-mode ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
