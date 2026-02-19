@@ -338,7 +338,6 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fetchFridayData = (): void => {
-<<<<<<< HEAD
   fetch(`${import.meta.env.VITE_API_URL}/api/friday`)
     .then(res => res.json())
     .then(async (json: FridayData[]) => {
@@ -346,40 +345,6 @@ function VPDashboard(): React.ReactElement {
       const dataArray = Array.isArray(json) ? json : [];
       if (dataArray.length === 0) {
         console.warn("No Friday data received from server.");
-=======
-    fetch("http://localhost:3001/api/friday")
-      .then(res => res.json())
-      .then(async (json: FridayData[] | FridayData) => {
-        const dataArray = Array.isArray(json) ? json : [];
-        
-        if (dataArray.length > 0) {
-          console.log('Friday data first row:', dataArray[0]);
-          console.log('Friday data columns:', Object.keys(dataArray[0]));
-        }
-        
-        const tasResponse = await fetch("http://localhost:3001/api/tas");
-        const tasData: TAData[] = await tasResponse.json();
-        
-        const enrichedData = dataArray.map(fridayRow => {
-          const matchingTA = tasData.find(ta => ta.id === fridayRow.id);
-          
-          if (matchingTA) {
-            return {
-              ...fridayRow,
-              attendance_count: matchingTA.attendance_count || 0,
-              absence_count: matchingTA.absence_count || 0,
-            };
-          }
-          
-          return fridayRow;
-        });
-        
-        console.log('Enriched Friday data first row:', enrichedData[0]);
-        setFridayData(enrichedData);
-      })
-      .catch(err => {
-        console.error("Fetch Friday error:", err);
->>>>>>> a05c6f21708c52bcb0c65d44ebd1b428c5b94468
         setFridayData([]);
         return;
       }
