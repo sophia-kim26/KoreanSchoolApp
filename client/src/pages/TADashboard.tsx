@@ -38,6 +38,7 @@ interface CurrentUser {
   first_name: string;
   last_name: string;
   email: string;
+  classroom: string | null;
 }
 
 interface ActiveShiftResponse {
@@ -116,6 +117,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [clockedIn, setClockedIn] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('appearance');
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('ta_dark_mode') === 'true';
+  });
   const { logout } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
@@ -131,9 +135,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
   const [editingShiftId, setEditingShiftId] = useState<number | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
-  
-  // Assigned classroom state
-  const [assignedClassroom, setAssignedClassroom] = useState<string>('제비꽃반');
 
   const overlayStyle = {
     position: "fixed" as const,
@@ -233,6 +234,12 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
+  // dark mode
+  useEffect(() => {
+    localStorage.setItem('ta_dark_mode', String(darkMode));
+    document.body.classList.toggle('dark-mode', darkMode);
+  }, [darkMode]);
+
   // autologout when you close the tab or window
   useEffect(() => {
     const handleBeforeUnload = (): void => {
@@ -264,6 +271,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       return;
     }
     setCurrentUser(user);
+    setAssignedClassroom(user.classroom ?? '');
     checkActiveShift(user.id);
   }, [navigate]);
 
@@ -303,6 +311,11 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const taName: string = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
+
+  // ✅ Fixed - proper ternary with else branch
+  const [assignedClassroom, setAssignedClassroom] = useState<string>(
+  currentUser ? `${currentUser.classroom}` : ''
+  );
 
   // Clock in function - IP based validation (no GPS needed)
   const clockIn = async (): Promise<void> => {
@@ -426,20 +439,26 @@ const clockOut = async (): Promise<void> => {
       await fetch(`http://localhost:3001/api/shifts/${shiftId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attendance: newStatus
-        })
+        body: JSON.stringify({ attendance: newStatus })
       });
-      
-      // Refresh the data to show the updated status
-      await fetchShifts();
+
+      // Update local state so the correct value persists across re-renders
+      setData(prevData =>
+        prevData.map(shift =>
+          shift.id === shiftId
+            ? { ...shift, attendance: newStatus }
+            : shift
+        )
+      );
+
     } catch (err) {
       console.error("Failed to update attendance:", err);
+      alert("Failed to update attendance. Please try again.");
     }
   };
 
   return (
-    <div className="page-container">
+  <div className={`page-container${darkMode ? ' dark-mode' : ''}`}>
       <div className="page-header" style={{ justifyContent: "flex-start", gap: "40px"}}>
         <img 
           src={logo} 
@@ -620,6 +639,7 @@ const clockOut = async (): Promise<void> => {
                           }
                           const dropdown = document.getElementById(dropdownId);
                           if (dropdown) dropdown.style.display = 'none';
+                          toggleAttendance(shiftId, 'Present');
                         }
                       }, 'Present'),
                       h('div', {
@@ -642,6 +662,7 @@ const clockOut = async (): Promise<void> => {
                           }
                           const dropdown = document.getElementById(dropdownId);
                           if (dropdown) dropdown.style.display = 'none';
+                          toggleAttendance(shiftId, 'Tardy');
                         }
                       }, 'Tardy'),
                       h('div', {
@@ -664,6 +685,7 @@ const clockOut = async (): Promise<void> => {
                           }
                           const dropdown = document.getElementById(dropdownId);
                           if (dropdown) dropdown.style.display = 'none';
+                          toggleAttendance(shiftId, 'Early Leave');
                         }
                       }, 'Early Leave'),
                     ])
@@ -905,7 +927,7 @@ const clockOut = async (): Promise<void> => {
                 }}>
                 Appearance
               </button>
-              <button 
+              {/* <button 
                 onClick={() => setActiveTab('navigation')}
                 style={{
                   padding: '12px 24px',
@@ -917,7 +939,7 @@ const clockOut = async (): Promise<void> => {
                   color: activeTab === 'navigation' ? '#1e40af' : '#6b7280'
                 }}>
                 Navigation
-              </button>
+              </button> */}
               <button 
                 onClick={() => setActiveTab('account')}
                 style={{
@@ -972,15 +994,34 @@ const clockOut = async (): Promise<void> => {
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Theme
                     </h3>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-                        Light Mode
-                      </button>
-                      <button style={{ padding: '10px 30px', background: '#4b5563', color: 'white', border: '1px solid #4b5563', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>
-                        Dark Mode
-                      </button>
+                    <button
+                      onClick={() => setDarkMode(false)}
+                      style={{
+                        padding: '10px 30px',
+                        background: !darkMode ? '#1e40af' : 'white',
+                        color: !darkMode ? 'white' : '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}>
+                      Light Mode
+                    </button>
+                    <button
+                      onClick={() => setDarkMode(true)}
+                      style={{
+                        padding: '10px 30px',
+                        background: darkMode ? '#4b5563' : 'white',
+                        color: darkMode ? 'white' : '#374151',
+                        border: '1px solid #4b5563',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}>
+                      Dark Mode
+                    </button>
                     </div>
-                  </div>
 
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
@@ -995,7 +1036,7 @@ const clockOut = async (): Promise<void> => {
                 </>
               )}
 
-              {activeTab === 'navigation' && (
+              {/* {activeTab === 'navigation' && (
                 <>
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Keyboard Navigation</h3>
                   <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', marginBottom: 24 }}>Edit Keybinds</button>
@@ -1019,7 +1060,7 @@ const clockOut = async (): Promise<void> => {
                     <div style={{ padding: '12px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px', textAlign: 'center' }}>Esc</div>
                   </div>
                 </>
-              )}
+              )} */}
 
               {activeTab === 'account' && (
                 <>
@@ -1050,11 +1091,8 @@ const clockOut = async (): Promise<void> => {
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Security</h3>
                   <div style={{ marginBottom: 24 }}>
                     <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Password</p>
-                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px' }}>********</div>
-                  </div>
-                  <div>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Two-factor Authentication</p>
-                    <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>Set Up</button>
+                    <div style={{ marginBottom: 8, padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px' }}>********</div>
+                    <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>View</button>
                   </div>
                 </>
               )}
