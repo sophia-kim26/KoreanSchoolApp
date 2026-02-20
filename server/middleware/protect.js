@@ -11,7 +11,7 @@ const checkJwt = expressjwt({
 
     rateLimit: true,
 
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+    jwksUri: `https://${process.env.VITE_AUTH0_DOMAIN}/.well-known/jwks.json`
 
   }),
 
@@ -21,5 +21,6 @@ const checkJwt = expressjwt({
 
   algorithms: ['RS256']
 
-
 });
+
+
