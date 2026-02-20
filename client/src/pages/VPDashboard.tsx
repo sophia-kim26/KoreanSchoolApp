@@ -135,7 +135,7 @@ function VPDashboard(): React.ReactElement {
     korean_name: "",
     classroom: ""
   });
-  const [metrics, setMetrics] = useState<Metrics>({
+    const [metrics, setMetrics] = useState<Metrics>({
     attendance: 0,
     absence: 0,
   });
@@ -263,7 +263,7 @@ function VPDashboard(): React.ReactElement {
       });
       
       const responseText = await response.text();
-      if (response.ok) {
+            if (response.ok) {
         const responseData = JSON.parse(responseText);
         
         setShowCalendar(false);
@@ -304,8 +304,8 @@ function VPDashboard(): React.ReactElement {
               if ((e.target as HTMLElement).closest('button')) return;
 
               const cells = row.querySelectorAll('.gridjs-td');
-              if (cells.length >= 9) {
-                const taId = cells[8].textContent;
+              if (cells.length >= 8) {
+                const taId = cells[7].textContent;
                 if (taId) {
                   navigate(`/vp/ta-view/${taId}`);
                 }
@@ -480,7 +480,7 @@ function VPDashboard(): React.ReactElement {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
+      const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
       
@@ -495,41 +495,21 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/tas/${taId}/classroom`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroom })
-      });
-      if (response.ok) {
-        fetchData();
-      } else {
-        alert('Failed to update classroom');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error updating classroom');
-    }
-  };
-
   const handleRowClick = (taId: number): void => {
     navigate(`/vp/ta-view/${taId}`);
   };
 
-  // classroom added at index 4; id is now at index 8
   const gridData: (string | number | boolean)[][] = data.map(row => [
-    row.first_name,       // 0
-    row.last_name,        // 1
-    row.korean_name,      // 2
-    row.session_day,      // 3
-    row.classroom || '',  // 4  ← NEW
-    row.is_active,        // 5
-    row.total_hours || '0.00', // 6
-    row.attendance,       // 7
-    row.id,               // 8  ← was 7
-    row.attendance_count || 0, // 9
-    row.absence_count || 0,    // 10
+    row.first_name, 
+    row.last_name, 
+    row.korean_name,
+    row.session_day, 
+    row.is_active,
+    row.total_hours || '0.00',
+    row.attendance,
+    row.id,  
+    row.attendance_count || 0,
+    row.absence_count || 0,
   ]);
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
@@ -538,6 +518,8 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
+    // Only hide these specific columns - count columns like attendance_count, 
+    // absence_count, tardiness_count, early_departure_count will be visible
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
@@ -554,13 +536,13 @@ function VPDashboard(): React.ReactElement {
     const finalKeys = [...nonDateKeys, ...dateKeys];
 
     return finalKeys.map(key => ({
-      name: dateRegex.test(key) 
-        ? key.replace(/_/g, '-') 
-        : key.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' '), 
-      id: key
-    }));
+        name: dateRegex.test(key) 
+          ? key.replace(/_/g, '-') 
+          : key.split('_').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' '), 
+        id: key
+      }));
   };
 
   const fridayGridData: any[][] = fridayData.map(row => {
@@ -707,104 +689,6 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
                   { name: translations[language].sessionDay, width: '120px' },
-                  {
-                    name: translations[language].classroom,
-                    width: '160px',
-                    formatter: (cell: any, row: any) => {
-                      const taId = row.cells[8].data;
-                      const dropdownId = `classroom-dropdown-${taId}`;
-                      const labelId = `classroom-label-${taId}`;
-
-                      const dropdownList = h('div', {
-                        id: dropdownId,
-                        style: `
-                          display: none;
-                          position: fixed;
-                          background: white;
-                          border: 1px solid #bfdbfe;
-                          border-radius: 6px;
-                          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-                          z-index: 9999;
-                          max-height: 220px;
-                          overflow-y: auto;
-                          min-width: 180px;
-                        `
-                      },
-                        ...CLASSROOMS.map(name =>
-                          h('div', {
-                            style: `
-                              padding: 8px 14px;
-                              font-size: 13px;
-                              color: #1e40af;
-                              cursor: pointer;
-                              background: ${cell === name ? '#eff6ff' : 'white'};
-                              font-weight: ${cell === name ? '600' : '400'};
-                            `,
-                            onmouseover: function(this: HTMLElement) { this.style.background = '#dbeafe'; },
-                            onmouseout: function(this: HTMLElement) { this.style.background = cell === name ? '#eff6ff' : 'white'; },
-                            onclick: (e: Event) => {
-                              e.stopPropagation();
-                              const dropdown = document.getElementById(dropdownId);
-                              const label = document.getElementById(labelId);
-                              if (dropdown) dropdown.style.display = 'none';
-                              if (label) label.textContent = name;
-                              updateClassroom(taId, name);
-                            }
-                          }, name)
-                        )
-                      );
-
-                      const label = h('span', {
-                        id: labelId,
-                        style: `
-                          font-size: 14px;
-                          color: #1e40af;
-                          cursor: pointer;
-                        `
-                      }, cell || '—');
-
-                      const wrapper = h('div', {
-                        style: `position: relative;`,
-                        onclick: (e: Event) => {
-                          e.stopPropagation();
-                          const dropdown = document.getElementById(dropdownId);
-                          if (!dropdown) return;
-
-                          // Close all other open dropdowns first
-                          document.querySelectorAll('[id^="classroom-dropdown-"]').forEach((el) => {
-                            if (el.id !== dropdownId) (el as HTMLElement).style.display = 'none';
-                          });
-
-                          if (dropdown.style.display === 'none') {
-                            // Position relative to the wrapper element
-                            const trigger = (e.currentTarget as HTMLElement);
-                            const rect = trigger.getBoundingClientRect();
-                            dropdown.style.top = `${rect.bottom + window.scrollY}px`;
-                            dropdown.style.left = `${rect.left + window.scrollX}px`;
-                            dropdown.style.display = 'block';
-
-                            // Append to body so it escapes table overflow:hidden
-                            if (!document.body.contains(dropdown)) {
-                              document.body.appendChild(dropdown);
-                            }
-
-                            // Close when clicking outside
-                            const closeHandler = (ev: MouseEvent) => {
-                              if (!dropdown.contains(ev.target as Node) && ev.target !== trigger) {
-                                dropdown.style.display = 'none';
-                                document.removeEventListener('click', closeHandler);
-                              }
-                            };
-                            setTimeout(() => document.addEventListener('click', closeHandler), 0);
-                          } else {
-                            dropdown.style.display = 'none';
-                          }
-                        }
-                      }, label, dropdownList);
-
-                      return wrapper;
-                    }
-                  },
                   { 
                     name: translations[language].active,
                     width: '80px',
@@ -819,7 +703,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].attendance,
                     width: '120px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[8].data; // ← was [7]
+                      const taId = row.cells[7].data;
                       return h('button', {
                         style: `
                           display: inline-block;
@@ -865,7 +749,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].actions,
                     width: '100px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[8].data; // ← was [7]
+                      const taId = row.cells[7].data;
                       return h('button', {
                         style: `
                           padding: 6px 12px;
