@@ -32,13 +32,11 @@ app.use('/api/parents', parentRoutes);
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// const PORT = 3001;
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-// });
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
 
 // To this:
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(3001);
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   app.listen(3001);
+// }
 export default app;
