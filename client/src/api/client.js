@@ -50,7 +50,7 @@ class ApiClient {
 
   async signIn(pin) {
 
-    return this.request('/api/signin', {
+    return this.request('/api/auth/signin', {
 
       method: 'POST',
 
