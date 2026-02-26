@@ -49,6 +49,7 @@ interface ActiveShiftResponse {
 }
 
 type TabType = 'appearance' | 'navigation' | 'account' | 'privacy';
+type TextSize = 'S' | 'M' | 'L';
 
 // Helper function to get user location - OUTSIDE the component
 const getUserLocation = (): Promise<UserLocation> => {
@@ -112,6 +113,13 @@ const formatTime = (dateString: string | null): string => {
   });
 };
 
+// Map TextSize to actual CSS font sizes
+const TEXT_SIZE_MAP: Record<TextSize, string> = {
+  S: '13px',
+  M: '16px',
+  L: '20px',
+};
+
 function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [data, setData] = useState<Shift[]>([]);
   const [clockedIn, setClockedIn] = useState<boolean>(false);
@@ -120,6 +128,15 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('ta_dark_mode') === 'true';
   });
+
+  // Text size state - persisted to localStorage
+  const [textSize, setTextSize] = useState<TextSize>(() => {
+    return (localStorage.getItem('ta_text_size') as TextSize) || 'M';
+  });
+
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+
   const { logout } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
@@ -239,6 +256,19 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     localStorage.setItem('ta_dark_mode', String(darkMode));
     document.body.classList.toggle('dark-mode', darkMode);
   }, [darkMode]);
+
+  // text size — apply CSS variable to root so it cascades everywhere
+  useEffect(() => {
+    localStorage.setItem('ta_text_size', textSize);
+    document.documentElement.style.setProperty('--ta-font-size', TEXT_SIZE_MAP[textSize]);
+  }, [textSize]);
+
+  // Reset password visibility whenever the privacy tab is opened or closed
+  useEffect(() => {
+    if (activeTab !== 'privacy') {
+      setShowPassword(false);
+    }
+  }, [activeTab]);
 
   // autologout when you close the tab or window
   useEffect(() => {
@@ -457,8 +487,14 @@ const clockOut = async (): Promise<void> => {
     }
   };
 
+  // Derive the active font size for inline use where CSS var may not cascade
+  const activeFontSize = TEXT_SIZE_MAP[textSize];
+
   return (
-  <div className={`page-container${darkMode ? ' dark-mode' : ''}`}>
+  <div
+    className={`page-container${darkMode ? ' dark-mode' : ''}`}
+    style={{ fontSize: activeFontSize }}
+  >
       <div className="page-header" style={{ justifyContent: "flex-start", gap: "40px"}}>
         <img 
           src={logo} 
@@ -927,19 +963,6 @@ const clockOut = async (): Promise<void> => {
                 }}>
                 Appearance
               </button>
-              {/* <button 
-                onClick={() => setActiveTab('navigation')}
-                style={{
-                  padding: '12px 24px',
-                  background: activeTab === 'navigation' ? '#bfdbfe' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: activeTab === 'navigation' ? '#1e40af' : '#6b7280'
-                }}>
-                Navigation
-              </button> */}
               <button 
                 onClick={() => setActiveTab('account')}
                 style={{
@@ -1023,44 +1046,40 @@ const clockOut = async (): Promise<void> => {
                     </button>
                     </div>
 
+                  {/* ── Text / Icon Size ── */}
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
                       Text/Icon Size
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>S</button>
-                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '16px', fontWeight: '500' }}>M</button>
-                      <button style={{ padding: '10px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '20px', fontWeight: '500' }}>L</button>
+                      {(['S', 'M', 'L'] as TextSize[]).map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setTextSize(size)}
+                          style={{
+                            padding: '10px 20px',
+                            background: textSize === size ? '#1e40af' : 'white',
+                            color: textSize === size ? 'white' : '#374151',
+                            border: `2px solid ${textSize === size ? '#1e40af' : '#d1d5db'}`,
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            // Show each button in its own representative size
+                            fontSize: size === 'S' ? '12px' : size === 'M' ? '16px' : '20px',
+                            transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                            minWidth: 48,
+                          }}
+                        >
+                          {size}
+                        </button>
+                      ))}
                     </div>
+                    <p style={{ marginTop: 8, fontSize: '12px', color: '#6b7280' }}>
+                      Current: {textSize === 'S' ? 'Small (13px)' : textSize === 'M' ? 'Medium (16px)' : 'Large (20px)'}
+                    </p>
                   </div>
                 </>
               )}
-
-              {/* {activeTab === 'navigation' && (
-                <>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Keyboard Navigation</h3>
-                  <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', marginBottom: 24 }}>Edit Keybinds</button>
-                  <div style={{ marginBottom: 24 }}>
-                    <p style={{ marginBottom: 12, fontSize: '14px', color: '#1e40af' }}>Change Selection:</p>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>↑</button>
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>←</button>
-                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>↓</button>
-                      <button style={{ padding: '12px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '16px' }}>→</button>
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 16 }}>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Select:</p>
-                    <div style={{ padding: '12px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px', textAlign: 'center' }}>Enter</div>
-                  </div>
-                  <div>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af' }}>Escape/Return:</p>
-                    <div style={{ padding: '12px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px', textAlign: 'center' }}>Esc</div>
-                  </div>
-                </>
-              )} */}
 
               {activeTab === 'account' && (
                 <>
@@ -1091,8 +1110,76 @@ const clockOut = async (): Promise<void> => {
                   <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Security</h3>
                   <div style={{ marginBottom: 24 }}>
                     <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Password</p>
-                    <div style={{ marginBottom: 8, padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '150px' }}>********</div>
-                    <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>View</button>
+
+                    {/* Password display row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <div style={{
+                        padding: '10px 16px',
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        minWidth: '180px',
+                        fontFamily: showPassword ? 'inherit' : 'monospace',
+                        letterSpacing: showPassword ? 'normal' : '0.15em',
+                        fontSize: '14px',
+                        color: '#374151',
+                      }}>
+                        {showPassword
+                          ? (currentUser?.email
+                              ? '(managed via Auth0 — reset via email)'
+                              : 'No password on file')
+                          : '••••••••'}
+                      </div>
+
+                      {/* View / Hide toggle button */}
+                      <button
+                        onClick={() => setShowPassword(prev => !prev)}
+                        style={{
+                          padding: '8px 16px',
+                          background: 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          color: '#374151',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseOver={e => (e.currentTarget.style.background = '#f3f4f6')}
+                        onMouseOut={e => (e.currentTarget.style.background = 'white')}
+                      >
+                        {/* Eye / Eye-off icon */}
+                        {showPassword ? (
+                          /* Eye-off SVG */
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                          </svg>
+                        ) : (
+                          /* Eye SVG */
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        )}
+                        {showPassword ? 'Hide' : 'View'}
+                      </button>
+                    </div>
+
+                    {/* Contextual note when revealed */}
+                    {showPassword && (
+                      <p style={{
+                        fontSize: '12px',
+                        color: '#6b7280',
+                        marginTop: 4,
+                        maxWidth: 320,
+                      }}>
+                        Passwords are managed securely through Auth0. To change your password, use the "Forgot password" flow on the login page.
+                      </p>
+                    )}
                   </div>
                 </>
               )}
