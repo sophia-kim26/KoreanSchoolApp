@@ -781,7 +781,7 @@ const clockOut = async (): Promise<void> => {
               }
             ]}
             search={true}
-            pagination={{ limit: 10 }}
+            pagination={{ limit: 4 }}
             sort={true}
           />
       )}
