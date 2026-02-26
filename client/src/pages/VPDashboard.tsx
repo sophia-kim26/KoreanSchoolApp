@@ -328,48 +328,46 @@ function VPDashboard(): React.ReactElement {
     });
   };
 
-  const fetchFridayData = (): void => {
-  fetch(`${import.meta.env.VITE_API_URL}/api/friday`)
-    .then(res => res.json())
-    .then(async (json: FridayData[]) => {
-      // 1. Safety check: ensure we have data to process
+  const fetchFridayData = async (): Promise<void> => {
+    try {
+      const token = await getAccessTokenSilently();
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`);
+      const json = await res.json();
+
       const dataArray = Array.isArray(json) ? json : [];
       if (dataArray.length === 0) {
-        console.warn("No Friday data received from server.");
         setFridayData([]);
         return;
       }
 
-      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`);
+      // ✅ Now includes Authorization header
+      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const tasData: TAData[] = await tasResponse.json();
-      
+
       const enrichedData = dataArray.map(fridayRow => {
-        // 2. Use a fallback for matching if ID isn't the common link
-        // Check if matching by email or name is safer for your schema
-        const matchingTA = tasData.find(ta => 
-          ta.id === fridayRow.id || 
+        const matchingTA = tasData.find(ta =>
+          ta.id === fridayRow.id ||
           ta.email === fridayRow.email
         );
-        
         return {
           ...fridayRow,
           attendance_count: matchingTA?.attendance_count ?? 0,
           absence_count: matchingTA?.absence_count ?? 0,
         };
       });
-      
-      // 3. Only log if the array actually has content
-      if (enrichedData.length > 0) {
-        console.log('Enriched Friday data first row:', enrichedData[0]);
-      }
-      
+
       setFridayData(enrichedData);
-    })
-    .catch(err => {
+    } catch (err) {
       console.error("Fetch Friday error:", err);
       setFridayData([]);
-    });
-};
+    }
+  };
 
   const handleSignOut = (): void => {
     logout({ 
