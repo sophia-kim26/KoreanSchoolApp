@@ -17,7 +17,7 @@ router.post('/create-account', createAccountLimiter, validateCreateAccount, asyn
 });
 
 // Create account endpoint without rate limiting
-router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
+router.post('/create-account-vp', createAccountLimiterVp, validateCreateAccount, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
