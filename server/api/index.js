@@ -5,13 +5,13 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 // Import your routes
-import authRoutes from './routes/auth.js';
-import tasRoutes from './routes/tas.js';
-import shiftsRoutes from './routes/shifts.js';
-import attendanceRoutes from './routes/attendance.js';
-import fridayRouter from './routes/friday.js';
-import parentRoutes from './routes/parents.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from '../routes/auth.js';
+import tasRoutes from '../routes/tas.js';
+import shiftsRoutes from '../routes/shifts.js';
+import attendanceRoutes from '../routes/attendance.js';
+import fridayRouter from '../routes/friday.js';
+import parentRoutes from '../routes/parents.js';
+import { errorHandler } from '../middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
