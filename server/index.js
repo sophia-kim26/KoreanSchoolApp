@@ -18,7 +18,9 @@ dotenv.config({ path: join(__dirname, '..', 'client', '.env') });
 
 const app = express();
 app.set('trust proxy', 1); 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3001', 'https://korean-school-app-2.vercel.app/']
+}))
 app.use(express.json()); 
 
 // Routes

@@ -480,7 +480,7 @@ function VPDashboard(): React.ReactElement {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
       
