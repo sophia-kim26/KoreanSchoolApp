@@ -179,7 +179,7 @@ function VPDashboard(): React.ReactElement {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  const { isLoading, isAuthenticated, user, logout } = useAuth0();
+  const { isLoading, isAuthenticated, user, logout, getAccessTokenSilently } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
   // Calendar helper functions
@@ -280,12 +280,23 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const fetchData = (): void => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/tas`)
-      .then(res => {
-        return res.json();
-      })
-      .then((json: TAData[]) => {
+  const fetchData = async (): Promise<void> => {
+    try {
+      // 1. Get the token from Auth0
+      const token = await getAccessTokenSilently();
+
+      // 2. Make the request with the Authorization header
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const json = await response.json();
+
+      // 3. Safety Check: Only sort if the response is an array
+      if (Array.isArray(json)) {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
             return a.id - b.id;
@@ -294,37 +305,17 @@ function VPDashboard(): React.ReactElement {
         });
         setData(sorted);
         calculateMetrics(sorted);
-
-        setTimeout(() => {
-          const rows = document.querySelectorAll('.gridjs-tr');
-          rows.forEach(row => {
-            if (row.querySelector('th')) return;
-            
-            row.addEventListener('click', (e) => {
-              if ((e.target as HTMLElement).closest('button')) return;
-
-              const cells = row.querySelectorAll('.gridjs-td');
-              if (cells.length >= 8) {
-                const taId = cells[7].textContent;
-                if (taId) {
-                  navigate(`/vp/ta-view/${taId}`);
-                }
-              }
-            });
-            
-            row.addEventListener('mouseenter', () => {
-              (row as HTMLElement).style.backgroundColor = '#dbeafe';
-            });
-            row.addEventListener('mouseleave', () => {
-              (row as HTMLElement).style.backgroundColor = '#eff6ff';
-            });
-          });
-        }, 100);
-      })
-      .catch(err => {
-        console.error("Fetch error:", err);
-        alert("Error loading data: " + err.message);
-      });
+      } else {
+        // If we get a 401 or error object, clear the data so it shows "No data found"
+        // instead of crashing with the .sort() error
+        console.error("Backend returned an error or non-array:", json);
+        setData([]); 
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      // Setting data to empty array prevents the .sort() crash
+      setData([]);
+    }
   };
 
   const calculateMetrics = (data: TAData[]): void => {
@@ -337,48 +328,33 @@ function VPDashboard(): React.ReactElement {
     });
   };
 
-  const fetchFridayData = (): void => {
-  fetch(`${import.meta.env.VITE_API_URL}/api/friday`)
-    .then(res => res.json())
-    .then(async (json: FridayData[]) => {
-      // 1. Safety check: ensure we have data to process
-      const dataArray = Array.isArray(json) ? json : [];
-      if (dataArray.length === 0) {
-        console.warn("No Friday data received from server.");
-        setFridayData([]);
-        return;
-      }
-
-      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`);
-      const tasData: TAData[] = await tasResponse.json();
-      
-      const enrichedData = dataArray.map(fridayRow => {
-        // 2. Use a fallback for matching if ID isn't the common link
-        // Check if matching by email or name is safer for your schema
-        const matchingTA = tasData.find(ta => 
-          ta.id === fridayRow.id || 
-          ta.email === fridayRow.email
-        );
-        
-        return {
-          ...fridayRow,
-          attendance_count: matchingTA?.attendance_count ?? 0,
-          absence_count: matchingTA?.absence_count ?? 0,
-        };
-      });
-      
-      // 3. Only log if the array actually has content
-      if (enrichedData.length > 0) {
-        console.log('Enriched Friday data first row:', enrichedData[0]);
-      }
-      
-      setFridayData(enrichedData);
-    })
-    .catch(err => {
+  const fetchFridayData = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`);
+      const json = await res.json();
+      setFridayData(Array.isArray(json) ? json : []);
+    } catch (err) {
       console.error("Fetch Friday error:", err);
       setFridayData([]);
+    }
+  };
+
+  useEffect(() => {
+    if (data.length === 0 || fridayData.length === 0) return;
+
+    const enriched = fridayData.map(fridayRow => {
+      const matchingTA = data.find(ta =>
+        ta.id === fridayRow.id || ta.email === fridayRow.email
+      );
+      return {
+        ...fridayRow,
+        attendance_count: matchingTA?.attendance_count ?? 0,
+        absence_count: matchingTA?.absence_count ?? 0,
+      };
     });
-};
+
+    setFridayData(enriched);
+  }, [data]);
 
   const handleSignOut = (): void => {
     logout({ 
@@ -413,7 +389,7 @@ function VPDashboard(): React.ReactElement {
         ta_code: pin
       };
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-account-vp`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -480,7 +456,7 @@ function VPDashboard(): React.ReactElement {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/tas/${taId}/deactivate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
         method: 'PATCH'
       });
       

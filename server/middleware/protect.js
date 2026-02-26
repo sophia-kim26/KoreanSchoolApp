@@ -1,6 +1,7 @@
 import { expressjwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 
+
 export const checkJwt = expressjwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,

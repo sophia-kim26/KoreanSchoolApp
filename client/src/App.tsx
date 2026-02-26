@@ -20,7 +20,8 @@ function AuthProviderWithNavigate() {
       domain={import.meta.env.VITE_AUTH0_DOMAIN as string}
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
       authorizationParams={{
-        redirect_uri: `${window.location.origin}/vp/login`
+        redirect_uri: `${window.location.origin}/vp/login`,
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE as string
       }}
       onRedirectCallback={onRedirectCallback}
       cacheLocation="localstorage"
