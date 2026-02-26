@@ -137,7 +137,7 @@ export default function TALogin(): React.ReactElement {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signin`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
