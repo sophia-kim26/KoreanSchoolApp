@@ -19,6 +19,10 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 
+app.get('/api/test', (req, res) => {
+  res.json({ message: "Backend is reachable!" });
+});
+
 // 1. Fix: Basic Security/Proxy setting
 app.set('trust proxy', 1); 
 

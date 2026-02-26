@@ -8,8 +8,8 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "api/index.js",
+      "src": "/api/(.*)",
+      "dest": "/api/index.js",
       "headers": {
         "Access-Control-Allow-Origin": "https://korean-school-app-2.vercel.app",
         "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
