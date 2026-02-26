@@ -413,7 +413,7 @@ function VPDashboard(): React.ReactElement {
         ta_code: pin
       };
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-account-vp`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

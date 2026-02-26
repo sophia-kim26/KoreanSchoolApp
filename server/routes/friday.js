@@ -1,9 +1,12 @@
 import express from 'express';
+import { checkJwt } from '../middleware/protect.js';
+
 import { 
     getAllFridayData, 
     getCalendarDates, 
     saveCalendarDates 
 } from '../services/fridayService.js';
+
 
 const router = express.Router();
 
@@ -36,7 +39,7 @@ router.get('/get-calendar-dates', async (req, res, next) => {
 });
 
 // POST /api/friday/save-calendar-dates
-router.post('/save-calendar-dates', async (req, res, next) => {
+router.post('/save-calendar-dates', checkJwt, async (req, res, next) => {
   try {
     console.log('POST /api/friday/save-calendar-dates called');
     console.log('Request body:', req.body);

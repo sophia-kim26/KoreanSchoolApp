@@ -1,10 +1,14 @@
 import express from 'express';
+import { checkJwt } from '../middleware/protect.js';
+
 import { getAllTAsWithStatus, deactivateTA, updateClassroom } from '../services/taService.js';
+// tas.js - should be protected (only admins manage TAs)
+
 
 const router = express.Router();
 
 // GET /api/tas - replaces /api/data
-router.get('/', async (req, res, next) => {
+router.get('/', checkJwt, async (req, res, next) => {
     try {
         const result = await getAllTAsWithStatus();
         res.json(result);
@@ -14,7 +18,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/deactivate
-router.patch('/:id/deactivate', async (req, res, next) => {
+router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
     try {
         const result = await deactivateTA(req.params.id);
         res.json(result);
@@ -24,7 +28,7 @@ router.patch('/:id/deactivate', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/classroom
-router.patch('/:id/classroom', async (req, res, next) => {
+router.patch('/:id/classroom', checkJwt, async (req, res, next) => {
     try {
         const { classroom } = req.body;
         if (!classroom) {
