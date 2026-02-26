@@ -1,5 +1,7 @@
 import { expressjwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import { checkJwt } from '../middleware/protect.js';
+
 
 export const checkJwt = expressjwt({
   secret: jwksRsa.expressJwtSecret({
