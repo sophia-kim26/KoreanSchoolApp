@@ -1,4 +1,6 @@
 import express from 'express';
+import { checkJwt } from '../middleware/protect.js';
+
 import { getAllTAsWithStatus, deactivateTA, updateClassroom } from '../services/taService.js';
 // tas.js - should be protected (only admins manage TAs)
 import { checkJwt } from '../middleware/protect.js';

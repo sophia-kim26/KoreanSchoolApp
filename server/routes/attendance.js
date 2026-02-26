@@ -1,4 +1,6 @@
 import express from 'express';
+import { checkJwt } from '../middleware/protect.js';
+
 import { clockIn, clockOut } from '../services/shiftService.js';
 import { validateClockIn } from '../middleware/validate.js';
 
