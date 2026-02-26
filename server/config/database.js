@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load from client/.env (going up two levels from server/config/ to root, then into client)
-dotenv.config({ path: join(__dirname, '..', '..', 'client', '.env') });
+dotenv.config();
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is not set in environment variables');

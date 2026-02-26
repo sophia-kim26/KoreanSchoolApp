@@ -14,16 +14,23 @@ import { errorHandler } from './middleware/errorHandler.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config({ path: join(__dirname, '..', 'client', '.env') });
-
+dotenv.config();
 const app = express();
 app.set('trust proxy', 1); 
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app']
+  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }))
 app.options('*', cors({
-  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app']
-})) // handle preflight requests
+  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}))
+
 app.use(express.json()); 
 
 // Routes
