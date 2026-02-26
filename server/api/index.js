@@ -42,7 +42,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
 app.use('/api/friday', fridayRouter);
-app.use('/', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/parents', parentRoutes);
 
 // 4. Error handling
