@@ -281,19 +281,19 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fetchData = (): void => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/tas`)
-      .then(res => {
-        return res.json();
-      })
-      .then((json: TAData[]) => {
-        const sorted = json.sort((a, b) => {
-          if (a.is_active === b.is_active) {
-            return a.id - b.id;
-          }
-          return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
-        });
-        setData(sorted);
-        calculateMetrics(sorted);
+  fetch(`${import.meta.env.VITE_API_URL}/api/tas`)
+    .then(res => res.json())
+    .then((json: TAData[] | any) => {
+      const dataArray: TAData[] = Array.isArray(json) ? json : json.data ?? json.tas ?? [];
+      
+      const sorted = dataArray.sort((a, b) => {
+        if (a.is_active === b.is_active) {
+          return a.id - b.id;
+        }
+        return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
+      });
+      setData(sorted);
+      calculateMetrics(sorted);
 
         setTimeout(() => {
           const rows = document.querySelectorAll('.gridjs-tr');
