@@ -26,7 +26,7 @@ router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCrea
   }
 });
 
-// POST /api/signin
+// POST /api/signin or is it /api/auth/signin???
 router.post('/signin', async (req, res, next) => {
   try {
     const { email, ta_code } = req.body;
