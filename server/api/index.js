@@ -23,6 +23,11 @@ app.get('/api/test', (req, res) => {
   res.json({ message: "Backend is reachable!" });
 });
 
+app.use((req, res, next) => {
+  console.log("Requested Path:", req.path);
+  next();
+});
+
 // 1. Fix: Basic Security/Proxy setting
 app.set('trust proxy', 1); 
 
