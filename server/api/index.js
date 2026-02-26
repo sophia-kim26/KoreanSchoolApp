@@ -42,13 +42,13 @@ app.use(cors({
 
 app.use(express.json()); 
 
-// 3. Routes
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/shifts', shiftsRoutes);
-app.use('/api/tas', tasRoutes);
-app.use('/api/friday', fridayRouter);
-app.use('/api/auth', authRoutes);
-app.use('/api/parents', parentRoutes);
+// Change these lines to mount at root
+app.use('/', authRoutes);
+app.use('/', attendanceRoutes);
+app.use('/', shiftsRoutes);
+app.use('/', tasRoutes);
+app.use('/', fridayRouter);
+app.use('/', parentRoutes);
 
 // 4. Error handling
 app.use(errorHandler);
