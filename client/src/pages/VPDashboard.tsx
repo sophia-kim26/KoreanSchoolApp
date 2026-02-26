@@ -179,7 +179,7 @@ function VPDashboard(): React.ReactElement {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  const { isLoading, isAuthenticated, user, logout } = useAuth0();
+  const { isLoading, isAuthenticated, user, logout, getAccessTokenSilently } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
   // Calendar helper functions
@@ -280,12 +280,23 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const fetchData = (): void => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/tas`)
-      .then(res => {
-        return res.json();
-      })
-      .then((json: TAData[]) => {
+  const fetchData = async (): Promise<void> => {
+    try {
+      // 1. Get the token from Auth0
+      const token = await getAccessTokenSilently();
+
+      // 2. Make the request with the Authorization header
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const json = await response.json();
+
+      // 3. Safety Check: Only sort if the response is an array
+      if (Array.isArray(json)) {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
             return a.id - b.id;
@@ -294,37 +305,17 @@ function VPDashboard(): React.ReactElement {
         });
         setData(sorted);
         calculateMetrics(sorted);
-
-        setTimeout(() => {
-          const rows = document.querySelectorAll('.gridjs-tr');
-          rows.forEach(row => {
-            if (row.querySelector('th')) return;
-            
-            row.addEventListener('click', (e) => {
-              if ((e.target as HTMLElement).closest('button')) return;
-
-              const cells = row.querySelectorAll('.gridjs-td');
-              if (cells.length >= 8) {
-                const taId = cells[7].textContent;
-                if (taId) {
-                  navigate(`/vp/ta-view/${taId}`);
-                }
-              }
-            });
-            
-            row.addEventListener('mouseenter', () => {
-              (row as HTMLElement).style.backgroundColor = '#dbeafe';
-            });
-            row.addEventListener('mouseleave', () => {
-              (row as HTMLElement).style.backgroundColor = '#eff6ff';
-            });
-          });
-        }, 100);
-      })
-      .catch(err => {
-        console.error("Fetch error:", err);
-        alert("Error loading data: " + err.message);
-      });
+      } else {
+        // If we get a 401 or error object, clear the data so it shows "No data found"
+        // instead of crashing with the .sort() error
+        console.error("Backend returned an error or non-array:", json);
+        setData([]); 
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      // Setting data to empty array prevents the .sort() crash
+      setData([]);
+    }
   };
 
   const calculateMetrics = (data: TAData[]): void => {
