@@ -18,7 +18,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/deactivate
-router.patch('/:id/deactivate', async (req, res, next) => {
+router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
     try {
         const result = await deactivateTA(req.params.id);
         res.json(result);

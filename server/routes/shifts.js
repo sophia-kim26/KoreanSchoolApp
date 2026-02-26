@@ -67,7 +67,7 @@ router.post('/manual', async (req, res, next) => {
 });
 
 // PUT /api/shifts/:id
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', checkJwt, async (req, res, next) => {
   try {
     
     // Extract ALL possible fields that might be updated
