@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
+
+// Import your routes
 import authRoutes from './routes/auth.js';
 import tasRoutes from './routes/tas.js';
 import shiftsRoutes from './routes/shifts.js';
@@ -16,39 +18,31 @@ const __dirname = dirname(__filename);
 
 dotenv.config();
 const app = express();
+
+// 1. Fix: Basic Security/Proxy setting
 app.set('trust proxy', 1); 
 
+// 2. Fix: Clean CORS implementation
+// Remove the 'const express = require' lines entirely
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}))
-app.options('*', cors({
-  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}))
+  origin: "https://korean-school-app-2.vercel.app", 
+  methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json()); 
 
-// Routes
+// 3. Routes
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
-app.use('/api/friday', fridayRouter);  // Mount at /api/friday, router handles /
+app.use('/api/friday', fridayRouter);
 app.use('/api', authRoutes);
 app.use('/api/parents', parentRoutes);
 
-// Error handling middleware (must be last)
+// 4. Error handling
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
-
-// To this:
-// if (process.env.NODE_ENV !== 'production') {
-//   app.listen(3001);
-// }
+// 5. CRITICAL: Export for Vercel
 export default app;
