@@ -21,6 +21,9 @@ app.set('trust proxy', 1);
 app.use(cors({
   origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app']
 }))
+app.options('*', cors({
+  origin: ['http://localhost:5173', 'https://korean-school-app-2.vercel.app']
+})) // handle preflight requests
 app.use(express.json()); 
 
 // Routes
