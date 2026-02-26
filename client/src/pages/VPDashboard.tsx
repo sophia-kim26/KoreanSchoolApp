@@ -330,44 +330,31 @@ function VPDashboard(): React.ReactElement {
 
   const fetchFridayData = async (): Promise<void> => {
     try {
-      const token = await getAccessTokenSilently();
-
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`);
       const json = await res.json();
-
-      const dataArray = Array.isArray(json) ? json : [];
-      if (dataArray.length === 0) {
-        setFridayData([]);
-        return;
-      }
-
-      // ✅ Now includes Authorization header
-      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const tasData: TAData[] = await tasResponse.json();
-
-      const enrichedData = dataArray.map(fridayRow => {
-        const matchingTA = tasData.find(ta =>
-          ta.id === fridayRow.id ||
-          ta.email === fridayRow.email
-        );
-        return {
-          ...fridayRow,
-          attendance_count: matchingTA?.attendance_count ?? 0,
-          absence_count: matchingTA?.absence_count ?? 0,
-        };
-      });
-
-      setFridayData(enrichedData);
+      setFridayData(Array.isArray(json) ? json : []);
     } catch (err) {
       console.error("Fetch Friday error:", err);
       setFridayData([]);
     }
   };
+
+  useEffect(() => {
+    if (data.length === 0 || fridayData.length === 0) return;
+
+    const enriched = fridayData.map(fridayRow => {
+      const matchingTA = data.find(ta =>
+        ta.id === fridayRow.id || ta.email === fridayRow.email
+      );
+      return {
+        ...fridayRow,
+        attendance_count: matchingTA?.attendance_count ?? 0,
+        absence_count: matchingTA?.absence_count ?? 0,
+      };
+    });
+
+    setFridayData(enriched);
+  }, [data]);
 
   const handleSignOut = (): void => {
     logout({ 
