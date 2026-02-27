@@ -34,7 +34,7 @@ app.set('trust proxy', 1);
 // 2. Fix: Clean CORS implementation
 // Remove the 'const express = require' lines entirely
 app.use(cors({
-  origin: "https://korean-school-app-2.vercel.app", 
+  origin: ["https://korean-school-app-2.vercel.app", "http://localhost:5173"],
   methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -53,5 +53,9 @@ app.use('/api/parents', parentRoutes);
 // 4. Error handling
 app.use(errorHandler);
 
-// 5. CRITICAL: Export for Vercel
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 export default app;
