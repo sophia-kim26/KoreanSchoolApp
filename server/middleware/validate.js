@@ -1,19 +1,19 @@
 import { isIPv4 } from 'net';
 
-// Allowed IP addresses or network ranges
+// allowed IP addresses or network ranges
 const ALLOWED_IPS = [
   '127.0.0.1',        // localhost for testing
   '::1',              // localhost IPv6
   '69.121.204.146',   // my home IP
 ];
 
-// CIDR ranges - allows entire subnets
+// cIDR ranges
 const ALLOWED_CIDR_RANGES = [
   '168.229.254.0/24',  // BCA BYOD network (covers .0 - .255, includes .66 and .67)
-  // '192.168.1.0/24', // Add Korean School network here when you know it
+  // '192.168.1.0/24', // add korean school ip address when i actually find out
 ];
 
-// Check if an IP falls within a CIDR range
+// check if the user's IP falls within a CIDR range
 const ipInCIDR = (ip, cidr) => {
   // Only handle IPv4
   if (!isIPv4(ip)) return false;

@@ -43,7 +43,7 @@ router.get('/active/:ta_id', async (req, res, next) => {
 });
 
 // POST /api/shifts - ADD validateLocation middleware
-router.post('/', checkJwt, validateShift, validateLocation, async (req, res, next) => {
+router.post('/', validateShift, validateLocation, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -53,7 +53,7 @@ router.post('/', checkJwt, validateShift, validateLocation, async (req, res, nex
 });
 
 // POST /api/shifts/manual - Create shift without validation (for manual entry by VP)
-router.post('/manual', checkJwt, async (req, res, next) => {
+router.post('/manual', async (req, res, next) => {
   try {
     const result = await createShift(req.body);
 

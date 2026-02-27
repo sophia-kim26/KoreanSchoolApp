@@ -328,48 +328,33 @@ function VPDashboard(): React.ReactElement {
     });
   };
 
-  const fetchFridayData = (): void => {
-  fetch(`${import.meta.env.VITE_API_URL}/api/friday`)
-    .then(res => res.json())
-    .then(async (json: FridayData[]) => {
-      // 1. Safety check: ensure we have data to process
-      const dataArray = Array.isArray(json) ? json : [];
-      if (dataArray.length === 0) {
-        console.warn("No Friday data received from server.");
-        setFridayData([]);
-        return;
-      }
-
-      const tasResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`);
-      const tasData: TAData[] = await tasResponse.json();
-      
-      const enrichedData = dataArray.map(fridayRow => {
-        // 2. Use a fallback for matching if ID isn't the common link
-        // Check if matching by email or name is safer for your schema
-        const matchingTA = tasData.find(ta => 
-          ta.id === fridayRow.id || 
-          ta.email === fridayRow.email
-        );
-        
-        return {
-          ...fridayRow,
-          attendance_count: matchingTA?.attendance_count ?? 0,
-          absence_count: matchingTA?.absence_count ?? 0,
-        };
-      });
-      
-      // 3. Only log if the array actually has content
-      if (enrichedData.length > 0) {
-        console.log('Enriched Friday data first row:', enrichedData[0]);
-      }
-      
-      setFridayData(enrichedData);
-    })
-    .catch(err => {
+  const fetchFridayData = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`);
+      const json = await res.json();
+      setFridayData(Array.isArray(json) ? json : []);
+    } catch (err) {
       console.error("Fetch Friday error:", err);
       setFridayData([]);
+    }
+  };
+
+  useEffect(() => {
+    if (data.length === 0 || fridayData.length === 0) return;
+
+    const enriched = fridayData.map(fridayRow => {
+      const matchingTA = data.find(ta =>
+        ta.id === fridayRow.id || ta.email === fridayRow.email
+      );
+      return {
+        ...fridayRow,
+        attendance_count: matchingTA?.attendance_count ?? 0,
+        absence_count: matchingTA?.absence_count ?? 0,
+      };
     });
-};
+
+    setFridayData(enriched);
+  }, [data]);
 
   const handleSignOut = (): void => {
     logout({ 

@@ -17,7 +17,7 @@ router.post('/api/auth/create-account', createAccountLimiter, validateCreateAcco
 });
 
 // Create account endpoint without rate limiting
-router.post('/api/auth/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
+router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
@@ -46,7 +46,7 @@ router.post('/api/auth/signin', async (req, res, next) => {
 });
 
 // Reset PIN endpoint
-router.post('/api/auth/reset-pin/:ta_id', async (req, res, next) => {
+router.post('/api/auth/reset-pin/:ta_id', checkJwt, async (req, res, next) => {
   try {
     const result = await resetPin(req.params.ta_id);
     res.json(result);
