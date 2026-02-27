@@ -1177,7 +1177,7 @@ const clockOut = async (): Promise<void> => {
                         marginTop: 4,
                         maxWidth: 320,
                       }}>
-                        Passwords are managed securely through Auth0. To change your password, use the "Forgot password" flow on the login page.
+                        Passwords are managed securely through Auth0. To change your password, click "Forgot password" on the login page.
                       </p>
                     )}
                   </div>

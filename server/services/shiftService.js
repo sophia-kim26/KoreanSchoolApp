@@ -1,5 +1,9 @@
 import { sql } from '../config/database.js';
 
+router.get('/test', (req, res) => {
+  res.json({ message: "Shifts route works" });
+});
+
 export const clockIn = async (ta_id) => {
   // Check if already clocked in today
   const existing = await sql`
