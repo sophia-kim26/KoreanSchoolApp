@@ -32,16 +32,13 @@ export const getAllFridayData = async () => {
     return allData.map(row => {
       const filteredRow = {};
       
-      // Keep all columns from the database (including the ones seen in your screenshot)
       Object.keys(row).forEach(col => {
         if (!dateRegex.test(col)) {
           filteredRow[col] = row[col];
         }
       });
       
-      // Map the dynamic date columns (e.g., 2024_04_04 from your image)
       selectedDates.forEach(dateKey => {
-        // row[dateKey] will now be found because the columns exist in your screenshot
         filteredRow[dateKey] = row.hasOwnProperty(dateKey) ? row[dateKey] : null;
       });
       
@@ -66,22 +63,35 @@ export const getCalendarDates = async () => {
 
 export const saveCalendarDates = async (dates) => {
   try {
-    // 1. Clear and save the dates to the reference table
-    await sql`DELETE FROM calendar_dates`;
+    // Run the delete + batch insert atomically in a single transaction.
+    // If anything fails mid-way, Postgres rolls back and no data is lost.
+    await sql.begin(async (tx) => {
+      // 1. Clear existing dates
+      await tx`DELETE FROM calendar_dates`;
+
+      if (dates && dates.length > 0) {
+        // 2. Batch insert all dates in ONE round trip instead of N.
+        //    sql`INSERT ... VALUES ${sql(rows)}` expands the array into
+        //    a single multi-row VALUES clause.
+        const rows = dates.map(date => ({ date }));
+        await tx`INSERT INTO calendar_dates ${tx(rows, 'date')}`;
+      }
+    });
+
+    // 3. ADD DYNAMIC COLUMNS TO FRIDAY TABLE (outside the transaction —
+    //    DDL like ALTER TABLE auto-commits in Postgres anyway, and running
+    //    it outside keeps the transactional delete+insert clean).
+    //    Each ALTER is still idempotent thanks to the IF NOT EXISTS guard.
     if (dates && dates.length > 0) {
       for (const date of dates) {
-        await sql`INSERT INTO calendar_dates (date) VALUES (${date})`;
-        
-        // 2. DYNAMICALLY ADD COLUMN TO FRIDAY TABLE
-        // SQL columns can't have dashes, so we use underscores (e.g., 2026_02_17)
         const columnName = date.replace(/-/g, '_');
-        
-        // This check prevents errors if the column already exists
         await sql.unsafe(`
-          DO $$ 
-          BEGIN 
-            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                           WHERE table_name='friday' AND column_name='${columnName}') THEN
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'friday' AND column_name = '${columnName}'
+            ) THEN
               ALTER TABLE friday ADD COLUMN "${columnName}" BOOLEAN DEFAULT FALSE;
             END IF;
           END $$;
@@ -89,7 +99,7 @@ export const saveCalendarDates = async (dates) => {
       }
     }
 
-    return { success: true, count: dates.length };
+    return { success: true, count: dates?.length ?? 0 };
   } catch (error) {
     console.error('Error in saveCalendarDates:', error);
     throw error;

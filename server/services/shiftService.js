@@ -1,5 +1,4 @@
 import { sql } from '../config/database.js';
-
 export const clockIn = async (ta_id) => {
   // Check if already clocked in today
   const existing = await sql`
