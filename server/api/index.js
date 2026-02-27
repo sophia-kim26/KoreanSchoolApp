@@ -36,7 +36,7 @@ app.set('trust proxy', 1);
 app.use(cors({
   origin: "https://korean-school-app-2.vercel.app", 
   methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
-  credentials: include,
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
