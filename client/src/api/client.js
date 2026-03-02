@@ -9,6 +9,7 @@ class ApiClient {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET,
         ...options.headers,
       },
     };

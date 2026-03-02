@@ -16,7 +16,7 @@ import { errorHandler } from '../middleware/errorHandler.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config();s
+dotenv.config();
 const app = express();
 
 app.get('/api/test', (req, res) => {
