@@ -392,7 +392,7 @@ function VPDashboard(): React.ReactElement {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(dataToSend)
       });
@@ -441,7 +441,7 @@ function VPDashboard(): React.ReactElement {
       } else {
         await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ta_id: taId })
         });
       }

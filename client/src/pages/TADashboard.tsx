@@ -430,7 +430,7 @@ const clockOut = async (): Promise<void> => {
     
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET,},
+      headers: { "Content-Type": "application/json"},
       body: JSON.stringify(requestBody)
     });
 
@@ -468,7 +468,7 @@ const clockOut = async (): Promise<void> => {
     try {
       await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attendance: newStatus })
       });
 
