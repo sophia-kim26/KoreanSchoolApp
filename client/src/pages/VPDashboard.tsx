@@ -289,8 +289,7 @@ function VPDashboard(): React.ReactElement {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
+          'Content-Type': 'application/json'
         }
       });
 

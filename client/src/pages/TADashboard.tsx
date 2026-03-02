@@ -208,7 +208,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET},
+        headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
           notes: notes
         })
@@ -357,7 +357,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       // Send clock-in request - backend validates IP address
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
+        headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
           ta_id: currentUser!.id,
           clock_in: time.toISOString(),
@@ -430,7 +430,7 @@ const clockOut = async (): Promise<void> => {
     
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
+      headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET,},
       body: JSON.stringify(requestBody)
     });
 
