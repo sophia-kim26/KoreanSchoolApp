@@ -1,4 +1,13 @@
-import { sql } from '../config/database.js';
+import { neon } from '@neondatabase/serverless';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../../.env') });
+
+const sql = neon(process.env.DATABASE_URL);
 
 export const getAllFridayData = async () => {
   try {
@@ -63,39 +72,10 @@ export const getCalendarDates = async () => {
 
 export const saveCalendarDates = async (dates) => {
   try {
-    // Run the delete + batch insert atomically in a single transaction.
-    // If anything fails mid-way, Postgres rolls back and no data is lost.
-    await sql.begin(async (tx) => {
-      // 1. Clear existing dates
-      await tx`DELETE FROM calendar_dates`;
-
-      if (dates && dates.length > 0) {
-        // 2. Batch insert all dates in ONE round trip instead of N.
-        //    sql`INSERT ... VALUES ${sql(rows)}` expands the array into
-        //    a single multi-row VALUES clause.
-        const rows = dates.map(date => ({ date }));
-        await tx`INSERT INTO calendar_dates ${tx(rows, 'date')}`;
-      }
-    });
-
-    // 3. ADD DYNAMIC COLUMNS TO FRIDAY TABLE (outside the transaction —
-    //    DDL like ALTER TABLE auto-commits in Postgres anyway, and running
-    //    it outside keeps the transactional delete+insert clean).
-    //    Each ALTER is still idempotent thanks to the IF NOT EXISTS guard.
+    // Just insert new dates, ignore duplicates
     if (dates && dates.length > 0) {
       for (const date of dates) {
-        const columnName = date.replace(/-/g, '_');
-        await sql.unsafe(`
-          DO $$
-          BEGIN
-            IF NOT EXISTS (
-              SELECT 1 FROM information_schema.columns
-              WHERE table_name = 'friday' AND column_name = '${columnName}'
-            ) THEN
-              ALTER TABLE friday ADD COLUMN "${columnName}" BOOLEAN DEFAULT FALSE;
-            END IF;
-          END $$;
-        `);
+        await sql`INSERT INTO calendar_dates (date) VALUES (${date}) ON CONFLICT DO NOTHING`;
       }
     }
 

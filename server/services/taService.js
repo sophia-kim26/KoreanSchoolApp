@@ -20,7 +20,28 @@ export const getAllTAsWithStatus = async () => {
                 FROM shifts s
                 WHERE s.ta_id = ta_list.id
                 ), 0
-            ) as total_hours
+            ) as total_hours,
+            COALESCE(
+                (SELECT COUNT(*)
+                FROM shifts s
+                WHERE s.ta_id = ta_list.id
+                AND s.clock_out IS NOT NULL
+                AND DATE(s.clock_in) IN (SELECT date::date FROM calendar_dates)
+                ), 0
+            ) as attendance_count,
+            COALESCE(
+                (SELECT COUNT(*)
+                FROM shifts s
+                WHERE s.ta_id = ta_list.id
+                AND DATE(s.clock_in) IN (SELECT date::date FROM calendar_dates)
+                AND NOT EXISTS (
+                    SELECT 1 FROM shifts s2 
+                    WHERE s2.ta_id = ta_list.id 
+                    AND DATE(s2.clock_in) = DATE(s.clock_in)
+                    AND s2.clock_out IS NOT NULL
+                )
+                ), 0
+            ) as absence_count
         FROM ta_list
         LEFT JOIN shifts 
             ON ta_list.id = shifts.ta_id 
