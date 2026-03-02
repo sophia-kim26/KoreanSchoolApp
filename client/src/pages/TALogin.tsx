@@ -139,7 +139,7 @@ export default function TALogin(): React.ReactElement {
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signin`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
                 body: JSON.stringify({
                     email: email.trim(),
                     ta_code: pin
@@ -213,7 +213,7 @@ export default function TALogin(): React.ReactElement {
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
                 body: JSON.stringify({
                     first_name: firstName,
                     last_name: lastName,

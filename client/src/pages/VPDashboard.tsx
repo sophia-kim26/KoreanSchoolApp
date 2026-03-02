@@ -258,7 +258,7 @@ function VPDashboard(): React.ReactElement {
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
         body: JSON.stringify({ dates: datesArray })
       });
       
@@ -289,7 +289,8 @@ function VPDashboard(): React.ReactElement {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
         }
       });
 
@@ -392,7 +393,7 @@ function VPDashboard(): React.ReactElement {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
         },
         body: JSON.stringify(dataToSend)
       });
@@ -441,7 +442,7 @@ function VPDashboard(): React.ReactElement {
       } else {
         await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
           body: JSON.stringify({ ta_id: taId })
         });
       }

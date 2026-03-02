@@ -222,6 +222,7 @@ function VPTAView() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
           },
           body: JSON.stringify(payload)
         });
@@ -250,6 +251,7 @@ function VPTAView() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET
           },
           body: JSON.stringify(newShiftPayload)
         });
