@@ -16,8 +16,8 @@ interface TAData {
   is_active: boolean;
   total_hours: number | string;
   attendance: string;
-  attendance_count: number;
-  absence_count: number;
+  // attendance_count: number;
+  // absence_count: number;
   ta_code: string;
   email: string;
   created_at: string;
@@ -29,8 +29,8 @@ interface FridayData {
   first_name?: string;
   last_name?: string;
   korean_name?: string;
-  attendance_count?: number;
-  absence_count?: number;
+  // attendance_count?: number;
+  // absence_count?: number;
   [key: string]: any;
 }
 
@@ -44,10 +44,10 @@ interface FormData {
   classroom: string;
 }
 
-interface Metrics {
-  attendance: number;
-  absence: number;
-}
+// interface Metrics {
+//   attendance: number;
+//   absence: number;
+// }
 
 interface Translations {
   [key: string]: {
@@ -135,10 +135,10 @@ function VPDashboard(): React.ReactElement {
     korean_name: "",
     classroom: ""
   });
-    const [metrics, setMetrics] = useState<Metrics>({
-    attendance: 0,
-    absence: 0,
-  });
+  //   const [metrics, setMetrics] = useState<Metrics>({
+  //   attendance: 0,
+  //   absence: 0,
+  // });
   
   const translations: Translations = {
     en: {
@@ -282,10 +282,8 @@ function VPDashboard(): React.ReactElement {
 
   const fetchData = async (): Promise<void> => {
     try {
-      // 1. Get the token from Auth0
       const token = await getAccessTokenSilently();
 
-      // 2. Make the request with the Authorization header
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -295,7 +293,6 @@ function VPDashboard(): React.ReactElement {
 
       const json = await response.json();
 
-      // 3. Safety Check: Only sort if the response is an array
       if (Array.isArray(json)) {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
@@ -304,29 +301,27 @@ function VPDashboard(): React.ReactElement {
           return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
         });
         setData(sorted);
-        calculateMetrics(sorted);
+        // calculateMetrics(sorted);
       } else {
-        // If we get a 401 or error object, clear the data so it shows "No data found"
-        // instead of crashing with the .sort() error
+
         console.error("Backend returned an error or non-array:", json);
         setData([]); 
       }
     } catch (err) {
       console.error("Fetch error:", err);
-      // Setting data to empty array prevents the .sort() crash
       setData([]);
     }
   };
 
-  const calculateMetrics = (data: TAData[]): void => {
-    const attendance = data.filter(ta => ta.attendance === 'Present').length;
-    const absence = data.filter(ta => ta.attendance === 'Absent').length;
+  // const calculateMetrics = (data: TAData[]): void => {
+  //   const attendance = data.filter(ta => ta.attendance === 'Present').length;
+  //   const absence = data.filter(ta => ta.attendance === 'Absent').length;
     
-    setMetrics({
-      attendance,
-      absence,
-    });
-  };
+    // setMetrics({
+    //   attendance,
+    //   absence,
+    // });
+  // };
 
   const fetchFridayData = async (): Promise<void> => {
     try {
@@ -339,22 +334,22 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  useEffect(() => {
-    if (data.length === 0 || fridayData.length === 0) return;
+  // useEffect(() => {
+  //   if (data.length === 0 || fridayData.length === 0) return;
 
-    const enriched = fridayData.map(fridayRow => {
-      const matchingTA = data.find(ta =>
-        ta.id === fridayRow.id || ta.email === fridayRow.email
-      );
-      return {
-        ...fridayRow,
-        attendance_count: matchingTA?.attendance_count ?? 0,
-        absence_count: matchingTA?.absence_count ?? 0,
-      };
-    });
+  //   const enriched = fridayData.map(fridayRow => {
+  //     const matchingTA = data.find(ta =>
+  //       ta.id === fridayRow.id || ta.email === fridayRow.email
+  //     );
+  //     return {
+  //       ...fridayRow,
+  //       attendance_count: matchingTA?.attendance_count ?? 0,
+  //       absence_count: matchingTA?.absence_count ?? 0,
+  //     };
+  //   });
 
-    setFridayData(enriched);
-  }, [data]);
+  //   setFridayData(enriched);
+  // }, [data]);
 
   const handleSignOut = (): void => {
     logout({ 
@@ -484,8 +479,8 @@ function VPDashboard(): React.ReactElement {
     row.total_hours || '0.00',
     row.attendance,
     row.id,  
-    row.attendance_count || 0,
-    row.absence_count || 0,
+    // row.attendance_count || 0,
+    // row.absence_count || 0,
   ]);
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
@@ -494,9 +489,8 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
-    // Only hide these specific columns - count columns like attendance_count, 
-    // absence_count, tardiness_count, early_departure_count will be visible
-    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
+    // const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
+    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
