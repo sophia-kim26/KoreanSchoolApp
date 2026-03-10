@@ -164,7 +164,7 @@ export default function TALogin(): React.ReactElement {
                 localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
                 setAuthState('authenticated');
                 setError('');
-                navigate('/ta/dashboard');
+                setTimeout(() => navigate('/ta/dashboard'), 0);
 
             } else {
                 setError(data.error || 'Invalid email or PIN. Please try again.');

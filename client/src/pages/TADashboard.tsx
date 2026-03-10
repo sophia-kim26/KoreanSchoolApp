@@ -373,13 +373,15 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   // autologout when you close the tab or window
   useEffect(() => {
-    const handleBeforeUnload = (): void => {
-      localStorage.removeItem('current_ta_user');
-      sessionStorage.setItem('ta_session_ended', 'true');
+    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
+      // Only treat as session end if the tab is actually closing
+      // not during React router navigation
+      if (!e.defaultPrevented) {
+        localStorage.removeItem('current_ta_user');
+        sessionStorage.setItem('ta_session_ended', 'true');
+      }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
