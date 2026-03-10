@@ -48,7 +48,7 @@ router.post('/api/auth/signin', async (req, res, next) => {
 
 // Reset PIN endpoint
 //router.post('/api/auth/reset-pin/:ta_id', checkJwt, async (req, res, next) => {
-router.post('/api/auth/reset-pin/:ta_id', checkJwt, async (req, res, next) => {
+router.post('/api/auth/reset-pin/:ta_id', async (req, res, next) => {
   try {
     const result = await resetPin(req.params.ta_id);
     res.json(result);
