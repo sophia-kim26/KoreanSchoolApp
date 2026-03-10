@@ -530,15 +530,6 @@ function VPDashboard(): React.ReactElement {
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
   const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
-    // Optimistically update local state immediately
-    setEnrichedFridayData(prev => 
-      prev.map(row => row.id === taId ? { ...row, classroom } : row)
-    );
-    // Also update the main data array so TA table stays in sync
-    setData(prev =>
-      prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta)
-    );
-
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
         method: 'PATCH',
@@ -546,13 +537,10 @@ function VPDashboard(): React.ReactElement {
         body: JSON.stringify({ classroom })
       });
       if (!response.ok) throw new Error('Failed to update classroom');
-      // No need to refetch — local state is already correct
+      await fetchFridayData();
     } catch (err) {
       console.error(err);
       alert('Error updating classroom');
-      // On failure, refetch to restore correct state
-      await fetchData();
-      await fetchFridayData();
     }
   };
 
