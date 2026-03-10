@@ -6,6 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 import logo from '../assets/logo.png';
 import Chart from "./Chart";
+import React from "react";
 
 // Type definitions
 interface UserLocation {
@@ -475,6 +476,18 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   ], []); // empty deps — columns never need to change
 
+  const ShiftsGrid = React.memo(({ gridData, gridColumns }: { gridData: any[][], gridColumns: any[] }) => {
+    return (
+      <Grid
+        key="ta-shifts-grid"
+        data={gridData}
+        columns={gridColumns}
+        search={true}
+        pagination={{ limit: 8 }}
+        sort={true}
+      />
+    );
+  });
 
   // dark mode — toggle class + persist
   useEffect(() => {
@@ -925,14 +938,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       {taData.length === 0 ? (
         <p>No data found.</p>
       ) : (
-          <Grid
-            key="ta-shifts-grid"
-            data={gridData}
-            columns={gridColumns}
-            search={true}
-            pagination={{ limit: 4 }}
-            sort={true}
-          />
+          <ShiftsGrid gridData={gridData} gridColumns={gridColumns} />
       )}
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
