@@ -91,6 +91,14 @@ const getUserLocation = (): Promise<UserLocation> => {
   });
 };
 
+// Helper function for bar graph
+const parseElapsedToHours = (elapsed: string | null): number => {
+  if (!elapsed) return 0;
+  const match = elapsed.match(/(\d+)hr(\d+)min/);
+  if (!match) return 0;
+  return parseInt(match[1]) + parseInt(match[2]) / 60;
+};
+
 // Helper function to format date
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
@@ -409,6 +417,35 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
+  // 2. Add this inside the component, right after taData is defined
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+
+  const { monthlyHours, monthLabels } = (() => {
+    const now = new Date();
+    const schoolYearStart = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    
+    const months: { year: number; month: number }[] = [];
+    for (let m = 8; m <= 11; m++) months.push({ year: schoolYearStart, month: m });
+    for (let m = 0; m <= now.getMonth() && schoolYearStart + 1 <= now.getFullYear(); m++) {
+      months.push({ year: schoolYearStart + 1, month: m });
+    }
+
+    const monthlyHours = months.map(({ year, month }) =>
+      Math.round(
+        taData
+          .filter(shift => {
+            const d = new Date(shift.clock_in);
+            return d.getFullYear() === year && d.getMonth() === month;
+          })
+          .reduce((sum, shift) => sum + parseElapsedToHours(shift.elapsed_time as unknown as string), 0)
+        * 10) / 10
+    );
+
+    const monthLabels = months.map(({ month }) => MONTH_NAMES[month]);
+    return { monthlyHours, monthLabels };
+  })();
+    
   // Updated grid data with formatted date and time
   const gridData: (string | number | null)[][] = taData.map(row => [
     row.id,
@@ -507,20 +544,22 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       return;
     }
 
-    try {
-      const requestBody = {
-        clock_out: time.toISOString(),
-        elapsed_time: elapsedTimeText
-      };
-      
-      console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
-      console.log("Request body:", JSON.stringify(requestBody, null, 2));
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify(requestBody)
-      });
+  try {
+    const requestBody = {
+      clock_out: time.toISOString(),
+      elapsed_time: elapsedTimeText
+    };
+    
+    console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
+    console.log("Request body:", JSON.stringify(requestBody, null, 2));
+    
+    // const token = await getAccessTokenSilently();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      // headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(requestBody)
+    });
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
@@ -873,7 +912,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      {currentUser && <Chart currentUser={currentUser} darkMode={darkMode} />}
+      {currentUser && (
+        <Chart
+          currentUser={currentUser}
+          darkMode={darkMode}
+          monthlyHours={monthlyHours}
+          monthLabels={monthLabels}
+        />
+      )}
 
 
       {/* Notes Edit Modal */}

@@ -175,3 +175,8 @@ export const updateClassroom = async (id, classroom) => {
         message: 'Classroom updated successfully'
     };
 };
+
+export const getTAById = async (id) => {
+  const result = await sql`SELECT * FROM ta_list WHERE id = ${id}`;
+  return result[0] || null;
+};

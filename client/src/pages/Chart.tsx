@@ -39,11 +39,13 @@ interface Parent {
 interface ChartProps {
   currentUser: User;
   darkMode?: boolean;
+  monthlyHours?: number[];
+  monthLabels?: string[];
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false }: ChartProps) {
+export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [] }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
 
     useEffect(() => {
@@ -67,18 +69,28 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
       fetchParents();
     }, [currentUser?.id]);
 
+    const [fullTA, setFullTA] = useState<any>(null);
+
+    useEffect(() => {
+      if (!currentUser?.id) return;
+      fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => setFullTA(data))
+        .catch(err => console.error('Failed to fetch TA info:', err));
+    }, [currentUser?.id]);
+
     const taInfo = {
-      firstName: currentUser.first_name || "First Name",
-      lastName: currentUser?.last_name || "Last Name",
-      email: currentUser?.email || "email@example.com",
-      phone: currentUser?.phone || "123-456-7890",
-      highschool : currentUser?.highschool || "Bergen County Academies",
-      grade : currentUser?.grade || "12",
-      age : currentUser?.age || "17",
-      gender : currentUser?.gender || "F",
-      address: currentUser?.address || "433 Ivy Avenue, Haworth NJ",
-      emergencyPhone: currentUser?.emergencyPhone || "123-456-7890",
-      notes: currentUser?.notes || "No notes",
+      firstName: fullTA?.first_name || currentUser.first_name,
+      lastName: fullTA?.last_name || currentUser.last_name,
+      email: fullTA?.email || currentUser?.email,
+      phone: fullTA?.phone || "Not provided",
+      highschool: fullTA?.high_school || "Not provided",
+      grade: fullTA?.grade || "N/A",
+      age: fullTA?.age || "N/A",
+      gender: fullTA?.gender || "N/A",
+      address: fullTA?.address || "Not provided",
+      emergencyPhone: fullTA?.emergency_phone || "Not provided",
+      notes: fullTA?.notes || "No notes",
       hoursCompleted: 250,
       totalHoursRequired: 300,
       parents: parents.length > 0 ? parents : [
@@ -91,15 +103,15 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
       ]
     };
 
-  const dataValues = [12, 19, 40, 30, 5];
+  const dataValues = monthlyHours.length > 0 ? monthlyHours : [];
 
   const barData = {
-    labels: ["September", "October", "November", "December", "January"],
+    labels: monthLabels,
     datasets: [
       {
         label: "Hours",
         data: dataValues,
-        backgroundColor: [darkMode ? "#3b82f6" : "#bfdbfe"]
+        backgroundColor: darkMode ? "#3b82f6" : "#bfdbfe"
       }
     ]
   };
@@ -110,35 +122,18 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
     scales: {
       y: {
         min: 0,
-        max: 50,
-        ticks: {
-          stepSize: 5,
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        title: {
-          display: true,
-          text: "Hours",
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        max: Math.max(10, Math.ceil(Math.max(...dataValues, 0) * 1.2)),
+        ticks: { stepSize: 5, color: darkMode ? "#9ca3af" : undefined },
+        title: { display: true, text: "Hours", color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       },
       x: {
-        ticks: {
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        ticks: { color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       }
     },
     plugins: {
-      legend: {
-        labels: {
-          color: darkMode ? "#d1d5db" : undefined
-        }
-      }
+      legend: { labels: { color: darkMode ? "#d1d5db" : undefined } }
     }
   };
 
