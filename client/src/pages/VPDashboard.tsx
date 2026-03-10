@@ -476,13 +476,8 @@ function VPDashboard(): React.ReactElement {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     
     try {
-      const token = await getAccessTokenSilently();
-
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        method: 'PATCH'
       });
       
       if (response.ok) {
