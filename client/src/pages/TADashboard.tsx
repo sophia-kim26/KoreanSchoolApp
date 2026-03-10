@@ -14,6 +14,47 @@ interface UserLocation {
   accuracy: number;
 }
 
+type Language = 'en' | 'ko';
+
+interface Translations {
+  [key: string]: {
+    assignedClassroom: string;
+    firstName: string;
+    lastName: string;
+    koreanName: string;
+    date: string;
+    attendance: string;
+    clockIn: string;
+    clockOut: string;
+    elapsedTime: string;
+    notes: string;
+    settings: string;
+    signOut: string;
+    present: string;
+    tardy: string;
+    earlyLeave: string;
+    parentInformation: string;
+    phone: string;
+    email: string;
+    totalHours: string;
+    emergencyPhone: string;
+    analytics: string;
+    hoursCompleted: string;
+    hoursByMonth: string;
+    appearance: string;
+    account: string;
+    privacy: string;
+    languagePreferences: string;
+    theme: string;
+    textIconSize: string;
+    // stopped here
+    yes: string;
+    no: string;
+    viewAnalytics: string;
+    remove: string;
+  };
+}
+
 interface ElapsedTime {
   hours: number;
   minutes: number;
@@ -90,6 +131,21 @@ const getUserLocation = (): Promise<UserLocation> => {
     );
   });
 };
+
+const translations: Translations = {
+    en: {
+      firstName: "First Name", lastName: "Last Name", koreanName: "Korean Name",
+      sessionDay: "Session Day", classroom: "Classroom", active: "Active",
+      totalHours: "Total Hours", attendance: "Attendance", analytics: "Analytics",
+      actions: "Actions", yes: "Yes", no: "No", viewAnalytics: "View Analytics", remove: "Remove"
+    },
+    ko: {
+      firstName: "이름", lastName: "성", koreanName: "한국어 이름",
+      sessionDay: "수업 요일", classroom: "교실", active: "활성 상태",
+      totalHours: "총 시간", attendance: "출석", analytics: "통계",
+      actions: "작업", yes: "예", no: "아니오", viewAnalytics: "통계 보기", remove: "삭제"
+    }
+  };
 
 // Helper function for bar graph
 const parseElapsedToHours = (elapsed: string | null): number => {
@@ -262,15 +318,15 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const gridColumns = useMemo(() => [
     {
-      name: "ID",
+      translations[language].name: "ID",
       hidden: true
     },
     {
-      name: "Date",
+      translations[language].name: "Date",
       width: '120px'
     },
     {
-      name: "Attendance",
+      translations[language].name: "Attendance",
       width: '140px',
       formatter: (cell: any, row: any) => {
         const shiftId = row.cells[0].data;
@@ -414,19 +470,19 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       }
     },
     {
-      name: "Clock In",
+      translations[language].name: "Clock In",
       width: '120px'
     },
     {
-      name: "Clock Out",
+      translations[language].name: "Clock Out",
       width: '120px'
     },
     {
-      name: "Elapsed Time",
+      translations[language].name: "Elapsed Time",
       width: '130px'
     },
     {
-      name: "Notes",
+      translations[language].name: "Notes",
       width: '200px',
       formatter: (cell: any, row: any) => {
         const shiftId = row.cells[0].data;
@@ -1162,16 +1218,16 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               {activeTab === 'appearance' && (
                 <>
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Language Preferences
-                    </h3>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Language Preferences</h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: darkMode ? '#f9fafb' : 'inherit' }}>
-                        English
-                      </button>
-                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-                        Korean
-                      </button>
+                      {(['en', 'ko'] as Language[]).map(lang => (
+                        <button key={lang} onClick={() => setLanguage(lang)} style={{
+                          padding: '10px 30px',
+                          background: language === lang ? (dm ? '#1e3a5f' : '#bfdbfe') : (dm ? '#273549' : 'white'),
+                          color: language === lang ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#d1d5db' : '#374151'),
+                          border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
+                        }}>{lang === 'en' ? 'English' : 'Korean'}</button>
+                      ))}
                     </div>
                   </div>
 
