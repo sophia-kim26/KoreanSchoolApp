@@ -916,54 +916,51 @@ function VPDashboard(): React.ReactElement {
               <Grid
                 data={fridayGridData}
                 columns={getFridayColumns().map((col, colIndex) => ({
-                  name: col.name,
-                  width: '150px',
-                  formatter: (cell: any) => {
-                    // Classroom dropdown
-                    if (col.id === 'classroom') {
-                      const koreanNameColIndex = getFridayColumns().findIndex(c => c.id === 'korean_name');
-                      // Get ta id - find the row in fridayData by korean_name match
-                      const koreanName = koreanNameColIndex >= 0 ? row.cells[koreanNameColIndex].data : null;
-                      const taMatch = fridayData.find(r => r.korean_name === koreanName);
-                      const taId = taMatch?.id;
+                name: col.name,
+                width: col.id === 'classroom' ? '180px' : '150px',
+                formatter: (cell: any, row: any) => {
+                  if (col.id === 'classroom') {
+                    const fridayColumns = getFridayColumns();
+                    const idColIndex = fridayColumns.findIndex(c => c.id === 'korean_name');
+                    const koreanName = idColIndex >= 0 ? row.cells[idColIndex].data : null;
+                    const taMatch = fridayData.find(r => r.korean_name === koreanName);
+                    const taId = taMatch?.id;
 
-                      return h('select', {
-                        style: `
-                          padding: 4px 8px;
-                          border-radius: 4px;
-                          border: 1px solid #93c5fd;
-                          background-color: #eff6ff;
-                          color: #1e40af;
-                          font-size: 13px;
-                          cursor: pointer;
-                          width: 100%;
-                        `,
-                        onchange: (e: Event) => {
-                          const newClassroom = (e.target as HTMLSelectElement).value;
-                          if (taId) updateClassroom(taId, newClassroom);
-                        }
-                      }, [
-                        h('option', { value: '' }, '— Select —'),
-                        ...CLASSROOMS.map(room =>
-                          h('option', { 
-                            value: room,
-                            selected: cell === room
-                          }, room)
-                        )
-                      ]);
-                    }
-                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
-                    if (dateRegex.test(col.id)) {
-                      if (cell === true) return '✓';
-                      if (isDateInPast(col.id)) return '✗';
-                      return '';
-                    }
-                    if (cell === true) return '✓';
-                    if (cell === false) return '✗';
-                    if (cell === null || cell === undefined) return '';
-                    return cell;
+                    return h('select', {
+                      style: `
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        border: 1px solid #93c5fd;
+                        background-color: #eff6ff;
+                        color: #1e40af;
+                        font-size: 13px;
+                        cursor: pointer;
+                        width: 100%;
+                      `,
+                      onchange: (e: Event) => {
+                        const newClassroom = (e.target as HTMLSelectElement).value;
+                        if (taId) updateClassroom(taId, newClassroom);
+                      }
+                    }, [
+                      h('option', { value: '' }, '— Select —'),
+                      ...CLASSROOMS.map(room =>
+                        h('option', { value: room, selected: cell === room }, room)
+                      )
+                    ]);
                   }
-                }))}
+
+                  const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                  if (dateRegex.test(col.id)) {
+                    if (cell === true) return '✓';
+                    if (isDateInPast(col.id)) return '✗';
+                    return '';
+                  }
+                  if (cell === true) return '✓';
+                  if (cell === false) return '✗';
+                  if (cell === null || cell === undefined) return '';
+                  return cell;
+                }
+              }))}
                 search={true}
                 pagination={{ limit: 10 }}
                 sort={true}
