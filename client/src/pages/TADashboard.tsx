@@ -519,7 +519,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     const token = await getAccessTokenSilently();
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer${token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(requestBody)
     });
 
