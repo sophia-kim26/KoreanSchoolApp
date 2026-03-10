@@ -417,6 +417,10 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
+  const totalHours = taData.reduce((sum, shift) => {
+    return sum + parseElapsedToHours(shift.elapsed_time as unknown as string);
+  }, 0);
+
   // 2. Add this inside the component, right after taData is defined
   const MONTH_NAMES = ['January','February','March','April','May','June',
                       'July','August','September','October','November','December'];
@@ -919,6 +923,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
           monthlyHours={monthlyHours}
           monthLabels={monthLabels}
           shifts={taData}
+          totalHours={totalHours}
         />
       )}
 

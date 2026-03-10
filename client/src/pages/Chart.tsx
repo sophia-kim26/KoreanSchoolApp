@@ -42,6 +42,7 @@ interface ChartProps {
   monthlyHours?: number[];
   monthLabels?: string[];
   shifts?: Shift[];
+  totalHours?: number;
 }
 
 interface Shift {
@@ -56,7 +57,7 @@ interface Shift {
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [] }: ChartProps) {
+export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [], totalHours = 0 }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
 
 
@@ -103,8 +104,6 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
       address: fullTA?.address || "Not provided",
       emergencyPhone: fullTA?.emergency_phone || "Not provided",
       notes: fullTA?.notes || "No notes",
-      hoursCompleted: 250,
-      totalHoursRequired: 300,
       parents: parents.length > 0 ? parents : [
         {
           koreanName: "한국이름",
@@ -275,7 +274,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
         <div style={{ marginTop: "20px" }}>
           <div style={{ width: "100%", height: "40px", backgroundColor: progressBg, borderRadius: "20px", overflow: "hidden", position: "relative" }}>
             <div style={{
-              width: `${(taInfo.hoursCompleted / taInfo.totalHoursRequired) * 100}%`,
+              width: `${Math.min((totalHours / 300) * 100, 100)}%`,
               height: "100%",
               backgroundColor: darkMode ? "#3b82f6" : "#5b8dc4",
               borderRadius: "20px",
@@ -286,7 +285,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
             </div>
           </div>
           <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: headingColor }}>
-            {taInfo.hoursCompleted}/{taInfo.totalHoursRequired} Hours Completed
+            {totalHours.toFixed(2)}/300 Hours Completed
           </p>
         </div>
       </div>
