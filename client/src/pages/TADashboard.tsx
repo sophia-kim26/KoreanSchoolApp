@@ -709,7 +709,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <p>No data found.</p>
       ) : (
           <Grid
-            key={taData.length}
+            key="ta-shifts-grid"
             data={gridData}
             columns={[
               {
