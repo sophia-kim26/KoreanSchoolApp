@@ -634,7 +634,7 @@ function VPTAView() {
                 onMouseOver={(e) => !resettingPin && (e.currentTarget.style.backgroundColor = '#dc2626')}
                 onMouseOut={(e) => !resettingPin && (e.currentTarget.style.backgroundColor = '#ef4444')}
               >
-                {resettingPin ? 'Resetting...' : '🔄 Reset PIN'}
+                {resettingPin ? 'Resetting...' : 'Reset PIN'}
               </button>
             </div>
           </div>
