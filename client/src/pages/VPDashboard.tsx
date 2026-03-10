@@ -505,6 +505,7 @@ function VPDashboard(): React.ReactElement {
     row.last_name, 
     row.korean_name,
     row.session_day, 
+    row.classroom || '',
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
@@ -781,6 +782,7 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].firstName, width: '120px' },
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
+                  { name: translations[language].classroom, width: '150px' },
                   { name: translations[language].sessionDay, width: '120px' },
                   { 
                     name: translations[language].active,
@@ -796,7 +798,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].attendance,
                     width: '120px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data;
                       return h('button', {
                         style: `
                           display: inline-block;
@@ -842,7 +844,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].actions,
                     width: '100px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data;
                       return h('button', {
                         style: `
                           padding: 6px 12px;
