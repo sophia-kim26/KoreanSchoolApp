@@ -41,12 +41,14 @@ interface ChartProps {
   darkMode?: boolean;
   monthlyHours?: number[];
   monthLabels?: string[];
+  shifts?: Shift[];
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [] }: ChartProps) {
+export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [] }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
+
 
     useEffect(() => {
       const fetchParents = async () => {
@@ -137,7 +139,9 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
     }
   };
 
-  const presentPercentage = Math.round(taInfo.hoursCompleted / taInfo.totalHoursRequired * 100);
+  const completedShifts = shifts.filter(s => s.clock_out).length;
+  const totalShifts = shifts.length;
+  const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
   const absentPercentage = 100 - presentPercentage;
 
   const doughnutData = {
