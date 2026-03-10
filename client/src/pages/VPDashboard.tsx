@@ -502,12 +502,19 @@ function VPDashboard(): React.ReactElement {
     }));
   };
 
-  const fridayGridData: any[][] = fridayData.map(row => {
-    const taMatch = data.find(ta => ta.id === row.id);
-    const rowWithClassroom = { ...row, classroom: taMatch?.classroom ?? '' };
-    return getFridayColumns().map(col => 
-      col.id === 'classroom' ? rowWithClassroom.classroom : row[col.id]
-    );
+  const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (fridayData.length === 0 || data.length === 0) return;
+    const enriched = fridayData.map(row => {
+      const taMatch = data.find(ta => ta.id === row.id);
+      return { ...row, classroom: taMatch?.classroom ?? '' };
+    });
+    setEnrichedFridayData(enriched);
+  }, [fridayData]); // only fridayData, NOT data
+
+  const fridayGridData: any[][] = enrichedFridayData.map(row => {
+    return getFridayColumns().map(col => row[col.id]);
   });
 
   const saturdayGridData: any[][] = saturdayData.map(row => {
@@ -530,6 +537,12 @@ function VPDashboard(): React.ReactElement {
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
   const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
+    // Update ONLY the data arrays in state, NOT enrichedFridayData
+    // This avoids rebuilding the grid
+    setData(prev =>
+      prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta)
+    );
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
         method: 'PATCH',
@@ -537,10 +550,11 @@ function VPDashboard(): React.ReactElement {
         body: JSON.stringify({ classroom })
       });
       if (!response.ok) throw new Error('Failed to update classroom');
-      await fetchFridayData();
     } catch (err) {
       console.error(err);
       alert('Error updating classroom');
+      await fetchData();
+      await fetchFridayData();
     }
   };
 
