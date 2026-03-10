@@ -16,8 +16,8 @@ interface TAData {
   is_active: boolean;
   total_hours: number | string;
   attendance: string;
-  attendance_count: number;
-  absence_count: number;
+  // attendance_count: number;
+  // absence_count: number;
   ta_code: string;
   email: string;
   created_at: string;
@@ -29,8 +29,16 @@ interface FridayData {
   first_name?: string;
   last_name?: string;
   korean_name?: string;
-  attendance_count?: number;
-  absence_count?: number;
+  // attendance_count?: number;
+  // absence_count?: number;
+  [key: string]: any;
+}
+
+interface SaturdayData {
+  id?: number;
+  first_name?: string;
+  last_name?: string;
+  korean_name?: string;
   [key: string]: any;
 }
 
@@ -44,10 +52,10 @@ interface FormData {
   classroom: string;
 }
 
-interface Metrics {
-  attendance: number;
-  absence: number;
-}
+// interface Metrics {
+//   attendance: number;
+//   absence: number;
+// }
 
 interface Translations {
   [key: string]: {
@@ -80,7 +88,7 @@ interface CalendarDatesResponse {
 
 type Language = 'en' | 'ko';
 type ActiveTab = 'appearance';
-type MainTab = 'tas' | 'friday';
+type MainTab = 'tas' | 'friday' | 'saturday';
 
 const CLASSROOMS = [
   '앵두꽃반',
@@ -115,6 +123,7 @@ const CLASSROOMS = [
 function VPDashboard(): React.ReactElement {
   const [data, setData] = useState<TAData[]>([]);
   const [fridayData, setFridayData] = useState<FridayData[]>([]);
+  const [saturdayData, setSaturdayData] = useState<SaturdayData[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showPinModal, setShowPinModal] = useState<boolean>(false);
@@ -135,10 +144,10 @@ function VPDashboard(): React.ReactElement {
     korean_name: "",
     classroom: ""
   });
-    const [metrics, setMetrics] = useState<Metrics>({
-    attendance: 0,
-    absence: 0,
-  });
+  //   const [metrics, setMetrics] = useState<Metrics>({
+  //   attendance: 0,
+  //   absence: 0,
+  // });
   
   const translations: Translations = {
     en: {
@@ -233,6 +242,7 @@ function VPDashboard(): React.ReactElement {
     fetchData();
     fetchSavedDates();
     fetchFridayData();
+    fetchSaturdayData();
   }, []);
 
   useEffect(() => {
@@ -258,18 +268,22 @@ function VPDashboard(): React.ReactElement {
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(import.meta.env.VITE_VERCEL_BYPASS_SECRET 
+            ? { 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET } 
+            : {})
+        },
         body: JSON.stringify({ dates: datesArray })
       });
       
-      const responseText = await response.text();
-            if (response.ok) {
-        const responseData = JSON.parse(responseText);
-        
+      if (response.ok) {
         setShowCalendar(false);
-        await fetchFridayData(); 
+        await fetchFridayData();
+        await fetchSaturdayData();
         alert("Dates saved! The table now shows only selected dates.");
       } else {
+        const responseText = await response.text();
         console.error("Server returned error status:", response.status);
         console.error("Response body:", responseText);
         alert(`Failed to save dates. Status: ${response.status}. Check console for details.`);
@@ -282,10 +296,8 @@ function VPDashboard(): React.ReactElement {
 
   const fetchData = async (): Promise<void> => {
     try {
-      // 1. Get the token from Auth0
       const token = await getAccessTokenSilently();
 
-      // 2. Make the request with the Authorization header
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -295,7 +307,6 @@ function VPDashboard(): React.ReactElement {
 
       const json = await response.json();
 
-      // 3. Safety Check: Only sort if the response is an array
       if (Array.isArray(json)) {
         const sorted = json.sort((a, b) => {
           if (a.is_active === b.is_active) {
@@ -304,29 +315,27 @@ function VPDashboard(): React.ReactElement {
           return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
         });
         setData(sorted);
-        calculateMetrics(sorted);
+        // calculateMetrics(sorted);
       } else {
-        // If we get a 401 or error object, clear the data so it shows "No data found"
-        // instead of crashing with the .sort() error
+
         console.error("Backend returned an error or non-array:", json);
         setData([]); 
       }
     } catch (err) {
       console.error("Fetch error:", err);
-      // Setting data to empty array prevents the .sort() crash
       setData([]);
     }
   };
 
-  const calculateMetrics = (data: TAData[]): void => {
-    const attendance = data.filter(ta => ta.attendance === 'Present').length;
-    const absence = data.filter(ta => ta.attendance === 'Absent').length;
+  // const calculateMetrics = (data: TAData[]): void => {
+  //   const attendance = data.filter(ta => ta.attendance === 'Present').length;
+  //   const absence = data.filter(ta => ta.attendance === 'Absent').length;
     
-    setMetrics({
-      attendance,
-      absence,
-    });
-  };
+    // setMetrics({
+    //   attendance,
+    //   absence,
+    // });
+  // };
 
   const fetchFridayData = async (): Promise<void> => {
     try {
@@ -339,22 +348,33 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  useEffect(() => {
-    if (data.length === 0 || fridayData.length === 0) return;
+  const fetchSaturdayData = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saturday`);
+      const json = await res.json();
+      setSaturdayData(Array.isArray(json) ? json : []);
+    } catch (err) {
+      console.error("Fetch Saturday error:", err);
+      setSaturdayData([]);
+    }
+  };
 
-    const enriched = fridayData.map(fridayRow => {
-      const matchingTA = data.find(ta =>
-        ta.id === fridayRow.id || ta.email === fridayRow.email
-      );
-      return {
-        ...fridayRow,
-        attendance_count: matchingTA?.attendance_count ?? 0,
-        absence_count: matchingTA?.absence_count ?? 0,
-      };
-    });
+  // useEffect(() => {
+  //   if (data.length === 0 || fridayData.length === 0) return;
 
-    setFridayData(enriched);
-  }, [data]);
+  //   const enriched = fridayData.map(fridayRow => {
+  //     const matchingTA = data.find(ta =>
+  //       ta.id === fridayRow.id || ta.email === fridayRow.email
+  //     );
+  //     return {
+  //       ...fridayRow,
+  //       attendance_count: matchingTA?.attendance_count ?? 0,
+  //       absence_count: matchingTA?.absence_count ?? 0,
+  //     };
+  //   });
+
+  //   setFridayData(enriched);
+  // }, [data]);
 
   const handleSignOut = (): void => {
     logout({ 
@@ -484,9 +504,17 @@ function VPDashboard(): React.ReactElement {
     row.total_hours || '0.00',
     row.attendance,
     row.id,  
-    row.attendance_count || 0,
-    row.absence_count || 0,
+    // row.attendance_count || 0,
+    // row.absence_count || 0,
   ]);
+
+  const isDateInPast = (dateKey: string): boolean => {
+    const [year, month, day] = dateKey.split('_').map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
@@ -494,9 +522,8 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
-    // Only hide these specific columns - count columns like attendance_count, 
-    // absence_count, tardiness_count, early_departure_count will be visible
-    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
+    // const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
+    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
@@ -505,7 +532,13 @@ function VPDashboard(): React.ReactElement {
       Array.from(selectedDates).map(date => date.replace(/-/g, '_'))
     );
     
-    const dateKeys = keys.filter(key => dateRegex.test(key) && selectedDatesWithUnderscores.has(key));
+    const dateKeys = keys.filter(key => {
+      if (!dateRegex.test(key)) return false;
+      if (!selectedDatesWithUnderscores.has(key)) return false;
+      const [year, month, day] = key.split('_').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.getDay() === 5; // 5 = Friday
+    });
     
     dateKeys.sort();
 
@@ -521,8 +554,48 @@ function VPDashboard(): React.ReactElement {
       }));
   };
 
+  const getSaturdayColumns = (): Array<{ name: string; id: string }> => {
+    if (saturdayData.length === 0) return [];
+    
+    const sampleRow = saturdayData[0];
+    const keys = Object.keys(sampleRow);
+    
+    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
+    
+    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+    const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
+    
+    const selectedDatesWithUnderscores = new Set(
+      Array.from(selectedDates).map(date => date.replace(/-/g, '_'))
+    );
+    
+    const dateKeys = keys.filter(key => {
+      if (!dateRegex.test(key)) return false;
+      if (!selectedDatesWithUnderscores.has(key)) return false;
+      const [year, month, day] = key.split('_').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.getDay() === 6; // 6 = Saturday
+    });
+    dateKeys.sort();
+
+    const finalKeys = [...nonDateKeys, ...dateKeys];
+
+    return finalKeys.map(key => ({
+      name: dateRegex.test(key)
+        ? key.replace(/_/g, '-')
+        : key.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '),
+      id: key
+    }));
+  };
+
   const fridayGridData: any[][] = fridayData.map(row => {
     return getFridayColumns().map(col => row[col.id]);
+  });
+
+  const saturdayGridData: any[][] = saturdayData.map(row => {
+    return getSaturdayColumns().map(col => row[col.id]);
   });
 
   if (isLoading) {
@@ -544,7 +617,7 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600' }}>
-          VP Dashboard - {mainTab === 'tas' ? 'TA List' : 'Friday Table'}
+          VP Dashboard - {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
         </h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button 
@@ -635,6 +708,21 @@ function VPDashboard(): React.ReactElement {
             color: mainTab === 'friday' ? '#1e40af' : '#6b7280'
           }}>
           Friday
+        </button>
+        <button 
+          onClick={() => setMainTab('saturday')}
+          style={{
+            padding: '12px 24px',
+            background: mainTab === 'saturday' ? '#bfdbfe' : 'transparent',
+            border: 'none',
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            color: mainTab === 'saturday' ? '#1e40af' : '#6b7280'
+          }}>
+          Saturday
         </button>
       </div>
 
@@ -794,10 +882,16 @@ function VPDashboard(): React.ReactElement {
             }}>
               <Grid
                 data={fridayGridData}
-                columns={getFridayColumns().map(col => ({
+                columns={getFridayColumns().map((col, colIndex) => ({
                   name: col.name,
                   width: '150px',
                   formatter: (cell: any) => {
+                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                    if (dateRegex.test(col.id)) {
+                      if (cell === true) return '✓';
+                      if (isDateInPast(col.id)) return '✗';
+                      return '';
+                    }
                     if (cell === true) return '✓';
                     if (cell === false) return '✗';
                     if (cell === null || cell === undefined) return '';
@@ -812,6 +906,70 @@ function VPDashboard(): React.ReactElement {
                     'font-size': '14px',
                     'border-collapse': 'collapse'
                   },
+                  th: {
+                    'background-color': '#93c5fd',
+                    'padding': '16px 12px',
+                    'text-align': 'left',
+                    'font-weight': '600',
+                    'color': '#1e3a8a',
+                    'border-bottom': '2px solid #3b82f6'
+                  },
+                  td: {
+                    'padding': '14px 12px',
+                    'border-bottom': '1px solid #bfdbfe',
+                    'color': '#1e40af',
+                    'background-color': '#eff6ff'
+                  }
+                }}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {mainTab === 'saturday' && (
+        <>
+          <p style={{ marginBottom: 20, color: '#374151', fontSize: '14px' }}>
+            Total Records: {saturdayData.length}
+          </p>
+          
+          {saturdayData.length === 0 ? (
+            <div>
+              <p>No Saturday data found. Please select dates in Settings.</p>
+              <button onClick={fetchSaturdayData} style={{ padding: '10px 20px', marginTop: 10 }}>
+                Retry Load
+              </button>
+            </div>
+          ) : (
+            <div style={{ 
+              background: '#dbeafe', 
+              borderRadius: 8, 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              overflow: 'hidden'
+            }}>
+              <Grid
+                data={saturdayGridData}
+                columns={getSaturdayColumns().map((col) => ({
+                  name: col.name,
+                  width: '150px',
+                  formatter: (cell: any) => {
+                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                    if (dateRegex.test(col.id)) {
+                      if (cell === true) return '✓';
+                      if (isDateInPast(col.id)) return '✗';
+                      return '';
+                    }
+                    if (cell === true) return '✓';
+                    if (cell === false) return '✗';
+                    if (cell === null || cell === undefined) return '';
+                    return cell;
+                  }
+                }))}
+                search={true}
+                pagination={{ limit: 10 }}
+                sort={true}
+                style={{
+                  table: { 'font-size': '14px', 'border-collapse': 'collapse' },
                   th: {
                     'background-color': '#93c5fd',
                     'padding': '16px 12px',

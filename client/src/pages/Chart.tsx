@@ -12,7 +12,6 @@ import {
   ArcElement
 } from "chart.js";
 
-// --- ADDED TYPES TO FIX 'ANY' ERROR ---
 interface User {
   id: string | number;
   first_name?: string;
@@ -39,12 +38,12 @@ interface Parent {
 
 interface ChartProps {
   currentUser: User;
+  darkMode?: boolean;
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser }: ChartProps) {
-    // --- ADDED <Parent[]> TO FIX 'NEVER' ERROR ---
+export default function Chart({ currentUser, darkMode = false }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
 
     useEffect(() => {
@@ -100,47 +99,58 @@ export default function Chart({ currentUser }: ChartProps) {
       {
         label: "Hours",
         data: dataValues,
-        backgroundColor: ["#bfdbfe"]
+        backgroundColor: [darkMode ? "#3b82f6" : "#bfdbfe"]
       }
     ]
   };
 
   const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
 
-  // --- WRAPPED IN 'SCALES' TO FIX GRID COLOR & TYPE ERROR ---
   const barOptions = {
     scales: {
       y: {
-        min : 0,
-        max : 50,
+        min: 0,
+        max: 50,
         ticks: {
-          stepSize: 5
+          stepSize: 5,
+          color: darkMode ? "#9ca3af" : undefined
         },
         title: {
           display: true,
-          text: "Hours"
+          text: "Hours",
+          color: darkMode ? "#9ca3af" : undefined
         },
         grid: {
-          color: "#feefbf"
+          color: darkMode ? "#374151" : "#feefbf"
         }
       },
       x: {
+        ticks: {
+          color: darkMode ? "#9ca3af" : undefined
+        },
         grid: {
-          color: "#feefbf"
+          color: darkMode ? "#374151" : "#feefbf"
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: darkMode ? "#d1d5db" : undefined
         }
       }
     }
   };
 
-  const presentPercentage = Math.round(taInfo.hoursCompleted/taInfo.totalHoursRequired*100);
-  const absentPercentage = 100-presentPercentage;
+  const presentPercentage = Math.round(taInfo.hoursCompleted / taInfo.totalHoursRequired * 100);
+  const absentPercentage = 100 - presentPercentage;
 
   const doughnutData = {
     labels: ['Present', 'Absent'],
     datasets: [
       {
         data: [presentPercentage, absentPercentage],
-        backgroundColor: ['#5b8dc4', '#f5f5dc'],
+        backgroundColor: darkMode ? ['#3b82f6', '#374151'] : ['#5b8dc4', '#f5f5dc'],
         borderWidth: 0,
         cutout: '75%'
       }
@@ -154,29 +164,42 @@ export default function Chart({ currentUser }: ChartProps) {
     }
   };
 
+  // Dark mode color shorthands
+  const cardBg = darkMode ? "#1f2937" : "#f5eed1";
+  const cardBorder = darkMode ? "1px solid #374151" : "none";
+  const headingColor = darkMode ? "#60a5fa" : "#5b8dc4";
+  const subtextColor = darkMode ? "#9ca3af" : "#9ca3af";
+  const rowEven = darkMode ? "#1f2937" : "#ffffff";
+  const rowOdd = darkMode ? "#273549" : "#f9fafb";
+  const rowBorder = darkMode ? "#374151" : "#e5e7eb";
+  const tdColor = darkMode ? "#e5e7eb" : "inherit";
+  const progressBg = darkMode ? "#374151" : "#e5e7eb";
+
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <div style={{ width: "800px" }}>
           <Bar data={barData} options={barOptions} />
-          <p style={{ marginTop: "12px", fontWeight: "bold" }}>
+          <p style={{ marginTop: "12px", fontWeight: "bold", color: darkMode ? "#f9fafb" : "inherit" }}>
             Total Hours: {totalHours}
           </p>
         </div>
 
+        {/* Parent Information Card */}
         <div style={{
           width: "800px",
-          backgroundColor: "#f5eed1",
+          backgroundColor: cardBg,
+          border: cardBorder,
           borderRadius: "16px",
           padding: "30px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
         }}>
-          <h3 style={{ fontSize: "20px", color: "#5b8dc4", marginBottom: "20px", textAlign: "center" }}>
+          <h3 style={{ fontSize: "20px", color: headingColor, marginBottom: "20px", textAlign: "center" }}>
             Parent Information
           </h3>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
             <thead>
-              <tr style={{ backgroundColor: "#5b8dc4", color: "white" }}>
+              <tr style={{ backgroundColor: darkMode ? "#1e3a5f" : "#5b8dc4", color: "white" }}>
                 <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>Korean Name</th>
                 <th style={{ padding: "10px", textAlign: "left" }}>English Name</th>
                 <th style={{ padding: "10px", textAlign: "left" }}>Phone Number</th>
@@ -186,13 +209,13 @@ export default function Chart({ currentUser }: ChartProps) {
             <tbody>
               {taInfo.parents.map((parent, index) => (
                 <tr key={index} style={{ 
-                  backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
-                  borderBottom: "1px solid #e5e7eb"
+                  backgroundColor: index % 2 === 0 ? rowEven : rowOdd,
+                  borderBottom: `1px solid ${rowBorder}`
                 }}>
-                  <td style={{ padding: "10px" }}>{parent.koreanName || parent.korean_name || 'N/A'}</td>
-                  <td style={{ padding: "10px" }}>{parent.englishName || parent.english_name || 'N/A'}</td>
-                  <td style={{ padding: "10px" }}>{parent.phone || 'N/A'}</td>
-                  <td style={{ padding: "10px" }}>{parent.email || 'N/A'}</td>
+                  <td style={{ padding: "10px", color: tdColor }}>{parent.koreanName || parent.korean_name || 'N/A'}</td>
+                  <td style={{ padding: "10px", color: tdColor }}>{parent.englishName || parent.english_name || 'N/A'}</td>
+                  <td style={{ padding: "10px", color: tdColor }}>{parent.phone || 'N/A'}</td>
+                  <td style={{ padding: "10px", color: tdColor }}>{parent.email || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
@@ -200,17 +223,19 @@ export default function Chart({ currentUser }: ChartProps) {
         </div>
       </div>
 
+      {/* Profile Card */}
       <div style={{
         width: "400px",
-        backgroundColor: "#f5eed1",
+        backgroundColor: cardBg,
+        border: cardBorder,
         borderRadius: "16px",
         padding: "40px 30px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+        boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
       }}>
         <div style={{ position: "relative", width: "250px", height: "250px", margin: "0 auto 20px" }}>
           <Doughnut data={doughnutData} options={doughnutOptions} />
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "600", color: "#5b8dc4" }}>
+            <div style={{ fontSize: "24px", fontWeight: "600", color: headingColor }}>
               {presentPercentage}% Present
             </div>
             <div style={{ fontSize: "20px", color: "#d4af37" }}>
@@ -220,10 +245,10 @@ export default function Chart({ currentUser }: ChartProps) {
         </div>
 
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontSize: "24px", color: "#5b8dc4", marginBottom: "8px" }}>
+          <h2 style={{ fontSize: "24px", color: headingColor, marginBottom: "8px" }}>
             {taInfo.firstName} {taInfo.lastName}
           </h2>
-          <p style={{ color: "#9ca3af", fontSize: "16px" }}>
+          <p style={{ color: subtextColor, fontSize: "16px" }}>
             {taInfo.email} | {taInfo.phone}
             <br />
             {taInfo.highschool} | {taInfo.grade}th grade
@@ -239,11 +264,11 @@ export default function Chart({ currentUser }: ChartProps) {
         </div>
 
         <div style={{ marginTop: "20px" }}>
-          <div style={{ width: "100%", height: "40px", backgroundColor: "#e5e7eb", borderRadius: "20px", overflow: "hidden", position: "relative" }}>
+          <div style={{ width: "100%", height: "40px", backgroundColor: progressBg, borderRadius: "20px", overflow: "hidden", position: "relative" }}>
             <div style={{
               width: `${(taInfo.hoursCompleted / taInfo.totalHoursRequired) * 100}%`,
               height: "100%",
-              backgroundColor: "#5b8dc4",
+              backgroundColor: darkMode ? "#3b82f6" : "#5b8dc4",
               borderRadius: "20px",
               transition: "width 0.3s ease"
             }}></div>
@@ -251,7 +276,7 @@ export default function Chart({ currentUser }: ChartProps) {
               🏅
             </div>
           </div>
-          <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: "#5b8dc4" }}>
+          <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: headingColor }}>
             {taInfo.hoursCompleted}/{taInfo.totalHoursRequired} Hours Completed
           </p>
         </div>

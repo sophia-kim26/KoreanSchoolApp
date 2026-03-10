@@ -167,7 +167,8 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   };
 
   const modalStyle = {
-    backgroundColor: "#fff",
+    backgroundColor: darkMode ? "#1f2937" : "#fff",
+    color: darkMode ? "#f9fafb" : "inherit",
     padding: "30px",
     borderRadius: "8px",
     textAlign: "center" as const,
@@ -251,10 +252,102 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
-  // dark mode
+  // dark mode — toggle class + persist
   useEffect(() => {
     localStorage.setItem('ta_dark_mode', String(darkMode));
     document.body.classList.toggle('dark-mode', darkMode);
+  }, [darkMode]);
+
+  // Dark mode CSS injection — only for gridjs/table elements that can't use React state
+  useEffect(() => {
+    const styleId = 'dark-mode-styles';
+    const existing = document.getElementById(styleId);
+    if (existing) existing.remove();
+
+    if (darkMode) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        body.dark-mode { background-color: #111827 !important; color: #f9fafb !important; }
+        body.dark-mode .page-container { background-color: #111827 !important; }
+        body.dark-mode .page-header { background-color: #1f2937 !important; border-bottom: 1px solid #374151 !important; }
+        body.dark-mode .page-title { color: #f9fafb !important; }
+        body.dark-mode h1 { color: #f9fafb !important; }
+        body.dark-mode p { color: #d1d5db !important; }
+        body.dark-mode strong { color: #f9fafb !important; }
+
+        /* Table */
+        body.dark-mode .gridjs-wrapper { 
+          background-color: #1f2937 !important; 
+          border: 1px solid #374151 !important; 
+          border-radius: 10px !important;
+          overflow: hidden !important;
+        }
+        body.dark-mode .gridjs-thead { background-color: #273549 !important; }
+        body.dark-mode .gridjs-th { 
+          background-color: #273549 !important; 
+          color: #93c5fd !important; 
+          border-color: #374151 !important; 
+          font-weight: 600 !important;
+        }
+        body.dark-mode .gridjs-th-content { color: #93c5fd !important; }
+        body.dark-mode .gridjs-tr { 
+          background-color: #1f2937 !important; 
+          border-bottom: 1px solid #2d3748 !important; 
+        }
+        body.dark-mode .gridjs-tr:hover { background-color: #263348 !important; }
+        body.dark-mode .gridjs-td { 
+          color: #e5e7eb !important; 
+          border-color: #2d3748 !important; 
+          background-color: transparent !important; 
+        }
+        body.dark-mode .gridjs-search-input { 
+          background-color: #1f2937 !important; 
+          color: #f9fafb !important; 
+          border: 1px solid #4b5563 !important; 
+          border-radius: 8px !important;
+        }
+        body.dark-mode .gridjs-search-input::placeholder { color: #6b7280 !important; }
+        body.dark-mode .gridjs-pagination { 
+          background-color: #1f2937 !important; 
+          border-top: 1px solid #374151 !important; 
+          color: #9ca3af !important;
+        }
+        body.dark-mode .gridjs-pages button { 
+          background-color: #273549 !important; 
+          color: #d1d5db !important; 
+          border: 1px solid #374151 !important;
+          border-radius: 6px !important;
+        }
+        body.dark-mode .gridjs-pages button:hover { background-color: #334155 !important; color: #f9fafb !important; }
+        body.dark-mode .gridjs-pages button.gridjs-currentPage { 
+          background-color: #3b82f6 !important; 
+          color: white !important; 
+          border-color: #3b82f6 !important;
+        }
+        body.dark-mode .gridjs-summary { color: #6b7280 !important; }
+
+        /* Buttons */
+        body.dark-mode .btn-primary { 
+          background-color: #2563eb !important; 
+          color: white !important;
+        }
+        body.dark-mode .btn-primary:disabled { 
+          background-color: #1e3a5f !important; 
+          color: #4b5563 !important; 
+        }
+        body.dark-mode .btn-settings { 
+          background-color: #374151 !important; 
+          color: #d1d5db !important; 
+          border: 1px solid #4b5563 !important;
+        }
+        body.dark-mode .btn-danger { 
+          background-color: #dc2626 !important; 
+          color: white !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }, [darkMode]);
 
   // text size — apply CSS variable to root so it cascades everywhere
@@ -318,11 +411,11 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   // Updated grid data with formatted date and time
   const gridData: (string | number | null)[][] = taData.map(row => [
-    row.id, // Keep id for internal use
-    formatDate(row.clock_in), // Date column - just the date
+    row.id,
+    formatDate(row.clock_in),
     row.attendance,
-    formatTime(row.clock_in), // Clock In - just the time
-    formatTime(row.clock_out), // Clock Out - just the time
+    formatTime(row.clock_in),
+    formatTime(row.clock_out),
     row.elapsed_time,
     row.notes
   ]);
@@ -342,19 +435,16 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : "Unknown";
 
-  // ✅ Fixed - proper ternary with else branch
   const [assignedClassroom, setAssignedClassroom] = useState<string>(
-  currentUser ? `${currentUser.classroom}` : ''
+    currentUser ? `${currentUser.classroom}` : ''
   );
 
   // Clock in function - IP based validation (no GPS needed)
   const clockIn = async (): Promise<void> => {
-    
     try {
       const time = new Date();
       setClockInTime(time);
 
-      // Send clock-in request - backend validates IP address
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
@@ -388,36 +478,34 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
-
-const clockOut = async (): Promise<void> => {
-  console.log("=== CLOCK OUT STARTED ===");
-  console.log("Active Shift ID:", activeShiftId);
-  console.log("Clock In Time:", clockInTime);
-  
-  const time = new Date();
-  setClockOutTime(time);
-
-  let calculatedElapsed: ElapsedTime | null = null;
-  let elapsedTimeText = "";
-
-  if (clockInTime) {
-    const diff = time.getTime() - clockInTime.getTime();
-    const totalMinutes = Math.floor(diff / 1000 / 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    calculatedElapsed = { hours, minutes }; 
-    setElapsed(calculatedElapsed);
+  const clockOut = async (): Promise<void> => {
+    console.log("=== CLOCK OUT STARTED ===");
+    console.log("Active Shift ID:", activeShiftId);
+    console.log("Clock In Time:", clockInTime);
     
-    // Format as text: "2hr30min"
-    elapsedTimeText = `${hours}hr${minutes.toString().padStart(2, '0')}min`;
-    console.log("Calculated elapsed time:", elapsedTimeText);
-  }
+    const time = new Date();
+    setClockOutTime(time);
 
-  if (!activeShiftId) {
-    console.error("No active shift ID found.");
-    alert("Error: No active shift found to clock out.");
-    return;
-  }
+    let calculatedElapsed: ElapsedTime | null = null;
+    let elapsedTimeText = "";
+
+    if (clockInTime) {
+      const diff = time.getTime() - clockInTime.getTime();
+      const totalMinutes = Math.floor(diff / 1000 / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      calculatedElapsed = { hours, minutes }; 
+      setElapsed(calculatedElapsed);
+      
+      elapsedTimeText = `${hours}hr${minutes.toString().padStart(2, '0')}min`;
+      console.log("Calculated elapsed time:", elapsedTimeText);
+    }
+
+    if (!activeShiftId) {
+      console.error("No active shift ID found.");
+      alert("Error: No active shift found to clock out.");
+      return;
+    }
 
   try {
     const requestBody = {
@@ -435,35 +523,35 @@ const clockOut = async (): Promise<void> => {
       body: JSON.stringify(requestBody)
     });
 
-    console.log("Response status:", response.status);
-    console.log("Response ok:", response.ok);
-    
-    const responseData = await response.json();
-    console.log("Response data:", responseData);
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+      
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
 
-    if (!response.ok) {
-      throw new Error(responseData.error || 'Failed to clock out');
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to clock out');
+      }
+
+      console.log("Fetching updated shifts...");
+      await fetchShifts();
+      
+      console.log("Resetting state...");
+      setClockedIn(false);
+      setActiveShiftId(null);
+      setClockInTime(null);
+      
+      alert("Successfully clocked out!");
+      console.log("=== CLOCK OUT COMPLETED ===");
+      
+    } catch (err) {
+      console.error("=== CLOCK OUT FAILED ===");
+      console.error("Error:", err);
+      console.error("Error message:", (err as Error).message);
+      console.error("Error stack:", (err as Error).stack);
+      alert((err as Error).message || "Failed to clock out. Please try again.");
     }
-
-    console.log("Fetching updated shifts...");
-    await fetchShifts();
-    
-    console.log("Resetting state...");
-    setClockedIn(false);
-    setActiveShiftId(null);
-    setClockInTime(null);
-    
-    alert("Successfully clocked out!");
-    console.log("=== CLOCK OUT COMPLETED ===");
-    
-  } catch (err) {
-    console.error("=== CLOCK OUT FAILED ===");
-    console.error("Error:", err);
-    console.error("Error message:", (err as Error).message);
-    console.error("Error stack:", (err as Error).stack);
-    alert((err as Error).message || "Failed to clock out. Please try again.");
-  }
-};
+  };
 
   const toggleAttendance = async (shiftId: number, newStatus: string): Promise<void> => {
     try {
@@ -473,7 +561,6 @@ const clockOut = async (): Promise<void> => {
         body: JSON.stringify({ attendance: newStatus })
       });
 
-      // Update local state so the correct value persists across re-renders
       setData(prevData =>
         prevData.map(shift =>
           shift.id === shiftId
@@ -492,10 +579,10 @@ const clockOut = async (): Promise<void> => {
   const activeFontSize = TEXT_SIZE_MAP[textSize];
 
   return (
-  <div
-    className={`page-container${darkMode ? ' dark-mode' : ''}`}
-    style={{ fontSize: activeFontSize }}
-  >
+    <div
+      className={`page-container${darkMode ? ' dark-mode' : ''}`}
+      style={{ fontSize: activeFontSize }}
+    >
       <div className="page-header" style={{ justifyContent: "flex-start", gap: "40px"}}>
         <img 
           src={logo} 
@@ -547,13 +634,13 @@ const clockOut = async (): Promise<void> => {
         marginTop: "20px",
         marginBottom: "20px",
         padding: "12px 20px",
-        backgroundColor: "#e0f2fe",
-        border: "2px solid #0ea5e9",
+        backgroundColor: darkMode ? "#1e3a5f" : "#e0f2fe",
+        border: darkMode ? "2px solid #3b82f6" : "2px solid #0ea5e9",
         borderRadius: "8px",
         display: "inline-block",
         fontSize: "16px",
         fontWeight: "500",
-        color: "#0c4a6e"
+        color: darkMode ? "#93c5fd" : "#0c4a6e"
       }}>
         <strong>Assigned Classroom:</strong> {assignedClassroom}
       </div>
@@ -569,7 +656,7 @@ const clockOut = async (): Promise<void> => {
 
         {elapsed && (
          <p><strong>Total Time Worked:</strong> {elapsed.hours} hours and {elapsed.minutes} minutes</p>
-      )}
+        )}
       </div>
 
       {taData.length === 0 ? (
@@ -581,25 +668,24 @@ const clockOut = async (): Promise<void> => {
             columns={[
               {
                 name: "ID",
-                hidden: true // Hide the ID column but keep it for row identification
+                hidden: true
               },
               "Date",
               {
                 name: "Attendance",
                 width: '120px',
                 formatter: (cell: any, row: any) => {
-                  const shiftId = row.cells[0].data; // Get ID from first (hidden) column
+                  const shiftId = row.cells[0].data;
                   const dropdownId = `dropdown-${shiftId}`;
                   const buttonId = `btn-${shiftId}`;
                   
-                  // Determine button color based on status
                   const getColors = (status: string): { bg: string; text: string } => {
                     if (status === 'Tardy') {
-                      return { bg: '#fef3c7', text: '#92400e' }; // yellow
+                      return { bg: '#fef3c7', text: '#92400e' };
                     } else if (status === 'Early Leave') {
-                      return { bg: '#dbeafe', text: '#1e40af' }; // blue
-                    } else { // Present
-                      return { bg: '#c4e9d1ff', text: '#166534' }; // green
+                      return { bg: '#dbeafe', text: '#1e40af' };
+                    } else {
+                      return { bg: '#c4e9d1ff', text: '#166534' };
                     }
                   };
                   
@@ -735,7 +821,7 @@ const clockOut = async (): Promise<void> => {
               {
                 name: "Notes",
                 formatter: (cell: any, row: any) => {
-                  const shiftId = row.cells[0].data; // Get ID from first (hidden) column
+                  const shiftId = row.cells[0].data;
                   const currentNotes = cell || '';
                   
                   return h('div', {
@@ -764,7 +850,6 @@ const clockOut = async (): Promise<void> => {
                       },
                       title: 'Edit notes'
                     }, 
-                    // Pencil icon SVG
                     h('svg', {
                       width: '16',
                       height: '16',
@@ -789,7 +874,8 @@ const clockOut = async (): Promise<void> => {
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      {currentUser && <Chart currentUser={currentUser}/>}
+      {currentUser && <Chart currentUser={currentUser} darkMode={darkMode} />}
+
 
       {/* Notes Edit Modal */}
       {showNotesModal && (
@@ -815,11 +901,13 @@ const clockOut = async (): Promise<void> => {
                 minHeight: '120px',
                 padding: '10px',
                 borderRadius: '4px',
-                border: '1px solid #d1d5db',
+                border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                 fontSize: '14px',
                 fontFamily: 'inherit',
                 resize: 'vertical',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                backgroundColor: darkMode ? '#273549' : 'white',
+                color: darkMode ? '#f9fafb' : 'inherit',
               }}
               autoFocus
             />
@@ -918,7 +1006,8 @@ const clockOut = async (): Promise<void> => {
           zIndex: 1000
         }}>
           <div style={{
-            background: 'white',
+            background: darkMode ? '#1f2937' : 'white',
+            color: darkMode ? '#f9fafb' : 'inherit',
             padding: 30,
             borderRadius: 12,
             width: 600,
@@ -935,7 +1024,7 @@ const clockOut = async (): Promise<void> => {
                   cursor: 'pointer',
                   padding: '5px 10px',
                   marginRight: '10px',
-                  color: '#6b7280'
+                  color: darkMode ? '#9ca3af' : '#6b7280'
                 }}
               >
                 ←
@@ -947,20 +1036,20 @@ const clockOut = async (): Promise<void> => {
               display: 'flex', 
               gap: 0, 
               marginBottom: 24,
-              borderBottom: '2px solid #e5e7eb'
+              borderBottom: darkMode ? '2px solid #374151' : '2px solid #e5e7eb'
             }}>
               <button 
                 onClick={() => setActiveTab('appearance')}
                 style={{
                   padding: '12px 24px',
-                  background: activeTab === 'appearance' ? '#bfdbfe' : 'transparent',
+                  background: activeTab === 'appearance' ? (darkMode ? '#1e3a5f' : '#bfdbfe') : 'transparent',
                   border: 'none',
                   borderTopLeftRadius: 8,
                   borderTopRightRadius: 8,
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: '500',
-                  color: activeTab === 'appearance' ? '#1e40af' : '#6b7280'
+                  color: activeTab === 'appearance' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
                 Appearance
               </button>
@@ -968,12 +1057,12 @@ const clockOut = async (): Promise<void> => {
                 onClick={() => setActiveTab('account')}
                 style={{
                   padding: '12px 24px',
-                  background: activeTab === 'account' ? '#bfdbfe' : 'transparent',
+                  background: activeTab === 'account' ? (darkMode ? '#1e3a5f' : '#bfdbfe') : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: '500',
-                  color: activeTab === 'account' ? '#1e40af' : '#6b7280'
+                  color: activeTab === 'account' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
                 Account
               </button>
@@ -981,19 +1070,19 @@ const clockOut = async (): Promise<void> => {
                 onClick={() => setActiveTab('privacy')}
                 style={{
                   padding: '12px 24px',
-                  background: activeTab === 'privacy' ? '#bfdbfe' : 'transparent',
+                  background: activeTab === 'privacy' ? (darkMode ? '#1e3a5f' : '#bfdbfe') : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: '500',
-                  color: activeTab === 'privacy' ? '#1e40af' : '#6b7280'
+                  color: activeTab === 'privacy' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
                 Privacy
               </button>
             </div>
 
             <div style={{ 
-              background: '#dbeafe', 
+              background: darkMode ? '#172a45' : '#dbeafe', 
               padding: 30, 
               borderRadius: 8,
               minHeight: '400px'
@@ -1001,30 +1090,30 @@ const clockOut = async (): Promise<void> => {
               {activeTab === 'appearance' && (
                 <>
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
                       Language Preferences
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: darkMode ? '#f9fafb' : 'inherit' }}>
                         English
                       </button>
-                      <button style={{ padding: '10px 30px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', color: '#6b7280' }}>
+                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
                         Korean
                       </button>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
                       Theme
                     </h3>
                     <button
                       onClick={() => setDarkMode(false)}
                       style={{
                         padding: '10px 30px',
-                        background: !darkMode ? '#1e40af' : 'white',
-                        color: !darkMode ? 'white' : '#374151',
-                        border: '1px solid #d1d5db',
+                        background: !darkMode ? '#1e40af' : (darkMode ? '#273549' : 'white'),
+                        color: !darkMode ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
+                        border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                         borderRadius: 6,
                         cursor: 'pointer',
                         fontSize: '14px',
@@ -1036,7 +1125,7 @@ const clockOut = async (): Promise<void> => {
                       onClick={() => setDarkMode(true)}
                       style={{
                         padding: '10px 30px',
-                        background: darkMode ? '#4b5563' : 'white',
+                        background: darkMode ? '#3b82f6' : 'white',
                         color: darkMode ? 'white' : '#374151',
                         border: '1px solid #4b5563',
                         borderRadius: 6,
@@ -1045,11 +1134,11 @@ const clockOut = async (): Promise<void> => {
                       }}>
                       Dark Mode
                     </button>
-                    </div>
+                  </div>
 
-                  {/* ── Text / Icon Size ── */}
+                  {/* Text / Icon Size */}
                   <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
                       Text/Icon Size
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -1059,13 +1148,12 @@ const clockOut = async (): Promise<void> => {
                           onClick={() => setTextSize(size)}
                           style={{
                             padding: '10px 20px',
-                            background: textSize === size ? '#1e40af' : 'white',
-                            color: textSize === size ? 'white' : '#374151',
-                            border: `2px solid ${textSize === size ? '#1e40af' : '#d1d5db'}`,
+                            background: textSize === size ? '#1e40af' : (darkMode ? '#273549' : 'white'),
+                            color: textSize === size ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
+                            border: `2px solid ${textSize === size ? '#1e40af' : (darkMode ? '#4b5563' : '#d1d5db')}`,
                             borderRadius: 6,
                             cursor: 'pointer',
                             fontWeight: '600',
-                            // Show each button in its own representative size
                             fontSize: size === 'S' ? '12px' : size === 'M' ? '16px' : '20px',
                             transition: 'background 0.15s, color 0.15s, border-color 0.15s',
                             minWidth: 48,
@@ -1075,7 +1163,7 @@ const clockOut = async (): Promise<void> => {
                         </button>
                       ))}
                     </div>
-                    <p style={{ marginTop: 8, fontSize: '12px', color: '#6b7280' }}>
+                    <p style={{ marginTop: 8, fontSize: '12px', color: darkMode ? '#6b7280' : '#6b7280' }}>
                       Current: {textSize === 'S' ? 'Small (13px)' : textSize === 'M' ? 'Medium (16px)' : 'Large (20px)'}
                     </p>
                   </div>
@@ -1084,22 +1172,22 @@ const clockOut = async (): Promise<void> => {
 
               {activeTab === 'account' && (
                 <>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Information</h3>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: darkMode ? '#60a5fa' : '#1e40af' }}>Information</h3>
                   <div style={{ marginBottom: 20 }}>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Name</p>
-                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: darkMode ? '#60a5fa' : '#1e40af', fontWeight: '600' }}>Name</p>
+                    <div style={{ padding: '10px 16px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, width: '200px', color: darkMode ? '#e5e7eb' : 'inherit' }}>
                       {taName}
                     </div>
                   </div>
                   <div style={{ marginBottom: 20 }}>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Email</p>
-                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: darkMode ? '#60a5fa' : '#1e40af', fontWeight: '600' }}>Email</p>
+                    <div style={{ padding: '10px 16px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, width: '200px', color: darkMode ? '#e5e7eb' : 'inherit' }}>
                       {currentUser?.email || 'N/A'}
                     </div>
                   </div>
                   <div>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Phone Number</p>
-                    <div style={{ padding: '10px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: 6, width: '200px' }}>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: darkMode ? '#60a5fa' : '#1e40af', fontWeight: '600' }}>Phone Number</p>
+                    <div style={{ padding: '10px 16px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, width: '200px', color: darkMode ? '#e5e7eb' : 'inherit' }}>
                       Not provided
                     </div>
                   </div>
@@ -1108,22 +1196,21 @@ const clockOut = async (): Promise<void> => {
 
               {activeTab === 'privacy' && (
                 <>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: '#1e40af' }}>Security</h3>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: darkMode ? '#60a5fa' : '#1e40af' }}>Security</h3>
                   <div style={{ marginBottom: 24 }}>
-                    <p style={{ marginBottom: 8, fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Password</p>
+                    <p style={{ marginBottom: 8, fontSize: '14px', color: darkMode ? '#60a5fa' : '#1e40af', fontWeight: '600' }}>Password</p>
 
-                    {/* Password display row */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                       <div style={{
                         padding: '10px 16px',
-                        background: 'white',
-                        border: '1px solid #d1d5db',
+                        background: darkMode ? '#273549' : 'white',
+                        border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                         borderRadius: 6,
                         minWidth: '180px',
                         fontFamily: showPassword ? 'inherit' : 'monospace',
                         letterSpacing: showPassword ? 'normal' : '0.15em',
                         fontSize: '14px',
-                        color: '#374151',
+                        color: darkMode ? '#e5e7eb' : '#374151',
                       }}>
                         {showPassword
                           ? (currentUser?.email
@@ -1132,35 +1219,31 @@ const clockOut = async (): Promise<void> => {
                           : '••••••••'}
                       </div>
 
-                      {/* View / Hide toggle button */}
                       <button
                         onClick={() => setShowPassword(prev => !prev)}
                         style={{
                           padding: '8px 16px',
-                          background: 'white',
-                          border: '1px solid #d1d5db',
+                          background: darkMode ? '#273549' : 'white',
+                          border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                           borderRadius: 6,
                           cursor: 'pointer',
                           fontSize: '14px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 6,
-                          color: '#374151',
+                          color: darkMode ? '#e5e7eb' : '#374151',
                           transition: 'background 0.15s',
                         }}
-                        onMouseOver={e => (e.currentTarget.style.background = '#f3f4f6')}
-                        onMouseOut={e => (e.currentTarget.style.background = 'white')}
+                        onMouseOver={e => (e.currentTarget.style.background = darkMode ? '#334155' : '#f3f4f6')}
+                        onMouseOut={e => (e.currentTarget.style.background = darkMode ? '#273549' : 'white')}
                       >
-                        {/* Eye / Eye-off icon */}
                         {showPassword ? (
-                          /* Eye-off SVG */
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                             <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
                             <line x1="1" y1="1" x2="23" y2="23"/>
                           </svg>
                         ) : (
-                          /* Eye SVG */
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                             <circle cx="12" cy="12" r="3"/>
@@ -1170,11 +1253,10 @@ const clockOut = async (): Promise<void> => {
                       </button>
                     </div>
 
-                    {/* Contextual note when revealed */}
                     {showPassword && (
                       <p style={{
                         fontSize: '12px',
-                        color: '#6b7280',
+                        color: darkMode ? '#6b7280' : '#6b7280',
                         marginTop: 4,
                         maxWidth: 320,
                       }}>
