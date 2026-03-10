@@ -262,10 +262,6 @@ function VPDashboard(): React.ReactElement {
     setEnrichedFridayData(enriched);
   }, [fridayData, data]);
 
-  const fridayGridData: any[][] = enrichedFridayData.map(row => {
-    return getFridayColumns().map(col => row[col.id]);
-  });
-
   const fetchSavedDates = (): void => {
     fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`) 
       .then(res => res.json())
@@ -649,6 +645,10 @@ function VPDashboard(): React.ReactElement {
       alert('Error updating classroom');
     }
   };
+
+  const fridayGridData: any[][] = enrichedFridayData.map(row => {
+    return getFridayColumns().map(col => row[col.id]);
+  });
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
