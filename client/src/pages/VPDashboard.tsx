@@ -184,6 +184,8 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
+  const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
+
   const generatePIN = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -250,6 +252,15 @@ function VPDashboard(): React.ReactElement {
       navigate('/vp/login');
     }
   }, [isLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (fridayData.length === 0 || data.length === 0) return;
+    const enriched = fridayData.map(row => {
+      const taMatch = data.find(ta => ta.id === row.id);
+      return { ...row, classroom: taMatch?.classroom ?? '' };
+    });
+    setEnrichedFridayData(enriched);
+  }, [fridayData, data]);
 
   const fetchSavedDates = (): void => {
     fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`) 
@@ -601,14 +612,6 @@ function VPDashboard(): React.ReactElement {
     }));
   };
 
-  const fridayGridData: any[][] = fridayData.map(row => {
-    const taMatch = data.find(ta => ta.id === row.id);
-    const rowWithClassroom = { ...row, classroom: taMatch?.classroom ?? '' };
-    return getFridayColumns().map(col => 
-      col.id === 'classroom' ? rowWithClassroom.classroom : row[col.id]
-    );
-  });
-
   const saturdayGridData: any[][] = saturdayData.map(row => {
     return getSaturdayColumns().map(col => row[col.id]);
   });
@@ -642,6 +645,10 @@ function VPDashboard(): React.ReactElement {
       alert('Error updating classroom');
     }
   };
+
+  const fridayGridData: any[][] = enrichedFridayData.map(row => {
+    return getFridayColumns().map(col => row[col.id]);
+  });
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
