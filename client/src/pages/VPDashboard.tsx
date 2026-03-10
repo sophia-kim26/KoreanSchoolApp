@@ -462,7 +462,9 @@ function VPDashboard(): React.ReactElement {
 
   const gridData: (string | number | boolean)[][] = data.map(row => [
     row.first_name, row.last_name, row.korean_name, row.session_day,
-    row.classroom || '', row.is_active, row.total_hours || '0.00', row.attendance, row.id,
+    // row.classroom || '', row.is_active, row.total_hours || '0.00', row.attendance, row.id,
+    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
+
   ]);
 
   const isDateInPast = (dateKey: string): boolean => {
@@ -641,13 +643,13 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].koreanName, width: '120px' },
                   { name: translations[language].classroom, width: '150px' },
                   { name: translations[language].sessionDay, width: '120px' },
-                  { name: translations[language].active, width: '80px', formatter: (cell: any) => cell ? 'Yes' : 'No' },
+                  // { name: translations[language].active, width: '80px', formatter: (cell: any) => cell ? 'Yes' : 'No' },
                   { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                   {
                     name: translations[language].attendance,
                     width: '120px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[8].data;
+                      const taId = row.cells[7].data;
                       return h('button', {
                         style: `display: inline-block; padding: 6px 16px; border-radius: 4px; font-weight: 500; font-size: 13px; background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'}; color: ${cell === 'Present' ? '#166534' : '#991b1b'}; border: none; cursor: pointer;`,
                         onclick: () => toggleAttendance(taId, cell)
@@ -668,7 +670,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].actions,
                     width: '100px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[8].data;
+                      const taId = row.cells[7].data;
                       return h('button', {
                         style: `padding: 6px 12px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;`,
                         onclick: (e: Event) => { e.preventDefault(); e.stopPropagation(); deactivateTA(taId); }
