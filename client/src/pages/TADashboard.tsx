@@ -418,8 +418,10 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     : [];
 
   const totalHours = taData.reduce((sum, shift) => {
-    return sum + parseElapsedToHours(shift.elapsed_time as unknown as string);
-  }, 0);
+  if (!shift.clock_in || !shift.clock_out) return sum;
+  const hours = (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60);
+  return sum + (hours > 0 ? hours : 0);
+}, 0);
 
   // 2. Add this inside the component, right after taData is defined
   const MONTH_NAMES = ['January','February','March','April','May','June',
