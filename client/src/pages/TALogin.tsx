@@ -162,6 +162,7 @@ export default function TALogin(): React.ReactElement {
             if (data.success && data.ta) {
                 setCurrentUser(data.ta);
                 localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
+                sessionStorage.removeItem('ta_session_ended');
                 setAuthState('authenticated');
                 setError('');
                 setTimeout(() => navigate('/ta/dashboard'), 0);

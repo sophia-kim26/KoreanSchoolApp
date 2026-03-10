@@ -709,7 +709,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <p>No data found.</p>
       ) : (
           <Grid
-            key={JSON.stringify(data)}
+            key={taData.length}
             data={gridData}
             columns={[
               {
