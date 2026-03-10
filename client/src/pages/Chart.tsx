@@ -246,7 +246,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
           <p style={{ color: subtextColor, fontSize: "16px" }}>
             {taInfo.email} | {taInfo.phone}
             <br />
-            {taInfo.highschool} | {taInfo.grade}th grade
+            {taInfo.highschool} | {taInfo.grade}nd grade
             <br />
             {taInfo.age} years old | {taInfo.gender}
             <br />
