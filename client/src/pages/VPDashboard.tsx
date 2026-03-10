@@ -825,7 +825,7 @@ function VPDashboard(): React.ReactElement {
                           font-size: 12px;
                           font-weight: 500;
                         `,
-                        onclick: () => deactivateTA(cell)
+                        onclick: () => deactivateTA(taId)
                       }, translations[language].remove);
                     }
                   }
