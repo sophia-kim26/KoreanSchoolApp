@@ -127,8 +127,6 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
     ]
   };
 
-  const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
-
   const barOptions = {
     scales: {
       y: {
