@@ -197,6 +197,7 @@ export default function TALogin(): React.ReactElement {
     };
 
     const handleSubmitNewAccount = async (): Promise<void> => {
+
         if (!firstName || !lastName || !formEmail || !sessionDay) {
             setError('Please fill in all required fields');
             return;

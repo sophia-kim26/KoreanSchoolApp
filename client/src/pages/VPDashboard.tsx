@@ -402,6 +402,11 @@ function VPDashboard(): React.ReactElement {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
+    if (!formData.session_day) {
+        alert("Please select a session day (Friday, Saturday, or Both)");
+        return;
+        }
+
     try {
       const pin = generatePIN();
       const dataToSend = {
@@ -500,6 +505,7 @@ function VPDashboard(): React.ReactElement {
     row.last_name, 
     row.korean_name,
     row.session_day, 
+    row.classroom || '',
     row.is_active,
     row.total_hours || '0.00',
     row.attendance,
@@ -522,8 +528,8 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     
-    // const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone'];
-    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
+    const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 
+      'phone', 'attendance_count', 'absence_count', 'classroom']; // ADD classroom here
     
     const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
@@ -537,21 +543,26 @@ function VPDashboard(): React.ReactElement {
       if (!selectedDatesWithUnderscores.has(key)) return false;
       const [year, month, day] = key.split('_').map(Number);
       const date = new Date(year, month - 1, day);
-      return date.getDay() === 5; // 5 = Friday
+      return date.getDay() === 5;
     });
     
     dateKeys.sort();
 
+    const koreanNameIndex = nonDateKeys.indexOf('korean_name');
+    const insertAt = koreanNameIndex >= 0 ? koreanNameIndex + 1 : nonDateKeys.length;
+    nonDateKeys.splice(insertAt, 0, 'classroom');
+
     const finalKeys = [...nonDateKeys, ...dateKeys];
 
     return finalKeys.map(key => ({
-        name: dateRegex.test(key) 
-          ? key.replace(/_/g, '-') 
-          : key.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' '), 
-        id: key
-      }));
+      name: dateRegex.test(key)
+        ? key.replace(/_/g, '-')
+        : key === 'classroom' ? 'Classroom'
+        : key.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '),
+      id: key
+    }));
   };
 
   const getSaturdayColumns = (): Array<{ name: string; id: string }> => {
@@ -591,7 +602,11 @@ function VPDashboard(): React.ReactElement {
   };
 
   const fridayGridData: any[][] = fridayData.map(row => {
-    return getFridayColumns().map(col => row[col.id]);
+    const taMatch = data.find(ta => ta.id === row.id);
+    const rowWithClassroom = { ...row, classroom: taMatch?.classroom ?? '' };
+    return getFridayColumns().map(col => 
+      col.id === 'classroom' ? rowWithClassroom.classroom : row[col.id]
+    );
   });
 
   const saturdayGridData: any[][] = saturdayData.map(row => {
@@ -612,6 +627,21 @@ function VPDashboard(): React.ReactElement {
   }
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
+
+  const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classroom })
+      });
+      if (!response.ok) throw new Error('Failed to update classroom');
+      await fetchFridayData();
+    } catch (err) {
+      console.error(err);
+      alert('Error updating classroom');
+    }
+  };
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -752,6 +782,7 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].firstName, width: '120px' },
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
+                  { name: translations[language].classroom, width: '150px' },
                   { name: translations[language].sessionDay, width: '120px' },
                   { 
                     name: translations[language].active,
@@ -767,7 +798,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].attendance,
                     width: '120px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data;
                       return h('button', {
                         style: `
                           display: inline-block;
@@ -813,7 +844,7 @@ function VPDashboard(): React.ReactElement {
                     name: translations[language].actions,
                     width: '100px',
                     formatter: (cell: any, row: any) => {
-                      const taId = row.cells[7].data;
+                      const taId = row.cells[8].data;
                       return h('button', {
                         style: `
                           padding: 6px 12px;
@@ -887,21 +918,51 @@ function VPDashboard(): React.ReactElement {
               <Grid
                 data={fridayGridData}
                 columns={getFridayColumns().map((col, colIndex) => ({
-                  name: col.name,
-                  width: '150px',
-                  formatter: (cell: any) => {
-                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
-                    if (dateRegex.test(col.id)) {
-                      if (cell === true) return '✓';
-                      if (isDateInPast(col.id)) return '✗';
-                      return '';
-                    }
-                    if (cell === true) return '✓';
-                    if (cell === false) return '✗';
-                    if (cell === null || cell === undefined) return '';
-                    return cell;
+                name: col.name,
+                width: col.id === 'classroom' ? '180px' : '150px',
+                formatter: (cell: any, row: any) => {
+                  if (col.id === 'classroom') {
+                    const fridayColumns = getFridayColumns();
+                    const idColIndex = fridayColumns.findIndex(c => c.id === 'korean_name');
+                    const koreanName = idColIndex >= 0 ? row.cells[idColIndex].data : null;
+                    const taMatch = fridayData.find(r => r.korean_name === koreanName);
+                    const taId = taMatch?.id;
+
+                    return h('select', {
+                      style: `
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        border: 1px solid #93c5fd;
+                        background-color: #eff6ff;
+                        color: #1e40af;
+                        font-size: 13px;
+                        cursor: pointer;
+                        width: 100%;
+                      `,
+                      onchange: (e: Event) => {
+                        const newClassroom = (e.target as HTMLSelectElement).value;
+                        if (taId) updateClassroom(taId, newClassroom);
+                      }
+                    }, [
+                      h('option', { value: '' }, '— Select —'),
+                      ...CLASSROOMS.map(room =>
+                        h('option', { value: room, selected: cell === room }, room)
+                      )
+                    ]);
                   }
-                }))}
+
+                  const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                  if (dateRegex.test(col.id)) {
+                    if (cell === true) return '✓';
+                    if (isDateInPast(col.id)) return '✗';
+                    return '';
+                  }
+                  if (cell === true) return '✓';
+                  if (cell === false) return '✗';
+                  if (cell === null || cell === undefined) return '';
+                  return cell;
+                }
+              }))}
                 search={true}
                 pagination={{ limit: 10 }}
                 sort={true}

@@ -41,12 +41,25 @@ interface ChartProps {
   darkMode?: boolean;
   monthlyHours?: number[];
   monthLabels?: string[];
+  shifts?: Shift[];
+  totalHours?: number;
+}
+
+interface Shift {
+  id: number;
+  ta_id: number;
+  clock_in: string;
+  clock_out: string | null;
+  elapsed_time: number | null;
+  attendance: string;
+  notes: string;
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [] }: ChartProps) {
+export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [], totalHours = 0 }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
+
 
     useEffect(() => {
       const fetchParents = async () => {
@@ -91,8 +104,6 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
       address: fullTA?.address || "Not provided",
       emergencyPhone: fullTA?.emergency_phone || "Not provided",
       notes: fullTA?.notes || "No notes",
-      hoursCompleted: 250,
-      totalHoursRequired: 300,
       parents: parents.length > 0 ? parents : [
         {
           koreanName: "한국이름",
@@ -116,8 +127,6 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
     ]
   };
 
-  const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
-
   const barOptions = {
     scales: {
       y: {
@@ -137,7 +146,9 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
     }
   };
 
-  const presentPercentage = Math.round(taInfo.hoursCompleted / taInfo.totalHoursRequired * 100);
+  const completedShifts = shifts.filter(s => s.clock_out).length;
+  const totalShifts = shifts.length;
+  const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
   const absentPercentage = 100 - presentPercentage;
 
   const doughnutData = {
@@ -261,7 +272,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
         <div style={{ marginTop: "20px" }}>
           <div style={{ width: "100%", height: "40px", backgroundColor: progressBg, borderRadius: "20px", overflow: "hidden", position: "relative" }}>
             <div style={{
-              width: `${(taInfo.hoursCompleted / taInfo.totalHoursRequired) * 100}%`,
+              width: `${Math.min((totalHours / 300) * 100, 100)}%`,
               height: "100%",
               backgroundColor: darkMode ? "#3b82f6" : "#5b8dc4",
               borderRadius: "20px",
@@ -272,7 +283,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
             </div>
           </div>
           <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: headingColor }}>
-            {taInfo.hoursCompleted}/{taInfo.totalHoursRequired} Hours Completed
+            {totalHours.toFixed(2)}/300 Hours Completed
           </p>
         </div>
       </div>
