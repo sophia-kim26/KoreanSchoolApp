@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "preact";
 import "gridjs/dist/theme/mermaid.css";
@@ -455,15 +455,16 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   })();
     
   // Updated grid data with formatted date and time
-  const gridData: (string | number | null)[][] = taData.map(row => [
-    row.id,
-    formatDate(row.clock_in),
-    row.attendance,
-    formatTime(row.clock_in),
-    formatTime(row.clock_out),
-    row.elapsed_time,
-    row.notes
-  ]);
+  const gridData = useMemo(() => 
+    taData.map(row => [
+      row.id,
+      formatDate(row.clock_in),
+      row.attendance,
+      formatTime(row.clock_in),
+      formatTime(row.clock_out),
+      row.elapsed_time,
+      row.notes
+    ]), [taData]);
 
   const handleSignOut = (): void => {
     localStorage.removeItem('current_ta_user');
