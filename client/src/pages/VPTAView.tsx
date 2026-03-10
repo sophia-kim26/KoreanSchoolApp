@@ -109,7 +109,6 @@ function VPTAView() {
 
   // --- Attendance calculation based on calendar dates ---
 
-  // Get the set of dates a shift covers (just the YYYY-MM-DD date portion)
   const shiftDateSet = useMemo((): Set<string> => {
     const s = new Set<string>();
     shifts.forEach(shift => {
@@ -119,39 +118,37 @@ function VPTAView() {
         s.add(key);
       }
     });
+    console.log("shiftDateSet", [...s]);
     return s;
   }, [shifts]);
 
-  // Filter calendar dates to only past dates that match this TA's session_day
   const relevantPastDates = useMemo((): string[] => {
     if (!taInfo) return [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const sessionDay = taInfo.session_day; // 'Friday' | 'Saturday' | 'Both'
+    const sessionDay = taInfo.session_day;
 
-    return Array.from(calendarDates).filter(dateStr => {
+    const result = Array.from(calendarDates).filter(dateStr => {
       const date = new Date(dateStr);
       date.setHours(0, 0, 0, 0);
-
-      // Only past dates (strictly before today)
       if (date >= today) return false;
-
-      const dayOfWeek = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
-
+      const dayOfWeek = date.getDay();
       if (sessionDay === 'Friday') return dayOfWeek === 5;
       if (sessionDay === 'Saturday') return dayOfWeek === 6;
       if (sessionDay === 'Both') return dayOfWeek === 5 || dayOfWeek === 6;
-
       return false;
     });
+
+    console.log("taInfo.session_day", sessionDay);
+    console.log("calendarDates (raw)", [...calendarDates]);
+    console.log("relevantPastDates", result);
+    return result;
   }, [calendarDates, taInfo]);
 
   const presentCount = useMemo((): number => {
     return relevantPastDates.filter(dateStr => shiftDateSet.has(dateStr)).length;
-    console.log("shiftDateSet", [...shiftDateSet]);
-    console.log("relevantPastDates", relevantPastDates);
   }, [relevantPastDates, shiftDateSet]);
 
   const absentCount = useMemo((): number => {
