@@ -1524,7 +1524,7 @@ function VPDashboard(): React.ReactElement {
                         fontWeight: '500'
                       }}
                     >
-                      📅 Set Days
+                      Set Days
                     </button>
                     {selectedDates.size > 0 && (
                       <p style={{ marginTop: 12, fontSize: '14px', color: '#374151' }}>
