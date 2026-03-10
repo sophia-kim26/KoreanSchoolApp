@@ -911,10 +911,27 @@ function VPDashboard(): React.ReactElement {
                     </div>
                   </div>
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>Schedule</h3>
-                    <button onClick={() => { setCurrentMonth(new Date()); setShowCalendar(true); }} style={{
-                      padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                    }}>📅 Set Days</button>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: '#1e40af' }}>
+                      Schedule
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setCurrentMonth(new Date());
+                        setShowCalendar(true);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        background: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Set Days
+                    </button>
                     {selectedDates.size > 0 && (
                       <p style={{ marginTop: 12, fontSize: '14px', color: '#374151' }}>
                         <strong>{selectedDates.size}</strong> day{selectedDates.size !== 1 ? 's' : ''} selected
