@@ -53,4 +53,19 @@ router.patch('/:id/classroom', async (req, res, next) => {
     }
 });
 
+// change assigned classroom
+router.patch('/api/tas/:id/classroom', async (req, res, next) => {
+  try {
+    const { classroom } = req.body;
+    const { id } = req.params;
+    const result = await pool.query(
+      'UPDATE ta_list SET classroom = $1 WHERE id = $2 RETURNING *',
+      [classroom, id]
+    );
+    res.json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
