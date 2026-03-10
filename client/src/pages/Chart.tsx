@@ -39,11 +39,13 @@ interface Parent {
 interface ChartProps {
   currentUser: User;
   darkMode?: boolean;
+  monthlyHours?: number[];
+  monthLabels?: string[];
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false }: ChartProps) {
+export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [] }: ChartProps) {
     const [parents, setParents] = useState<Parent[]>([]);
 
     useEffect(() => {
@@ -91,15 +93,15 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
       ]
     };
 
-  const dataValues = [12, 19, 40, 30, 5];
+  const dataValues = monthlyHours.length > 0 ? monthlyHours : [];
 
   const barData = {
-    labels: ["September", "October", "November", "December", "January"],
+    labels: monthLabels,
     datasets: [
       {
         label: "Hours",
         data: dataValues,
-        backgroundColor: [darkMode ? "#3b82f6" : "#bfdbfe"]
+        backgroundColor: darkMode ? "#3b82f6" : "#bfdbfe"
       }
     ]
   };
@@ -110,35 +112,18 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
     scales: {
       y: {
         min: 0,
-        max: 50,
-        ticks: {
-          stepSize: 5,
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        title: {
-          display: true,
-          text: "Hours",
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        max: Math.max(10, Math.ceil(Math.max(...dataValues, 0) * 1.2)),
+        ticks: { stepSize: 5, color: darkMode ? "#9ca3af" : undefined },
+        title: { display: true, text: "Hours", color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       },
       x: {
-        ticks: {
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        ticks: { color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       }
     },
     plugins: {
-      legend: {
-        labels: {
-          color: darkMode ? "#d1d5db" : undefined
-        }
-      }
+      legend: { labels: { color: darkMode ? "#d1d5db" : undefined } }
     }
   };
 
