@@ -825,7 +825,11 @@ function VPDashboard(): React.ReactElement {
                           font-size: 12px;
                           font-weight: 500;
                         `,
-                        onclick: () => deactivateTA(taId)
+                        onclick: (e: Event) => {
+                          e.preventDefault();        // ADD THIS
+                          e.stopPropagation();       // ADD THIS
+                          deactivateTA(taId);
+                        }
                       }, translations[language].remove);
                     }
                   }
