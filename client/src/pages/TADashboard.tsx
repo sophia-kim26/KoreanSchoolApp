@@ -716,10 +716,13 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 name: "ID",
                 hidden: true
               },
-              "Date",
+              {
+                name: "Date",
+                width: '120px'
+              },
               {
                 name: "Attendance",
-                width: '120px',
+                width: '140px',
                 formatter: (cell: any, row: any) => {
                   const shiftId = row.cells[0].data;
                   const dropdownId = `dropdown-${shiftId}`;
@@ -861,11 +864,21 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   ]);
                 }
               },
-              "Clock In",
-              "Clock Out",
-              "Elapsed Time",
+              {
+                name: "Clock In",
+                width: '120px'
+              },
+              {
+                name: "Clock Out",
+                width: '120px'
+              },
+              {
+                name: "Elapsed Time",
+                width: '130px'
+              },
               {
                 name: "Notes",
+                width: '200px',
                 formatter: (cell: any, row: any) => {
                   const shiftId = row.cells[0].data;
                   const currentNotes = cell || '';
