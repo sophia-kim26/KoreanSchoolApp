@@ -137,7 +137,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   // Password visibility state
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const { logout } = useAuth0();
+  const { logout, getAccessTokenSilently } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
@@ -428,9 +428,10 @@ const clockOut = async (): Promise<void> => {
     console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
     
+    const token = await getAccessTokenSilently();
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json", Authorization: `Bearer${token}` },
       body: JSON.stringify(requestBody)
     });
 
