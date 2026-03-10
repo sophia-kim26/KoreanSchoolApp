@@ -47,11 +47,6 @@ interface Translations {
     languagePreferences: string;
     theme: string;
     textIconSize: string;
-    // stopped here
-    yes: string;
-    no: string;
-    viewAnalytics: string;
-    remove: string;
   };
 }
 
@@ -134,16 +129,24 @@ const getUserLocation = (): Promise<UserLocation> => {
 
 const translations: Translations = {
     en: {
-      firstName: "First Name", lastName: "Last Name", koreanName: "Korean Name",
-      sessionDay: "Session Day", classroom: "Classroom", active: "Active",
-      totalHours: "Total Hours", attendance: "Attendance", analytics: "Analytics",
-      actions: "Actions", yes: "Yes", no: "No", viewAnalytics: "View Analytics", remove: "Remove"
+      assignedClassroom: "Assigned Classroom", firstName: "First Name", lastName: "Last Name", koreanName: "Korean Name",
+      date: "Date", attendance: "Attendance", clockIn: "Clock In", clockOut: "Clock Out",
+      elapsedTime: "Elapsed Time", notes: "Notes", settings: "Settings", signOut: "Sign Out",
+      present: "Present", tardy: "Tardy", earlyLeave: "Early Leave", parentInformation: "Parent Information",
+      phone: "Phone", email: "Email", totalHours: "Total Hours", emergencyPhone: "Emergency Phone",
+      analytics: "Analytics", hoursCompleted: "Hours Completed", hoursByMonth: "Hours by Month",
+      appearance: "Appearance", account: "Account", privacy: "Privacy", languagePreferences: "Language Preferences",
+      theme: "Theme", textIconSize: "Text/Icon Size"
     },
     ko: {
-      firstName: "이름", lastName: "성", koreanName: "한국어 이름",
-      sessionDay: "수업 요일", classroom: "교실", active: "활성 상태",
-      totalHours: "총 시간", attendance: "출석", analytics: "통계",
-      actions: "작업", yes: "예", no: "아니오", viewAnalytics: "통계 보기", remove: "삭제"
+      assignedClassroom: "교실", firstName: "이름", lastName: "성", koreanName: "한국어 이름",
+      date: "날짜", attendance: "출석", clockIn: "Clock In", clockOut: "Clock Out",
+      elapsedTime: "Elapsed Time", notes: "기타사항", settings: "설정", signOut: "Sign Out",
+      present: "출석", tardy: "지각", earlyLeave: "조퇴", parentInformation: "보호자 정보",
+      phone: "전화번호", email: "Email", totalHours: "총 시간", emergencyPhone: "비상 전화",
+      analytics: "통계", hoursCompleted: "총 시간", hoursByMonth: "월별 시간",
+      appearance: "웹사이트 외모", account: "계정", privacy: "개인 정보", languagePreferences: "언어 설정",
+      theme: "테마", textIconSize: "텍스트/아이콘 크기"
     }
   };
 
@@ -189,6 +192,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [clockedIn, setClockedIn] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('appearance');
+  const [language, setLanguage] = useState<Language>('en');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('ta_dark_mode') === 'true';
   });
@@ -318,15 +322,15 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const gridColumns = useMemo(() => [
     {
-      translations[language].name: "ID",
+      name: "ID",
       hidden: true
     },
     {
-      translations[language].name: "Date",
+      name: translations[language].date,
       width: '120px'
     },
     {
-      translations[language].name: "Attendance",
+      name: translations[language].attendance,
       width: '140px',
       formatter: (cell: any, row: any) => {
         const shiftId = row.cells[0].data;
@@ -470,19 +474,19 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       }
     },
     {
-      translations[language].name: "Clock In",
+      name: translations[language].clockIn,
       width: '120px'
     },
     {
-      translations[language].name: "Clock Out",
+      name: translations[language].clockOut,
       width: '120px'
     },
     {
-      translations[language].name: "Elapsed Time",
+      name: translations[language].elapsedTime,
       width: '130px'
     },
     {
-      translations[language].name: "Notes",
+      name: translations[language].notes,
       width: '200px',
       formatter: (cell: any, row: any) => {
         const shiftId = row.cells[0].data;
@@ -923,7 +927,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={clockedIn}
             >
-              Clock In
+              translations[language].clockIn,
             </button>
             
             <button
@@ -931,7 +935,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={!clockedIn}
             >
-              Clock Out
+              translations[language].clockOut,
             </button>
             <button 
               onClick={() => setShowSettingsModal(true)}
@@ -961,7 +965,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         fontWeight: "500",
         color: darkMode ? "#93c5fd" : "#0c4a6e"
       }}>
-        <strong>Assigned Classroom:</strong> {assignedClassroom}
+        <strong>translations[language].assignedClassroom,</strong> {assignedClassroom}
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
