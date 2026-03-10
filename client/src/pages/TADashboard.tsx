@@ -918,6 +918,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
           darkMode={darkMode}
           monthlyHours={monthlyHours}
           monthLabels={monthLabels}
+          shifts={taData}
         />
       )}
 

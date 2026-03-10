@@ -44,6 +44,16 @@ interface ChartProps {
   shifts?: Shift[];
 }
 
+interface Shift {
+  id: number;
+  ta_id: number;
+  clock_in: string;
+  clock_out: string | null;
+  elapsed_time: number | null;
+  attendance: string;
+  notes: string;
+}
+
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
 export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [] }: ChartProps) {
