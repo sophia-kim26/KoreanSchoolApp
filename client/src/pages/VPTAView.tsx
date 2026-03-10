@@ -150,6 +150,8 @@ function VPTAView() {
 
   const presentCount = useMemo((): number => {
     return relevantPastDates.filter(dateStr => shiftDateSet.has(dateStr)).length;
+    console.log("shiftDateSet", [...shiftDateSet]);
+    console.log("relevantPastDates", relevantPastDates);
   }, [relevantPastDates, shiftDateSet]);
 
   const absentCount = useMemo((): number => {
