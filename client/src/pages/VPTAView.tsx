@@ -294,7 +294,7 @@ function VPTAView() {
 
     try {
       setResettingPin(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/reset-pin/${ta_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-pin/${ta_id}`, {
         method: 'POST'
       });
 
