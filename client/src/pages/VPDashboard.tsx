@@ -511,7 +511,7 @@ function VPDashboard(): React.ReactElement {
       return { ...row, classroom: taMatch?.classroom ?? '' };
     });
     setEnrichedFridayData(enriched);
-  }, [fridayData]); // only fridayData, NOT data
+  }, [fridayData, data]);
 
   const fridayGridData: any[][] = enrichedFridayData.map(row => {
     return getFridayColumns().map(col => row[col.id]);
@@ -537,11 +537,8 @@ function VPDashboard(): React.ReactElement {
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
   const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
-    // Update ONLY the data arrays in state, NOT enrichedFridayData
-    // This avoids rebuilding the grid
-    setData(prev =>
-      prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta)
-    );
+    setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
+    setEnrichedFridayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
