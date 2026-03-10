@@ -402,6 +402,11 @@ function VPDashboard(): React.ReactElement {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
+    if (!formData.session_day) {
+        alert("Please select a session day (Friday, Saturday, or Both)");
+        return;
+        }
+
     try {
       const pin = generatePIN();
       const dataToSend = {
