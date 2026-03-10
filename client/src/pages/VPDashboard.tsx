@@ -508,6 +508,14 @@ function VPDashboard(): React.ReactElement {
     // row.absence_count || 0,
   ]);
 
+  const isDateInPast = (dateKey: string): boolean => {
+    const [year, month, day] = dateKey.split('_').map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
     
@@ -524,7 +532,13 @@ function VPDashboard(): React.ReactElement {
       Array.from(selectedDates).map(date => date.replace(/-/g, '_'))
     );
     
-    const dateKeys = keys.filter(key => dateRegex.test(key) && selectedDatesWithUnderscores.has(key));
+    const dateKeys = keys.filter(key => {
+      if (!dateRegex.test(key)) return false;
+      if (!selectedDatesWithUnderscores.has(key)) return false;
+      const [year, month, day] = key.split('_').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.getDay() === 5; // 5 = Friday
+    });
     
     dateKeys.sort();
 
@@ -555,7 +569,13 @@ function VPDashboard(): React.ReactElement {
       Array.from(selectedDates).map(date => date.replace(/-/g, '_'))
     );
     
-    const dateKeys = keys.filter(key => dateRegex.test(key) && selectedDatesWithUnderscores.has(key));
+    const dateKeys = keys.filter(key => {
+      if (!dateRegex.test(key)) return false;
+      if (!selectedDatesWithUnderscores.has(key)) return false;
+      const [year, month, day] = key.split('_').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.getDay() === 6; // 6 = Saturday
+    });
     dateKeys.sort();
 
     const finalKeys = [...nonDateKeys, ...dateKeys];
@@ -862,10 +882,16 @@ function VPDashboard(): React.ReactElement {
             }}>
               <Grid
                 data={fridayGridData}
-                columns={getFridayColumns().map(col => ({
+                columns={getFridayColumns().map((col, colIndex) => ({
                   name: col.name,
                   width: '150px',
                   formatter: (cell: any) => {
+                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                    if (dateRegex.test(col.id)) {
+                      if (cell === true) return '✓';
+                      if (isDateInPast(col.id)) return '✗';
+                      return '';
+                    }
                     if (cell === true) return '✓';
                     if (cell === false) return '✗';
                     if (cell === null || cell === undefined) return '';
@@ -923,10 +949,16 @@ function VPDashboard(): React.ReactElement {
             }}>
               <Grid
                 data={saturdayGridData}
-                columns={getSaturdayColumns().map(col => ({
+                columns={getSaturdayColumns().map((col) => ({
                   name: col.name,
                   width: '150px',
                   formatter: (cell: any) => {
+                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                    if (dateRegex.test(col.id)) {
+                      if (cell === true) return '✓';
+                      if (isDateInPast(col.id)) return '✗';
+                      return '';
+                    }
                     if (cell === true) return '✓';
                     if (cell === false) return '✗';
                     if (cell === null || cell === undefined) return '';
