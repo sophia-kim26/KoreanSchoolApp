@@ -69,18 +69,28 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
       fetchParents();
     }, [currentUser?.id]);
 
+    const [fullTA, setFullTA] = useState<any>(null);
+
+    useEffect(() => {
+      if (!currentUser?.id) return;
+      fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => setFullTA(data))
+        .catch(err => console.error('Failed to fetch TA info:', err));
+    }, [currentUser?.id]);
+
     const taInfo = {
-      firstName: currentUser.first_name || "First Name",
-      lastName: currentUser?.last_name || "Last Name",
-      email: currentUser?.email || "email@example.com",
-      phone: currentUser?.phone || "123-456-7890",
-      highschool : currentUser?.highschool || "Bergen County Academies",
-      grade : currentUser?.grade || "12",
-      age : currentUser?.age || "17",
-      gender : currentUser?.gender || "F",
-      address: currentUser?.address || "433 Ivy Avenue, Haworth NJ",
-      emergencyPhone: currentUser?.emergencyPhone || "123-456-7890",
-      notes: currentUser?.notes || "No notes",
+      firstName: fullTA?.first_name || currentUser.first_name,
+      lastName: fullTA?.last_name || currentUser.last_name,
+      email: fullTA?.email || currentUser?.email,
+      phone: fullTA?.phone || "Not provided",
+      highschool: fullTA?.high_school || "Not provided",
+      grade: fullTA?.grade || "N/A",
+      age: fullTA?.age || "N/A",
+      gender: fullTA?.gender || "N/A",
+      address: fullTA?.address || "Not provided",
+      emergencyPhone: fullTA?.emergency_phone || "Not provided",
+      notes: fullTA?.notes || "No notes",
       hoursCompleted: 250,
       totalHoursRequired: 300,
       parents: parents.length > 0 ? parents : [

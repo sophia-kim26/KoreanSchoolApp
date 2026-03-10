@@ -1,7 +1,8 @@
 import express from 'express';
 import { checkJwt } from '../middleware/protect.js';
 
-import { getAllTAsWithStatus, deactivateTA, updateClassroom } from '../services/taService.js';
+import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '../services/taService.js';
+
 // tas.js - should be protected (only admins manage TAs)
 
 
@@ -15,6 +16,16 @@ router.get('/', async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+});
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    const result = await getTAById(req.params.id);
+    if (!result) return res.status(404).json({ message: 'TA not found' });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
 });
 
 // PATCH /api/tas/:id/deactivate
