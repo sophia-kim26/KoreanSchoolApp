@@ -1000,7 +1000,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <p>No data found.</p>
       ) : (
           <Grid
-            key="ta-shifts-grid"
+              key={`ta-shifts-grid-${language}`}
             data={gridData}
             columns={gridColumns}
             search={true}

@@ -222,6 +222,7 @@ export default function Chart({
   const tdColor = darkMode ? "#e5e7eb" : "inherit";
   const progressBg = darkMode ? "#374151" : "#e5e7eb";
 
+  console.log('totalHours prop:', totalHours);
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
