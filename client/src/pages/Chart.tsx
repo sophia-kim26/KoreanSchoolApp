@@ -1,6 +1,5 @@
 // FOR TA DASHBOARD!!
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -57,62 +56,140 @@ interface Shift {
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false, monthlyHours = [], monthLabels = [], shifts = [], totalHours = 0 }: ChartProps) {
-    const [parents, setParents] = useState<Parent[]>([]);
+export default function Chart({
+  currentUser,
+  darkMode = false,
+  monthlyHours = [],
+  monthLabels = [],
+  shifts = [],
+  totalHours = 0
+}: ChartProps) {
+  const [parents, setParents] = useState<Parent[]>([]);
+  const [fullTA, setFullTA] = useState<any>(null);
+  const [calendarDates, setCalendarDates] = useState<Set<string>>(new Set());
 
-
-    useEffect(() => {
-      const fetchParents = async () => {
-        if (!currentUser?.id) return;
-        
-        try {
-          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setParents(data);
-          } else {
-            setParents([]);
-          }
-        } catch (error) {
-          console.error('Error fetching parents:', error);
+  useEffect(() => {
+    const fetchParents = async () => {
+      if (!currentUser?.id) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setParents(data);
+        } else {
           setParents([]);
         }
-      };
-
-      fetchParents();
-    }, [currentUser?.id]);
-
-    const [fullTA, setFullTA] = useState<any>(null);
-
-    useEffect(() => {
-      if (!currentUser?.id) return;
-      fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
-        .then(res => res.json())
-        .then(data => setFullTA(data))
-        .catch(err => console.error('Failed to fetch TA info:', err));
-    }, [currentUser?.id]);
-
-    const taInfo = {
-      firstName: fullTA?.first_name || currentUser.first_name,
-      lastName: fullTA?.last_name || currentUser.last_name,
-      email: fullTA?.email || currentUser?.email,
-      phone: fullTA?.phone || "Not provided",
-      highschool: fullTA?.high_school || "Not provided",
-      grade: fullTA?.grade || "N/A",
-      age: fullTA?.age || "N/A",
-      gender: fullTA?.gender || "N/A",
-      address: fullTA?.address || "Not provided",
-      emergencyPhone: fullTA?.emergency_phone || "Not provided",
-      notes: fullTA?.notes || "No notes",
-      parents: parents.length > 0 ? parents : [
-        {
-          koreanName: "한국이름",
-          englishName: "Parent Name",
-          phone: "123-456-7890",
-          email: "parent@example.com"
-        }
-      ]
+      } catch (error) {
+        console.error('Error fetching parents:', error);
+        setParents([]);
+      }
     };
+    fetchParents();
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
+      .then(res => res.json())
+      .then(data => setFullTA(data))
+      .catch(err => console.error('Failed to fetch TA info:', err));
+  }, [currentUser?.id]);
+
+  // Fetch calendar dates — same endpoint as VPDashboard / VPTAView
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.dates && Array.isArray(json.dates)) {
+          setCalendarDates(new Set(json.dates));
+        }
+      })
+      .catch(err => console.error('Failed to fetch calendar dates:', err));
+  }, []);
+
+  const taInfo = {
+    firstName: fullTA?.first_name || currentUser.first_name,
+    lastName: fullTA?.last_name || currentUser.last_name,
+    email: fullTA?.email || currentUser?.email,
+    phone: fullTA?.phone || "Not provided",
+    highschool: fullTA?.high_school || "Not provided",
+    grade: fullTA?.grade || "N/A",
+    age: fullTA?.age || "N/A",
+    gender: fullTA?.gender || "N/A",
+    address: fullTA?.address || "Not provided",
+    emergencyPhone: fullTA?.emergency_phone || "Not provided",
+    notes: fullTA?.notes || "No notes",
+    parents: parents.length > 0 ? parents : [
+      {
+        koreanName: "한국이름",
+        englishName: "Parent Name",
+        phone: "123-456-7890",
+        email: "parent@example.com"
+      }
+    ]
+  };
+
+  // --- Attendance calculation based on calendar dates (mirrors VPTAView logic) ---
+
+  // Parse a YYYY-MM-DD string as LOCAL midnight to avoid UTC day-offset errors
+  const parseDateLocal = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Build a set of dates this TA has a shift on, using the ISO string prefix
+  // directly (no Date conversion) to avoid timezone drift
+  const shiftDateSet = useMemo((): Set<string> => {
+    const s = new Set<string>();
+    shifts.forEach(shift => {
+      if (shift.clock_in) {
+        s.add(shift.clock_in.slice(0, 10)); // "2025-03-07"
+      }
+    });
+    return s;
+  }, [shifts]);
+
+  // Filter calendar dates to past dates matching this TA's session_day
+  const relevantPastDates = useMemo((): string[] => {
+    if (!fullTA?.session_day) return [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sessionDay: string = fullTA.session_day; // 'Friday' | 'Saturday' | 'Both'
+
+    return Array.from(calendarDates).filter(dateStr => {
+      const date = parseDateLocal(dateStr);
+      if (date >= today) return false;
+
+      const dayOfWeek = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
+      if (sessionDay === 'Friday') return dayOfWeek === 5;
+      if (sessionDay === 'Saturday') return dayOfWeek === 6;
+      if (sessionDay === 'Both') return dayOfWeek === 5 || dayOfWeek === 6;
+      return false;
+    });
+  }, [calendarDates, fullTA]);
+
+  const presentCount = useMemo(
+    () => relevantPastDates.filter(d => shiftDateSet.has(d)).length,
+    [relevantPastDates, shiftDateSet]
+  );
+
+  const absentCount = useMemo(
+    () => relevantPastDates.filter(d => !shiftDateSet.has(d)).length,
+    [relevantPastDates, shiftDateSet]
+  );
+
+  const totalRelevantDays = relevantPastDates.length;
+
+  const presentPercentage = totalRelevantDays > 0
+    ? Math.round((presentCount / totalRelevantDays) * 100)
+    : 0;
+  const absentPercentage = totalRelevantDays > 0
+    ? 100 - presentPercentage
+    : 0;
+
+  // --- End attendance calculation ---
 
   const dataValues = monthlyHours.length > 0 ? monthlyHours : [];
 
@@ -146,17 +223,16 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
     }
   };
 
-  const completedShifts = shifts.filter(s => s.clock_out).length;
-  const totalShifts = shifts.length;
-  const presentPercentage = totalShifts > 0 ? Math.round((completedShifts / totalShifts) * 100) : 0;
-  const absentPercentage = 100 - presentPercentage;
-
   const doughnutData = {
     labels: ['Present', 'Absent'],
     datasets: [
       {
-        data: [presentPercentage, absentPercentage],
-        backgroundColor: darkMode ? ['#3b82f6', '#374151'] : ['#5b8dc4', '#f5f5dc'],
+        data: totalRelevantDays > 0
+          ? [presentPercentage, absentPercentage]
+          : [1, 0], // neutral full ring when no dates yet
+        backgroundColor: totalRelevantDays > 0
+          ? (darkMode ? ['#3b82f6', '#374151'] : ['#5b8dc4', '#f5f5dc'])
+          : (darkMode ? ['#374151', '#374151'] : ['#e5e7eb', '#e5e7eb']),
         borderWidth: 0,
         cutout: '75%'
       }
@@ -214,7 +290,7 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
             </thead>
             <tbody>
               {taInfo.parents.map((parent, index) => (
-                <tr key={index} style={{ 
+                <tr key={index} style={{
                   backgroundColor: index % 2 === 0 ? rowEven : rowOdd,
                   borderBottom: `1px solid ${rowBorder}`
                 }}>
@@ -240,13 +316,21 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
       }}>
         <div style={{ position: "relative", width: "250px", height: "250px", margin: "0 auto 20px" }}>
           <Doughnut data={doughnutData} options={doughnutOptions} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
+          <div style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)", textAlign: "center"
+          }}>
             <div style={{ fontSize: "24px", fontWeight: "600", color: headingColor }}>
               {presentPercentage}% Present
             </div>
             <div style={{ fontSize: "20px", color: "#d4af37" }}>
               {absentPercentage}% Absent
             </div>
+            {totalRelevantDays > 0 && (
+              <div style={{ fontSize: "13px", color: subtextColor, marginTop: 4 }}>
+                {presentCount}/{totalRelevantDays} days
+              </div>
+            )}
           </div>
         </div>
 
@@ -270,7 +354,10 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
         </div>
 
         <div style={{ marginTop: "20px" }}>
-          <div style={{ width: "100%", height: "40px", backgroundColor: progressBg, borderRadius: "20px", overflow: "hidden", position: "relative" }}>
+          <div style={{
+            width: "100%", height: "40px", backgroundColor: progressBg,
+            borderRadius: "20px", overflow: "hidden", position: "relative"
+          }}>
             <div style={{
               width: `${Math.min((totalHours / 300) * 100, 100)}%`,
               height: "100%",
@@ -278,7 +365,10 @@ export default function Chart({ currentUser, darkMode = false, monthlyHours = []
               borderRadius: "20px",
               transition: "width 0.3s ease"
             }}></div>
-            <div style={{ position: "absolute", right: "20px", top: "50%", transform: "translateY(-50%)", fontSize: "24px" }}>
+            <div style={{
+              position: "absolute", right: "20px", top: "50%",
+              transform: "translateY(-50%)", fontSize: "24px"
+            }}>
               🏅
             </div>
           </div>
