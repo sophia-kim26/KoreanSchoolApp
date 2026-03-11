@@ -927,7 +927,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={clockedIn}
             >
-              translations[language].clockIn,
+              Clock In
             </button>
             
             <button
@@ -935,7 +935,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={!clockedIn}
             >
-              translations[language].clockOut,
+              Clock Out
             </button>
             <button 
               onClick={() => setShowSettingsModal(true)}
