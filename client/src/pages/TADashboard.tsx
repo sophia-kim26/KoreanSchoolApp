@@ -965,7 +965,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         fontWeight: "500",
         color: darkMode ? "#93c5fd" : "#0c4a6e"
       }}>
-        <strong>translations[language].assignedClassroom,</strong> {assignedClassroom}
+        <strong>Assigned Classroom</strong> {assignedClassroom}
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
