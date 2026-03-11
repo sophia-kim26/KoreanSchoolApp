@@ -690,6 +690,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
+  // Add this helper inside the formatter, before the return:
+  const translateStatus = (status: string) => {
+    if (status === 'Tardy') return translations[language].tardy;
+    if (status === 'Early Leave') return translations[language].earlyLeave;
+    return translations[language].present;
+  };
+
+
   const gridColumns = useMemo(() => [
     {
       name: "ID",
@@ -753,7 +761,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
               }
             }
-          }, cell || 'Present'),
+          }, translateStatus(cell || 'Present')),
           h('div', {
             id: dropdownId,
             style: `
@@ -907,7 +915,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   // Derive the active font size for inline use where CSS var may not cascade
   const activeFontSize = TEXT_SIZE_MAP[textSize];
-
   return (
     <div
       className={`page-container${darkMode ? ' dark-mode' : ''}`}
