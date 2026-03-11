@@ -1,6 +1,7 @@
 // FOR TA DASHBOARD!!
 import { useState, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
+import { translations, Language } from './translations';
 import {
   Chart as ChartJS,
   BarElement,
@@ -42,6 +43,7 @@ interface ChartProps {
   monthLabels?: string[];
   shifts?: Shift[];
   totalHours?: number;
+  language?: Language;  // add this
 }
 
 interface Shift {
@@ -62,7 +64,8 @@ export default function Chart({
   monthlyHours = [],
   monthLabels = [],
   shifts = [],
-  totalHours = 0
+  totalHours = 0,
+  language = 'en'
 }: ChartProps) {
   const [parents, setParents] = useState<Parent[]>([]);
   const [fullTA, setFullTA] = useState<any>(null);
@@ -118,7 +121,7 @@ export default function Chart({
     gender: fullTA?.gender || "N/A",
     address: fullTA?.address || "Not provided",
     emergencyPhone: fullTA?.emergency_phone || "Not provided",
-    notes: fullTA?.notes || "No notes",
+    notes: fullTA?.notes || translations[language].noNotes,
     parents: parents.length > 0 ? parents : [
       {
         koreanName: "한국이름",
@@ -222,14 +225,13 @@ export default function Chart({
   const tdColor = darkMode ? "#e5e7eb" : "inherit";
   const progressBg = darkMode ? "#374151" : "#e5e7eb";
 
-  console.log('totalHours prop:', totalHours);
   return (
     <div style={{ display: "flex", gap: "40px", marginTop: "20px", alignItems: "flex-start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <div style={{ width: "800px" }}>
           <Bar data={barData} options={barOptions} />
           <p style={{ marginTop: "12px", fontWeight: "bold", color: darkMode ? "#f9fafb" : "inherit" }}>
-            Total Hours: {Math.round(totalHours)}
+            {translations[language].totalHours}: {Math.round(totalHours)}
           </p>
         </div>
 
@@ -243,15 +245,15 @@ export default function Chart({
           boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
         }}>
           <h3 style={{ fontSize: "20px", color: headingColor, marginBottom: "20px", textAlign: "center" }}>
-            Parent Information
+            {translations[language].parentInformation}
           </h3>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
             <thead>
               <tr style={{ backgroundColor: darkMode ? "#1e3a5f" : "#5b8dc4", color: "white" }}>
-                <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>Korean Name</th>
+                <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>{translations[language].koreanName}</th>
                 <th style={{ padding: "10px", textAlign: "left" }}>English Name</th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Phone Number</th>
-                <th style={{ padding: "10px", textAlign: "left", borderRadius: "0 8px 0 0" }}>Email</th>
+                <th style={{ padding: "10px", textAlign: "left" }}>{translations[language].phone}</th>
+                <th style={{ padding: "10px", textAlign: "left", borderRadius: "0 8px 0 0" }}>{translations[language].email}</th>
               </tr>
             </thead>
             <tbody>
@@ -312,11 +314,11 @@ export default function Chart({
             )}
             <text x="140" y="125" textAnchor="middle" fontSize="22"
               fill={darkMode ? "#60a5fa" : "#5b8dc4"} fontWeight="500">
-              {presentPercentage}% Present
+              {presentPercentage}% {translations[language].present}
             </text>
             <text x="140" y="155" textAnchor="middle" fontSize="22"
               fill="#d4af37" fontWeight="500">
-              {absentPercentage}% Absent
+              {absentPercentage}% {translations[language].absent}
             </text>
             {totalRelevantDays > 0 && (
               <text x="140" y="182" textAnchor="middle" fontSize="13"
@@ -340,9 +342,9 @@ export default function Chart({
             <br />
             {taInfo.address}
             <br />
-            Emergency Phone: {taInfo.emergencyPhone}
+            {translations[language].emergencyPhone}: {taInfo.emergencyPhone}
             <br />
-            Notes: {taInfo.notes}
+            {translations[language].notes}: {taInfo.notes}
           </p>
         </div>
 
@@ -366,7 +368,7 @@ export default function Chart({
             </div>
           </div>
           <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: headingColor }}>
-            {totalHours.toFixed(2)}/300 Hours Completed
+            {totalHours.toFixed(2)}/300 {translations[language].hoursCompleted}
           </p>
         </div>
       </div>

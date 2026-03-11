@@ -6,6 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 import logo from '../assets/logo.png';
 import Chart from "./Chart";
+import { translations, Language } from './translations';
 
 // Type definitions
 interface UserLocation {
@@ -14,46 +15,44 @@ interface UserLocation {
   accuracy: number;
 }
 
-type Language = 'en' | 'ko';
-
-interface Translations {
-  [key: string]: {
-    assignedClassroom: string;
-    firstName: string;
-    lastName: string;
-    koreanName: string;
-    date: string;
-    attendance: string;
-    clockIn: string;
-    clockOut: string;
-    elapsedTime: string;
-    notes: string;
-    settings: string;
-    signOut: string;
-    present: string;
-    tardy: string;
-    earlyLeave: string;
-    parentInformation: string;
-    phone: string;
-    email: string;
-    totalHours: string;
-    emergencyPhone: string;
-    analytics: string;
-    hoursCompleted: string;
-    hoursByMonth: string;
-    appearance: string;
-    account: string;
-    privacy: string;
-    languagePreferences: string;
-    theme: string;
-    textIconSize: string;
-    noNotes: string,
-    lightMode: string,
-    darkMode: string,
-    english: string,
-    korean: string
-  };
-}
+// interface Translations {
+//   [key: string]: {
+//     assignedClassroom: string;
+//     firstName: string;
+//     lastName: string;
+//     koreanName: string;
+//     date: string;
+//     attendance: string;
+//     clockIn: string;
+//     clockOut: string;
+//     elapsedTime: string;
+//     notes: string;
+//     settings: string;
+//     signOut: string;
+//     present: string;
+//     tardy: string;
+//     earlyLeave: string;
+//     parentInformation: string;
+//     phone: string;
+//     email: string;
+//     totalHours: string;
+//     emergencyPhone: string;
+//     analytics: string;
+//     hoursCompleted: string;
+//     hoursByMonth: string;
+//     appearance: string;
+//     account: string;
+//     privacy: string;
+//     languagePreferences: string;
+//     theme: string;
+//     textIconSize: string;
+//     noNotes: string,
+//     lightMode: string,
+//     darkMode: string,
+//     english: string,
+//     korean: string
+//   };
+// }
 
 interface ElapsedTime {
   hours: number;
@@ -131,31 +130,6 @@ const getUserLocation = (): Promise<UserLocation> => {
     );
   });
 };
-
-const translations: Translations = {
-    en: {
-      assignedClassroom: "Assigned Classroom", firstName: "First Name", lastName: "Last Name", koreanName: "Korean Name",
-      date: "Date", attendance: "Attendance", clockIn: "Clock In", clockOut: "Clock Out",
-      elapsedTime: "Elapsed Time", notes: "Notes", settings: "Settings", signOut: "Sign Out",
-      present: "Present", tardy: "Tardy", earlyLeave: "Early Leave", parentInformation: "Parent Information",
-      phone: "Phone", email: "Email", totalHours: "Total Hours", emergencyPhone: "Emergency Phone",
-      analytics: "Analytics", hoursCompleted: "Hours Completed", hoursByMonth: "Hours by Month",
-      appearance: "Appearance", account: "Account", privacy: "Privacy", languagePreferences: "Language Preferences",
-      theme: "Theme", textIconSize: "Text/Icon Size", noNotes: "No notes", lightMode: "Light Mode", darkMode: "Dark Mode", 
-      english: "English", korean: "Korean"
-    },
-    ko: {
-      assignedClassroom: "교실", firstName: "이름", lastName: "성", koreanName: "한국어 이름",
-      date: "날짜", attendance: "출석", clockIn: "출근 시간", clockOut: "퇴근 시간",
-      elapsedTime: "Elapsed Time", notes: "기타사항", settings: "설정", signOut: "로그아웃",
-      present: "출석", tardy: "지각", earlyLeave: "조퇴", parentInformation: "보호자 정보",
-      phone: "전화번호", email: "Email", totalHours: "총 시간", emergencyPhone: "비상 전화",
-      analytics: "통계", hoursCompleted: "총 시간", hoursByMonth: "월별 시간",
-      appearance: "웹사이트 외모", account: "계정", privacy: "개인 정보", languagePreferences: "언어 설정",
-      theme: "테마", textIconSize: "텍스트/아이콘 크기", noNotes: "기티사항 없음", lightMode: "라이트 모드", darkMode: "다크 모드",
-      english: "영어", korean: "한국어"
-    }
-  };
 
 // Helper function for bar graph
 const parseElapsedToHours = (elapsed: string | null): number => {
@@ -1019,6 +993,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
           monthLabels={monthLabels}
           shifts={taData}
           totalHours={totalHours}
+          language={language}
         />
       )}
 
