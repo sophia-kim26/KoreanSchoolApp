@@ -47,7 +47,11 @@ interface Translations {
     languagePreferences: string;
     theme: string;
     textIconSize: string;
-    noNotes: string
+    noNotes: string,
+    lightMode: string,
+    darkMode: string,
+    english: string,
+    korean: string
   };
 }
 
@@ -137,7 +141,8 @@ const translations: Translations = {
       phone: "Phone", email: "Email", totalHours: "Total Hours", emergencyPhone: "Emergency Phone",
       analytics: "Analytics", hoursCompleted: "Hours Completed", hoursByMonth: "Hours by Month",
       appearance: "Appearance", account: "Account", privacy: "Privacy", languagePreferences: "Language Preferences",
-      theme: "Theme", textIconSize: "Text/Icon Size", noNotes: "No notes"
+      theme: "Theme", textIconSize: "Text/Icon Size", noNotes: "No notes", lightMode: "Light Mode", darkMode: "Dark Mode", 
+      english: "English", korean: "Korean"
     },
     ko: {
       assignedClassroom: "교실", firstName: "이름", lastName: "성", koreanName: "한국어 이름",
@@ -147,7 +152,8 @@ const translations: Translations = {
       phone: "전화번호", email: "Email", totalHours: "총 시간", emergencyPhone: "비상 전화",
       analytics: "통계", hoursCompleted: "총 시간", hoursByMonth: "월별 시간",
       appearance: "웹사이트 외모", account: "계정", privacy: "개인 정보", languagePreferences: "언어 설정",
-      theme: "테마", textIconSize: "텍스트/아이콘 크기", noNotes: "기티사항 없음"
+      theme: "테마", textIconSize: "텍스트/아이콘 크기", noNotes: "기티사항 없음", lightMode: "라이트 모드", darkMode: "다크 모드",
+      english: "영어", korean: "한국어"
     }
   };
 
@@ -780,7 +786,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Present';
+                  (button as HTMLElement).textContent = translations[language].present;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
@@ -803,7 +809,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Tardy';
+                  (button as HTMLElement).textContent = translations[language].tardy;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
@@ -826,7 +832,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Early Leave';
+                  (button as HTMLElement).textContent = translations[language].earlyLeave;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
@@ -1162,7 +1168,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               >
                 ←
               </button>
-              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
+              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>{translations[language].settings}</h2>
             </div>
 
             <div style={{ 
@@ -1234,7 +1240,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                           color: language === lang ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#d1d5db' : '#374151'),
                           border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                           borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                        }}>{lang === 'en' ? 'English' : 'Korean'}</button>
+                        }}>{lang === 'en' ? translations[language].english : translations[language].korean}</button>
                       ))}
                     </div>
                   </div>
@@ -1255,7 +1261,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         fontSize: '14px',
                         fontWeight: '500'
                       }}>
-                      Light Mode
+                      {translations[language].lightMode}
                     </button>
                     <button
                       onClick={() => setDarkMode(true)}
@@ -1268,7 +1274,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         cursor: 'pointer',
                         fontSize: '14px'
                       }}>
-                      Dark Mode
+                      {translations[language].darkMode}
                     </button>
                   </div>
 
