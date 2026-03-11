@@ -228,7 +228,7 @@ export default function Chart({
         <div style={{ width: "800px" }}>
           <Bar data={barData} options={barOptions} />
           <p style={{ marginTop: "12px", fontWeight: "bold", color: darkMode ? "#f9fafb" : "inherit" }}>
-            Total Hours: {totalHours}
+            Total Hours: {Math.round(totalHours)}
           </p>
         </div>
 
