@@ -1222,14 +1222,17 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               {activeTab === 'appearance' && (
                 <>
                   <div style={{ marginBottom: 30 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Language Preferences</h3>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
+                      Language Preferences
+                    </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {(['en', 'ko'] as Language[]).map(lang => (
                         <button key={lang} onClick={() => setLanguage(lang)} style={{
                           padding: '10px 30px',
-                          background: language === lang ? (dm ? '#1e3a5f' : '#bfdbfe') : (dm ? '#273549' : 'white'),
-                          color: language === lang ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#d1d5db' : '#374151'),
-                          border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
+                          background: language === lang ? (darkMode ? '#1e3a5f' : '#bfdbfe') : (darkMode ? '#273549' : 'white'),
+                          color: language === lang ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#d1d5db' : '#374151'),
+                          border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
+                          borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
                         }}>{lang === 'en' ? 'English' : 'Korean'}</button>
                       ))}
                     </div>
