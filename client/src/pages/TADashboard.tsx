@@ -875,7 +875,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         }, [
           h('span', {
             style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
-          }, currentNotes || 'No notes'),
+          }, currentNotes || translations[language].noNotes),
           h('button', {
             style: `
               background: none;
