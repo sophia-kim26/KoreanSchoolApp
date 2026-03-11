@@ -36,7 +36,7 @@ app.set('trust proxy', 1);
 // Remove the 'const express = require' lines entirely
 app.use(cors({
   origin: ["https://korean-school-app-2.vercel.app", "http://localhost:5173"],
-  methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
+  methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS", "PATCH"],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

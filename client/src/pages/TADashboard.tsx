@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "preact";
 import "gridjs/dist/theme/mermaid.css";
@@ -6,6 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 import logo from '../assets/logo.png';
 import Chart from "./Chart";
+import { translations, Language } from './translations';
 
 // Type definitions
 interface UserLocation {
@@ -13,6 +14,45 @@ interface UserLocation {
   longitude: number;
   accuracy: number;
 }
+
+// interface Translations {
+//   [key: string]: {
+//     assignedClassroom: string;
+//     firstName: string;
+//     lastName: string;
+//     koreanName: string;
+//     date: string;
+//     attendance: string;
+//     clockIn: string;
+//     clockOut: string;
+//     elapsedTime: string;
+//     notes: string;
+//     settings: string;
+//     signOut: string;
+//     present: string;
+//     tardy: string;
+//     earlyLeave: string;
+//     parentInformation: string;
+//     phone: string;
+//     email: string;
+//     totalHours: string;
+//     emergencyPhone: string;
+//     analytics: string;
+//     hoursCompleted: string;
+//     hoursByMonth: string;
+//     appearance: string;
+//     account: string;
+//     privacy: string;
+//     languagePreferences: string;
+//     theme: string;
+//     textIconSize: string;
+//     noNotes: string,
+//     lightMode: string,
+//     darkMode: string,
+//     english: string,
+//     korean: string
+//   };
+// }
 
 interface ElapsedTime {
   hours: number;
@@ -91,6 +131,14 @@ const getUserLocation = (): Promise<UserLocation> => {
   });
 };
 
+// Helper function for bar graph
+const parseElapsedToHours = (elapsed: string | null): number => {
+  if (!elapsed) return 0;
+  const match = elapsed.match(/(\d+)hr(\d+)min/);
+  if (!match) return 0;
+  return parseInt(match[1]) + parseInt(match[2]) / 60;
+};
+
 // Helper function to format date
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
@@ -120,11 +168,13 @@ const TEXT_SIZE_MAP: Record<TextSize, string> = {
   L: '20px',
 };
 
+
 function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const [data, setData] = useState<Shift[]>([]);
   const [clockedIn, setClockedIn] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('appearance');
+  const [language, setLanguage] = useState<Language>('en');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('ta_dark_mode') === 'true';
   });
@@ -365,13 +415,15 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   // autologout when you close the tab or window
   useEffect(() => {
-    const handleBeforeUnload = (): void => {
-      localStorage.removeItem('current_ta_user');
-      sessionStorage.setItem('ta_session_ended', 'true');
+    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
+      // Only treat as session end if the tab is actually closing
+      // not during React router navigation
+      if (!e.defaultPrevented) {
+        localStorage.removeItem('current_ta_user');
+        sessionStorage.setItem('ta_session_ended', 'true');
+      }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -409,16 +461,52 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     ? data.filter(row => row.ta_id === currentUser.id)
     : [];
 
+  const totalHours = taData.reduce((sum, shift) => {
+  if (!shift.clock_in || !shift.clock_out) return sum;
+  const hours = (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60);
+  return sum + (hours > 0 ? hours : 0);
+}, 0);
+
+  // 2. Add this inside the component, right after taData is defined
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+
+  const { monthlyHours, monthLabels } = (() => {
+    const now = new Date();
+    const schoolYearStart = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    
+    const months: { year: number; month: number }[] = [];
+    for (let m = 8; m <= 11; m++) months.push({ year: schoolYearStart, month: m });
+    for (let m = 0; m <= now.getMonth() && schoolYearStart + 1 <= now.getFullYear(); m++) {
+      months.push({ year: schoolYearStart + 1, month: m });
+    }
+
+    const monthlyHours = months.map(({ year, month }) =>
+      Math.round(
+        taData
+          .filter(shift => {
+            const d = new Date(shift.clock_in);
+            return d.getFullYear() === year && d.getMonth() === month;
+          })
+          .reduce((sum, shift) => sum + parseElapsedToHours(shift.elapsed_time as unknown as string), 0)
+        * 10) / 10
+    );
+
+    const monthLabels = months.map(({ month }) => MONTH_NAMES[month]);
+    return { monthlyHours, monthLabels };
+  })();
+    
   // Updated grid data with formatted date and time
-  const gridData: (string | number | null)[][] = taData.map(row => [
-    row.id,
-    formatDate(row.clock_in),
-    row.attendance,
-    formatTime(row.clock_in),
-    formatTime(row.clock_out),
-    row.elapsed_time,
-    row.notes
-  ]);
+  const gridData = useMemo(() => 
+    taData.map(row => [
+      row.id,
+      formatDate(row.clock_in),
+      row.attendance,
+      formatTime(row.clock_in),
+      formatTime(row.clock_out),
+      row.elapsed_time,
+      row.notes
+    ]), [taData]);
 
   const handleSignOut = (): void => {
     localStorage.removeItem('current_ta_user');
@@ -507,20 +595,22 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       return;
     }
 
-    try {
-      const requestBody = {
-        clock_out: time.toISOString(),
-        elapsed_time: elapsedTimeText
-      };
-      
-      console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
-      console.log("Request body:", JSON.stringify(requestBody, null, 2));
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify(requestBody)
-      });
+  try {
+    const requestBody = {
+      clock_out: time.toISOString(),
+      elapsed_time: elapsedTimeText
+    };
+    
+    console.log("Sending PUT request to:", `${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`);
+    console.log("Request body:", JSON.stringify(requestBody, null, 2));
+    
+    // const token = await getAccessTokenSilently();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      // headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(requestBody)
+    });
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
@@ -574,9 +664,231 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
+  // Add this helper inside the formatter, before the return:
+  const translateStatus = (status: string) => {
+    if (status === 'Tardy') return translations[language].tardy;
+    if (status === 'Early Leave') return translations[language].earlyLeave;
+    return translations[language].present;
+  };
+
+
+  const gridColumns = useMemo(() => [
+    {
+      name: "ID",
+      hidden: true
+    },
+    {
+      name: translations[language].date,
+      width: '120px'
+    },
+    {
+      name: translations[language].attendance,
+      width: '140px',
+      formatter: (cell: any, row: any) => {
+        const shiftId = row.cells[0].data;
+        const dropdownId = `dropdown-${shiftId}`;
+        const buttonId = `btn-${shiftId}`;
+        
+        const getColors = (status: string): { bg: string; text: string } => {
+          if (status === 'Tardy') {
+            return { bg: '#fef3c7', text: '#92400e' };
+          } else if (status === 'Early Leave') {
+            return { bg: '#dbeafe', text: '#1e40af' };
+          } else {
+            return { bg: '#c4e9d1ff', text: '#166534' };
+          }
+        };
+        
+        const colors = getColors(cell);
+        
+        return h('div', {
+          style: 'position: relative; display: inline-block;'
+        }, [
+          h('button', {
+            id: buttonId,
+            style: `
+              display: inline-block;
+              padding: 6px 16px;
+              border-radius: 4px;
+              font-weight: 500;
+              font-size: 13px;
+              background-color: ${colors.bg};
+              color: ${colors.text};
+              border: none;
+              cursor: pointer;
+              transition: opacity 0.2s;
+            `,
+            onmouseover: function(this: HTMLElement) { 
+              this.style.opacity = '0.8'; 
+            },
+            onmouseout: function(this: HTMLElement) { 
+              this.style.opacity = '1'; 
+            },
+            onclick: (e: Event) => {
+              e.stopPropagation();
+              const dropdown = document.getElementById(dropdownId);
+              const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+              allDropdowns.forEach(d => {
+                if (d.id !== dropdownId) (d as HTMLElement).style.display = 'none';
+              });
+              if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+              }
+            }
+          }, translateStatus(cell || 'Present')),
+          h('div', {
+            id: dropdownId,
+            style: `
+              display: none;
+              position: absolute;
+              top: 100%;
+              left: 0;
+              margin-top: 4px;
+              background: white;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+              z-index: 1000;
+              min-width: 120px;
+            `
+          }, [
+            h('div', {
+              style: `
+                padding: 8px 12px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background-color 0.2s;
+              `,
+              onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+              onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+              onclick: (e: Event) => {
+                e.stopPropagation();
+                const button = document.getElementById(buttonId);
+                const colors = getColors('Present');
+                if (button) {
+                  (button as HTMLElement).style.backgroundColor = colors.bg;
+                  (button as HTMLElement).style.color = colors.text;
+                  (button as HTMLElement).textContent = translations[language].present;
+                }
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) dropdown.style.display = 'none';
+                toggleAttendance(shiftId, 'Present');
+              }
+            }, translations[language].present),
+            h('div', {
+              style: `
+                padding: 8px 12px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background-color 0.2s;
+              `,
+              onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+              onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+              onclick: (e: Event) => {
+                e.stopPropagation();
+                const button = document.getElementById(buttonId);
+                const colors = getColors('Tardy');
+                if (button) {
+                  (button as HTMLElement).style.backgroundColor = colors.bg;
+                  (button as HTMLElement).style.color = colors.text;
+                  (button as HTMLElement).textContent = translations[language].tardy;
+                }
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) dropdown.style.display = 'none';
+                toggleAttendance(shiftId, 'Tardy');
+              }
+            }, translations[language].tardy),
+            h('div', {
+              style: `
+                padding: 8px 12px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background-color 0.2s; 
+              `,
+              onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
+              onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
+              onclick: (e: Event) => {
+                e.stopPropagation();
+                const button = document.getElementById(buttonId);
+                const colors = getColors('Early Leave');
+                if (button) {
+                  (button as HTMLElement).style.backgroundColor = colors.bg;
+                  (button as HTMLElement).style.color = colors.text;
+                  (button as HTMLElement).textContent = translations[language].earlyLeave;
+                }
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) dropdown.style.display = 'none';
+                toggleAttendance(shiftId, 'Early Leave');
+              }
+            }, translations[language].earlyLeave),
+          ])
+        ]);
+      }
+    },
+    {
+      name: translations[language].clockIn,
+      width: '120px'
+    },
+    {
+      name: translations[language].clockOut,
+      width: '120px'
+    },
+    {
+      name: translations[language].elapsedTime,
+      width: '130px'
+    },
+    {
+      name: translations[language].notes,
+      width: '200px',
+      formatter: (cell: any, row: any) => {
+        const shiftId = row.cells[0].data;
+        const currentNotes = cell || '';
+        
+        return h('div', {
+          style: 'display: flex; align-items: center; gap: 8px;'
+        }, [
+          h('span', {
+            style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
+          }, currentNotes || translations[language].noNotes),
+          h('button', {
+            style: `
+              background: none;
+              border: none;
+              cursor: pointer;
+              padding: 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #6b7280;
+              transition: color 0.2s;
+            `,
+            onmouseover: function(this: HTMLElement) { this.style.color = '#1e40af'; },
+            onmouseout: function(this: HTMLElement) { this.style.color = '#6b7280'; },
+            onclick: (e: Event) => {
+              e.stopPropagation();
+              handleEditNotes(shiftId, currentNotes);
+            },
+            title: 'Edit notes'
+          }, 
+          h('svg', {
+            width: '16',
+            height: '16',
+            viewBox: '0 0 24 24',
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+          }, [
+            h('path', { d: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z' })
+          ]))
+        ]);
+      }
+    }
+  ], [language]);
+
   // Derive the active font size for inline use where CSS var may not cascade
   const activeFontSize = TEXT_SIZE_MAP[textSize];
-
   return (
     <div
       className={`page-container${darkMode ? ' dark-mode' : ''}`}
@@ -603,7 +915,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={clockedIn}
             >
-              Clock In
+              {translations[language].clockIn}
             </button>
             
             <button
@@ -611,19 +923,19 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={!clockedIn}
             >
-              Clock Out
+              {translations[language].clockOut}
             </button>
             <button 
               onClick={() => setShowSettingsModal(true)}
               className="btn-settings"
             >
-              Settings
+              {translations[language].settings}
             </button>
             <button 
               onClick={handleSignOut}
               className="btn-danger"
             >
-              Sign Out
+              {translations[language].signOut}
             </button>
           </div>
       </div>
@@ -641,7 +953,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         fontWeight: "500",
         color: darkMode ? "#93c5fd" : "#0c4a6e"
       }}>
-        <strong>Assigned Classroom:</strong> {assignedClassroom}
+        <strong>{translations[language].assignedClassroom}: </strong> {assignedClassroom}
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
@@ -662,218 +974,28 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <p>No data found.</p>
       ) : (
           <Grid
-            key={JSON.stringify(data)}
+              key={`ta-shifts-grid-${language}`}
             data={gridData}
-            columns={[
-              {
-                name: "ID",
-                hidden: true
-              },
-              "Date",
-              {
-                name: "Attendance",
-                width: '120px',
-                formatter: (cell: any, row: any) => {
-                  const shiftId = row.cells[0].data;
-                  const dropdownId = `dropdown-${shiftId}`;
-                  const buttonId = `btn-${shiftId}`;
-                  
-                  const getColors = (status: string): { bg: string; text: string } => {
-                    if (status === 'Tardy') {
-                      return { bg: '#fef3c7', text: '#92400e' };
-                    } else if (status === 'Early Leave') {
-                      return { bg: '#dbeafe', text: '#1e40af' };
-                    } else {
-                      return { bg: '#c4e9d1ff', text: '#166534' };
-                    }
-                  };
-                  
-                  const colors = getColors(cell);
-                  
-                  return h('div', {
-                    style: 'position: relative; display: inline-block;'
-                  }, [
-                    h('button', {
-                      id: buttonId,
-                      style: `
-                        display: inline-block;
-                        padding: 6px 16px;
-                        border-radius: 4px;
-                        font-weight: 500;
-                        font-size: 13px;
-                        background-color: ${colors.bg};
-                        color: ${colors.text};
-                        border: none;
-                        cursor: pointer;
-                        transition: opacity 0.2s;
-                      `,
-                      onmouseover: function(this: HTMLElement) { 
-                        this.style.opacity = '0.8'; 
-                      },
-                      onmouseout: function(this: HTMLElement) { 
-                        this.style.opacity = '1'; 
-                      },
-                      onclick: (e: Event) => {
-                        e.stopPropagation();
-                        const dropdown = document.getElementById(dropdownId);
-                        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
-                        allDropdowns.forEach(d => {
-                          if (d.id !== dropdownId) (d as HTMLElement).style.display = 'none';
-                        });
-                        if (dropdown) {
-                          dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                        }
-                      }
-                    }, cell || 'Present'),
-                    h('div', {
-                      id: dropdownId,
-                      style: `
-                        display: none;
-                        position: absolute;
-                        top: 100%;
-                        left: 0;
-                        margin-top: 4px;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 4px;
-                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-                        z-index: 1000;
-                        min-width: 120px;
-                      `
-                    }, [
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e: Event) => {
-                          e.stopPropagation();
-                          const button = document.getElementById(buttonId);
-                          const colors = getColors('Present');
-                          if (button) {
-                            (button as HTMLElement).style.backgroundColor = colors.bg;
-                            (button as HTMLElement).style.color = colors.text;
-                            (button as HTMLElement).textContent = 'Present';
-                          }
-                          const dropdown = document.getElementById(dropdownId);
-                          if (dropdown) dropdown.style.display = 'none';
-                          toggleAttendance(shiftId, 'Present');
-                        }
-                      }, 'Present'),
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s;
-                        `,
-                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e: Event) => {
-                          e.stopPropagation();
-                          const button = document.getElementById(buttonId);
-                          const colors = getColors('Tardy');
-                          if (button) {
-                            (button as HTMLElement).style.backgroundColor = colors.bg;
-                            (button as HTMLElement).style.color = colors.text;
-                            (button as HTMLElement).textContent = 'Tardy';
-                          }
-                          const dropdown = document.getElementById(dropdownId);
-                          if (dropdown) dropdown.style.display = 'none';
-                          toggleAttendance(shiftId, 'Tardy');
-                        }
-                      }, 'Tardy'),
-                      h('div', {
-                        style: `
-                          padding: 8px 12px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          transition: background-color 0.2s; 
-                        `,
-                        onmouseover: function(this: HTMLElement) { this.style.backgroundColor = '#f3f4f6'; },
-                        onmouseout: function(this: HTMLElement) { this.style.backgroundColor = 'transparent'; },
-                        onclick: (e: Event) => {
-                          e.stopPropagation();
-                          const button = document.getElementById(buttonId);
-                          const colors = getColors('Early Leave');
-                          if (button) {
-                            (button as HTMLElement).style.backgroundColor = colors.bg;
-                            (button as HTMLElement).style.color = colors.text;
-                            (button as HTMLElement).textContent = 'Early Leave';
-                          }
-                          const dropdown = document.getElementById(dropdownId);
-                          if (dropdown) dropdown.style.display = 'none';
-                          toggleAttendance(shiftId, 'Early Leave');
-                        }
-                      }, 'Early Leave'),
-                    ])
-                  ]);
-                }
-              },
-              "Clock In",
-              "Clock Out",
-              "Elapsed Time",
-              {
-                name: "Notes",
-                formatter: (cell: any, row: any) => {
-                  const shiftId = row.cells[0].data;
-                  const currentNotes = cell || '';
-                  
-                  return h('div', {
-                    style: 'display: flex; align-items: center; gap: 8px;'
-                  }, [
-                    h('span', {
-                      style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
-                    }, currentNotes || 'No notes'),
-                    h('button', {
-                      style: `
-                        background: none;
-                        border: none;
-                        cursor: pointer;
-                        padding: 4px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #6b7280;
-                        transition: color 0.2s;
-                      `,
-                      onmouseover: function(this: HTMLElement) { this.style.color = '#1e40af'; },
-                      onmouseout: function(this: HTMLElement) { this.style.color = '#6b7280'; },
-                      onclick: (e: Event) => {
-                        e.stopPropagation();
-                        handleEditNotes(shiftId, currentNotes);
-                      },
-                      title: 'Edit notes'
-                    }, 
-                    h('svg', {
-                      width: '16',
-                      height: '16',
-                      viewBox: '0 0 24 24',
-                      fill: 'none',
-                      stroke: 'currentColor',
-                      'stroke-width': '2',
-                      'stroke-linecap': 'round',
-                      'stroke-linejoin': 'round'
-                    }, [
-                      h('path', { d: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z' })
-                    ]))
-                  ]);
-                }
-              }
-            ]}
+            columns={gridColumns}
             search={true}
-            pagination={{ limit: 4 }}
+            pagination={{ limit: 8 }}
             sort={true}
           />
       )}
 
       <h1 className="page-title" style={{ marginTop: "20px" }}>Volunteer Hours for {taName}</h1>
       <h1>Hours by month</h1>
-      {currentUser && <Chart currentUser={currentUser} darkMode={darkMode} />}
+      {currentUser && (
+        <Chart
+          currentUser={currentUser}
+          darkMode={darkMode}
+          monthlyHours={monthlyHours}
+          monthLabels={monthLabels}
+          shifts={taData}
+          totalHours={totalHours}
+          language={language}
+        />
+      )}
 
 
       {/* Notes Edit Modal */}
@@ -1028,7 +1150,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               >
                 ←
               </button>
-              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
+              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>{translations[language].settings}</h2>
             </div>
 
             <div style={{ 
@@ -1050,7 +1172,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'appearance' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Appearance
+                {translations[language].appearance}
               </button>
               <button 
                 onClick={() => setActiveTab('account')}
@@ -1063,7 +1185,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'account' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Account
+                {translations[language].account}
               </button>
               <button 
                 onClick={() => setActiveTab('privacy')}
@@ -1076,7 +1198,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'privacy' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Privacy
+                {translations[language].privacy}
               </button>
             </div>
 
@@ -1090,21 +1212,24 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 <>
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Language Preferences
+                      {translations[language].languagePreferences}
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: darkMode ? '#f9fafb' : 'inherit' }}>
-                        English
-                      </button>
-                      <button style={{ padding: '10px 30px', background: darkMode ? '#273549' : 'white', border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-                        Korean
-                      </button>
+                      {(['en', 'ko'] as Language[]).map(lang => (
+                        <button key={lang} onClick={() => setLanguage(lang)} style={{
+                          padding: '10px 30px',
+                          background: language === lang ? (darkMode ? '#1e3a5f' : '#bfdbfe') : (darkMode ? '#273549' : 'white'),
+                          color: language === lang ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#d1d5db' : '#374151'),
+                          border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
+                          borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
+                        }}>{lang === 'en' ? translations[language].english : translations[language].korean}</button>
+                      ))}
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Theme
+                      {translations[language].theme}
                     </h3>
                     <button
                       onClick={() => setDarkMode(false)}
@@ -1118,7 +1243,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         fontSize: '14px',
                         fontWeight: '500'
                       }}>
-                      Light Mode
+                      {translations[language].lightMode}
                     </button>
                     <button
                       onClick={() => setDarkMode(true)}
@@ -1131,14 +1256,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         cursor: 'pointer',
                         fontSize: '14px'
                       }}>
-                      Dark Mode
+                      {translations[language].darkMode}
                     </button>
                   </div>
 
                   {/* Text / Icon Size */}
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Text/Icon Size
+                      {translations[language].textIconSize}
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {(['S', 'M', 'L'] as TextSize[]).map((size) => (

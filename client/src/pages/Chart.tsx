@@ -1,7 +1,7 @@
 // FOR TA DASHBOARD!!
-
-import { useState, useEffect } from "react";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { useState, useEffect, useMemo } from "react";
+import { Bar } from "react-chartjs-2";
+import { translations, Language } from './translations';
 import {
   Chart as ChartJS,
   BarElement,
@@ -39,128 +39,178 @@ interface Parent {
 interface ChartProps {
   currentUser: User;
   darkMode?: boolean;
+  monthlyHours?: number[];
+  monthLabels?: string[];
+  shifts?: Shift[];
+  totalHours?: number;
+  language?: Language;  // add this
+}
+
+interface Shift {
+  id: number;
+  ta_id: number;
+  clock_in: string;
+  clock_out: string | null;
+  elapsed_time: number | null;
+  attendance: string;
+  notes: string;
 }
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement);
 
-export default function Chart({ currentUser, darkMode = false }: ChartProps) {
-    const [parents, setParents] = useState<Parent[]>([]);
+export default function Chart({
+  currentUser,
+  darkMode = false,
+  monthlyHours = [],
+  monthLabels = [],
+  shifts = [],
+  totalHours = 0,
+  language = 'en'
+}: ChartProps) {
+  const [parents, setParents] = useState<Parent[]>([]);
+  const [fullTA, setFullTA] = useState<any>(null);
+  const [calendarDates, setCalendarDates] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
-      const fetchParents = async () => {
-        if (!currentUser?.id) return;
-        
-        try {
-          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setParents(data);
-          } else {
-            setParents([]);
-          }
-        } catch (error) {
-          console.error('Error fetching parents:', error);
+  useEffect(() => {
+    const fetchParents = async () => {
+      if (!currentUser?.id) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setParents(data);
+        } else {
           setParents([]);
         }
-      };
-
-      fetchParents();
-    }, [currentUser?.id]);
-
-    const taInfo = {
-      firstName: currentUser.first_name || "First Name",
-      lastName: currentUser?.last_name || "Last Name",
-      email: currentUser?.email || "email@example.com",
-      phone: currentUser?.phone || "123-456-7890",
-      highschool : currentUser?.highschool || "Bergen County Academies",
-      grade : currentUser?.grade || "12",
-      age : currentUser?.age || "17",
-      gender : currentUser?.gender || "F",
-      address: currentUser?.address || "433 Ivy Avenue, Haworth NJ",
-      emergencyPhone: currentUser?.emergencyPhone || "123-456-7890",
-      notes: currentUser?.notes || "No notes",
-      hoursCompleted: 250,
-      totalHoursRequired: 300,
-      parents: parents.length > 0 ? parents : [
-        {
-          koreanName: "한국이름",
-          englishName: "Parent Name",
-          phone: "123-456-7890",
-          email: "parent@example.com"
-        }
-      ]
+      } catch (error) {
+        console.error('Error fetching parents:', error);
+        setParents([]);
+      }
     };
+    fetchParents();
+  }, [currentUser?.id]);
 
-  const dataValues = [12, 19, 40, 30, 5];
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
+      .then(res => res.json())
+      .then(data => setFullTA(data))
+      .catch(err => console.error('Failed to fetch TA info:', err));
+  }, [currentUser?.id]);
 
-  const barData = {
-    labels: ["September", "October", "November", "December", "January"],
-    datasets: [
+  // Fetch calendar dates — same endpoint as VPDashboard / VPTAView
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.dates && Array.isArray(json.dates)) {
+          setCalendarDates(new Set(json.dates));
+        }
+      })
+      .catch(err => console.error('Failed to fetch calendar dates:', err));
+  }, []);
+
+  const taInfo = {
+    firstName: fullTA?.first_name || currentUser.first_name,
+    lastName: fullTA?.last_name || currentUser.last_name,
+    email: fullTA?.email || currentUser?.email,
+    phone: fullTA?.phone || "Not provided",
+    highschool: fullTA?.high_school || "Not provided",
+    grade: fullTA?.grade || "N/A",
+    age: fullTA?.age || "N/A",
+    gender: fullTA?.gender || "N/A",
+    address: fullTA?.address || "Not provided",
+    emergencyPhone: fullTA?.emergency_phone || "Not provided",
+    notes: fullTA?.notes || translations[language].noNotes,
+    parents: parents.length > 0 ? parents : [
       {
-        label: "Hours",
-        data: dataValues,
-        backgroundColor: [darkMode ? "#3b82f6" : "#bfdbfe"]
+        koreanName: "한국이름",
+        englishName: "Parent Name",
+        phone: "123-456-7890",
+        email: "parent@example.com"
       }
     ]
   };
 
-  const totalHours = dataValues.reduce((sum, val) => sum + val, 0);
+  // --- Attendance calculation (identical to VPTAView) ---
+
+  // Parse YYYY-MM-DD as local midnight to avoid UTC day-offset errors
+  const parseDateLocal = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Slice ISO string directly — no Date conversion, no timezone drift
+  const shiftDateSet = useMemo((): Set<string> => {
+    const s = new Set<string>();
+    shifts.forEach(shift => {
+      if (shift.clock_in) s.add(shift.clock_in.slice(0, 10));
+    });
+    return s;
+  }, [shifts]);
+
+  // Past calendar dates matching this TA's session_day
+  const relevantPastDates = useMemo((): string[] => {
+    if (!fullTA?.session_day) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessionDay: string = fullTA.session_day;
+    return Array.from(calendarDates).filter(dateStr => {
+      const date = parseDateLocal(dateStr);
+      if (date >= today) return false;
+      const dow = date.getDay();
+      if (sessionDay === 'Friday') return dow === 5;
+      if (sessionDay === 'Saturday') return dow === 6;
+      if (sessionDay === 'Both') return dow === 5 || dow === 6;
+      return false;
+    });
+  }, [calendarDates, fullTA]);
+
+  const presentCount = useMemo(
+    () => relevantPastDates.filter(d => shiftDateSet.has(d)).length,
+    [relevantPastDates, shiftDateSet]
+  );
+  const absentCount = useMemo(
+    () => relevantPastDates.filter(d => !shiftDateSet.has(d)).length,
+    [relevantPastDates, shiftDateSet]
+  );
+  const totalRelevantDays = relevantPastDates.length;
+  const presentPercentage = totalRelevantDays > 0
+    ? Math.round((presentCount / totalRelevantDays) * 100)
+    : 0;
+  const absentPercentage = totalRelevantDays > 0 ? 100 - presentPercentage : 0;
+
+  // --- End attendance calculation ---
+
+  const dataValues = monthlyHours.length > 0 ? monthlyHours : [];
+
+  const barData = {
+    labels: monthLabels,
+    datasets: [
+      {
+        label: "Hours",
+        data: dataValues,
+        backgroundColor: darkMode ? "#3b82f6" : "#bfdbfe"
+      }
+    ]
+  };
 
   const barOptions = {
     scales: {
       y: {
         min: 0,
-        max: 50,
-        ticks: {
-          stepSize: 5,
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        title: {
-          display: true,
-          text: "Hours",
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        max: Math.max(10, Math.ceil(Math.max(...dataValues, 0) * 1.2)),
+        ticks: { stepSize: 5, color: darkMode ? "#9ca3af" : undefined },
+        title: { display: true, text: "Hours", color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       },
       x: {
-        ticks: {
-          color: darkMode ? "#9ca3af" : undefined
-        },
-        grid: {
-          color: darkMode ? "#374151" : "#feefbf"
-        }
+        ticks: { color: darkMode ? "#9ca3af" : undefined },
+        grid: { color: darkMode ? "#374151" : "#feefbf" }
       }
     },
     plugins: {
-      legend: {
-        labels: {
-          color: darkMode ? "#d1d5db" : undefined
-        }
-      }
-    }
-  };
-
-  const presentPercentage = Math.round(taInfo.hoursCompleted / taInfo.totalHoursRequired * 100);
-  const absentPercentage = 100 - presentPercentage;
-
-  const doughnutData = {
-    labels: ['Present', 'Absent'],
-    datasets: [
-      {
-        data: [presentPercentage, absentPercentage],
-        backgroundColor: darkMode ? ['#3b82f6', '#374151'] : ['#5b8dc4', '#f5f5dc'],
-        borderWidth: 0,
-        cutout: '75%'
-      }
-    ]
-  };
-
-  const doughnutOptions = {
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false }
+      legend: { labels: { color: darkMode ? "#d1d5db" : undefined } }
     }
   };
 
@@ -181,7 +231,7 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
         <div style={{ width: "800px" }}>
           <Bar data={barData} options={barOptions} />
           <p style={{ marginTop: "12px", fontWeight: "bold", color: darkMode ? "#f9fafb" : "inherit" }}>
-            Total Hours: {totalHours}
+            {translations[language].totalHours}: {Math.round(totalHours)}
           </p>
         </div>
 
@@ -195,20 +245,20 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
           boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
         }}>
           <h3 style={{ fontSize: "20px", color: headingColor, marginBottom: "20px", textAlign: "center" }}>
-            Parent Information
+            {translations[language].parentInformation}
           </h3>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
             <thead>
               <tr style={{ backgroundColor: darkMode ? "#1e3a5f" : "#5b8dc4", color: "white" }}>
-                <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>Korean Name</th>
+                <th style={{ padding: "10px", textAlign: "left", borderRadius: "8px 0 0 0" }}>{translations[language].koreanName}</th>
                 <th style={{ padding: "10px", textAlign: "left" }}>English Name</th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Phone Number</th>
-                <th style={{ padding: "10px", textAlign: "left", borderRadius: "0 8px 0 0" }}>Email</th>
+                <th style={{ padding: "10px", textAlign: "left" }}>{translations[language].phone}</th>
+                <th style={{ padding: "10px", textAlign: "left", borderRadius: "0 8px 0 0" }}>{translations[language].email}</th>
               </tr>
             </thead>
             <tbody>
               {taInfo.parents.map((parent, index) => (
-                <tr key={index} style={{ 
+                <tr key={index} style={{
                   backgroundColor: index % 2 === 0 ? rowEven : rowOdd,
                   borderBottom: `1px solid ${rowBorder}`
                 }}>
@@ -223,7 +273,7 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
         </div>
       </div>
 
-      {/* Profile Card */}
+      {/* Profile Card — SVG donut identical to VPTAView */}
       <div style={{
         width: "400px",
         backgroundColor: cardBg,
@@ -232,16 +282,51 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
         padding: "40px 30px",
         boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
       }}>
-        <div style={{ position: "relative", width: "250px", height: "250px", margin: "0 auto 20px" }}>
-          <Doughnut data={doughnutData} options={doughnutOptions} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "600", color: headingColor }}>
-              {presentPercentage}% Present
-            </div>
-            <div style={{ fontSize: "20px", color: "#d4af37" }}>
-              {absentPercentage}% Absent
-            </div>
-          </div>
+        {/* SVG Donut — exact same implementation as VPTAView */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
+          <svg width="280" height="280" viewBox="0 0 280 280">
+            {totalRelevantDays === 0 ? (
+              // No calendar dates configured yet — neutral grey ring
+              <circle
+                cx="140" cy="140" r="100" fill="none"
+                stroke={darkMode ? "#374151" : "#e5e7eb"}
+                strokeWidth="40"
+              />
+            ) : (
+              <>
+                <circle
+                  cx="140" cy="140" r="100" fill="none"
+                  stroke={darkMode ? "#3b82f6" : "#5b8dc4"}
+                  strokeWidth="40"
+                  strokeDasharray={`${presentPercentage * 6.283} 628.3`}
+                  strokeDashoffset="0"
+                  transform="rotate(-90 140 140)"
+                />
+                <circle
+                  cx="140" cy="140" r="100" fill="none"
+                  stroke={darkMode ? "#374151" : "#f5f5dc"}
+                  strokeWidth="40"
+                  strokeDasharray={`${absentPercentage * 6.283} 628.3`}
+                  strokeDashoffset={`-${presentPercentage * 6.283}`}
+                  transform="rotate(-90 140 140)"
+                />
+              </>
+            )}
+            <text x="140" y="125" textAnchor="middle" fontSize="22"
+              fill={darkMode ? "#60a5fa" : "#5b8dc4"} fontWeight="500">
+              {presentPercentage}% {translations[language].present}
+            </text>
+            <text x="140" y="155" textAnchor="middle" fontSize="22"
+              fill="#d4af37" fontWeight="500">
+              {absentPercentage}% {translations[language].absent}
+            </text>
+            {totalRelevantDays > 0 && (
+              <text x="140" y="182" textAnchor="middle" fontSize="13"
+                fill={darkMode ? "#6b7280" : "#9ca3af"}>
+                {presentCount}/{totalRelevantDays} days
+              </text>
+            )}
+          </svg>
         </div>
 
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -251,33 +336,39 @@ export default function Chart({ currentUser, darkMode = false }: ChartProps) {
           <p style={{ color: subtextColor, fontSize: "16px" }}>
             {taInfo.email} | {taInfo.phone}
             <br />
-            {taInfo.highschool} | {taInfo.grade}th grade
+            {taInfo.highschool} | {taInfo.grade}nd grade
             <br />
             {taInfo.age} years old | {taInfo.gender}
             <br />
             {taInfo.address}
             <br />
-            Emergency Phone: {taInfo.emergencyPhone}
+            {translations[language].emergencyPhone}: {taInfo.emergencyPhone}
             <br />
-            Notes: {taInfo.notes}
+            {translations[language].notes}: {taInfo.notes}
           </p>
         </div>
 
         <div style={{ marginTop: "20px" }}>
-          <div style={{ width: "100%", height: "40px", backgroundColor: progressBg, borderRadius: "20px", overflow: "hidden", position: "relative" }}>
+          <div style={{
+            width: "100%", height: "40px", backgroundColor: progressBg,
+            borderRadius: "20px", overflow: "hidden", position: "relative"
+          }}>
             <div style={{
-              width: `${(taInfo.hoursCompleted / taInfo.totalHoursRequired) * 100}%`,
+              width: `${Math.min((totalHours / 300) * 100, 100)}%`,
               height: "100%",
               backgroundColor: darkMode ? "#3b82f6" : "#5b8dc4",
               borderRadius: "20px",
               transition: "width 0.3s ease"
-            }}></div>
-            <div style={{ position: "absolute", right: "20px", top: "50%", transform: "translateY(-50%)", fontSize: "24px" }}>
+            }} />
+            <div style={{
+              position: "absolute", right: "20px", top: "50%",
+              transform: "translateY(-50%)", fontSize: "24px"
+            }}>
               🏅
             </div>
           </div>
           <p style={{ textAlign: "center", marginTop: "12px", fontSize: "18px", color: headingColor }}>
-            {taInfo.hoursCompleted}/{taInfo.totalHoursRequired} Hours Completed
+            {totalHours.toFixed(2)}/300 {translations[language].hoursCompleted}
           </p>
         </div>
       </div>
