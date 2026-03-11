@@ -1,6 +1,6 @@
 // FOR TA DASHBOARD!!
 import { useState, useEffect, useMemo } from "react";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   BarElement,
@@ -129,43 +129,36 @@ export default function Chart({
     ]
   };
 
-  // --- Attendance calculation based on calendar dates (mirrors VPTAView logic) ---
+  // --- Attendance calculation (identical to VPTAView) ---
 
-  // Parse a YYYY-MM-DD string as LOCAL midnight to avoid UTC day-offset errors
+  // Parse YYYY-MM-DD as local midnight to avoid UTC day-offset errors
   const parseDateLocal = (dateStr: string): Date => {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
 
-  // Build a set of dates this TA has a shift on, using the ISO string prefix
-  // directly (no Date conversion) to avoid timezone drift
+  // Slice ISO string directly — no Date conversion, no timezone drift
   const shiftDateSet = useMemo((): Set<string> => {
     const s = new Set<string>();
     shifts.forEach(shift => {
-      if (shift.clock_in) {
-        s.add(shift.clock_in.slice(0, 10)); // "2025-03-07"
-      }
+      if (shift.clock_in) s.add(shift.clock_in.slice(0, 10));
     });
     return s;
   }, [shifts]);
 
-  // Filter calendar dates to past dates matching this TA's session_day
+  // Past calendar dates matching this TA's session_day
   const relevantPastDates = useMemo((): string[] => {
     if (!fullTA?.session_day) return [];
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    const sessionDay: string = fullTA.session_day; // 'Friday' | 'Saturday' | 'Both'
-
+    const sessionDay: string = fullTA.session_day;
     return Array.from(calendarDates).filter(dateStr => {
       const date = parseDateLocal(dateStr);
       if (date >= today) return false;
-
-      const dayOfWeek = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
-      if (sessionDay === 'Friday') return dayOfWeek === 5;
-      if (sessionDay === 'Saturday') return dayOfWeek === 6;
-      if (sessionDay === 'Both') return dayOfWeek === 5 || dayOfWeek === 6;
+      const dow = date.getDay();
+      if (sessionDay === 'Friday') return dow === 5;
+      if (sessionDay === 'Saturday') return dow === 6;
+      if (sessionDay === 'Both') return dow === 5 || dow === 6;
       return false;
     });
   }, [calendarDates, fullTA]);
@@ -174,20 +167,15 @@ export default function Chart({
     () => relevantPastDates.filter(d => shiftDateSet.has(d)).length,
     [relevantPastDates, shiftDateSet]
   );
-
   const absentCount = useMemo(
     () => relevantPastDates.filter(d => !shiftDateSet.has(d)).length,
     [relevantPastDates, shiftDateSet]
   );
-
   const totalRelevantDays = relevantPastDates.length;
-
   const presentPercentage = totalRelevantDays > 0
     ? Math.round((presentCount / totalRelevantDays) * 100)
     : 0;
-  const absentPercentage = totalRelevantDays > 0
-    ? 100 - presentPercentage
-    : 0;
+  const absentPercentage = totalRelevantDays > 0 ? 100 - presentPercentage : 0;
 
   // --- End attendance calculation ---
 
@@ -220,29 +208,6 @@ export default function Chart({
     },
     plugins: {
       legend: { labels: { color: darkMode ? "#d1d5db" : undefined } }
-    }
-  };
-
-  const doughnutData = {
-    labels: ['Present', 'Absent'],
-    datasets: [
-      {
-        data: totalRelevantDays > 0
-          ? [presentPercentage, absentPercentage]
-          : [1, 0], // neutral full ring when no dates yet
-        backgroundColor: totalRelevantDays > 0
-          ? (darkMode ? ['#3b82f6', '#374151'] : ['#5b8dc4', '#f5f5dc'])
-          : (darkMode ? ['#374151', '#374151'] : ['#e5e7eb', '#e5e7eb']),
-        borderWidth: 0,
-        cutout: '75%'
-      }
-    ]
-  };
-
-  const doughnutOptions = {
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false }
     }
   };
 
@@ -305,7 +270,7 @@ export default function Chart({
         </div>
       </div>
 
-      {/* Profile Card */}
+      {/* Profile Card — SVG donut identical to VPTAView */}
       <div style={{
         width: "400px",
         backgroundColor: cardBg,
@@ -314,24 +279,51 @@ export default function Chart({
         padding: "40px 30px",
         boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"
       }}>
-        <div style={{ position: "relative", width: "250px", height: "250px", margin: "0 auto 20px" }}>
-          <Doughnut data={doughnutData} options={doughnutOptions} />
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)", textAlign: "center"
-          }}>
-            <div style={{ fontSize: "24px", fontWeight: "600", color: headingColor }}>
-              {presentPercentage}% Present
-            </div>
-            <div style={{ fontSize: "20px", color: "#d4af37" }}>
-              {absentPercentage}% Absent
-            </div>
-            {totalRelevantDays > 0 && (
-              <div style={{ fontSize: "13px", color: subtextColor, marginTop: 4 }}>
-                {presentCount}/{totalRelevantDays} days
-              </div>
+        {/* SVG Donut — exact same implementation as VPTAView */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
+          <svg width="280" height="280" viewBox="0 0 280 280">
+            {totalRelevantDays === 0 ? (
+              // No calendar dates configured yet — neutral grey ring
+              <circle
+                cx="140" cy="140" r="100" fill="none"
+                stroke={darkMode ? "#374151" : "#e5e7eb"}
+                strokeWidth="40"
+              />
+            ) : (
+              <>
+                <circle
+                  cx="140" cy="140" r="100" fill="none"
+                  stroke={darkMode ? "#3b82f6" : "#5b8dc4"}
+                  strokeWidth="40"
+                  strokeDasharray={`${presentPercentage * 6.283} 628.3`}
+                  strokeDashoffset="0"
+                  transform="rotate(-90 140 140)"
+                />
+                <circle
+                  cx="140" cy="140" r="100" fill="none"
+                  stroke={darkMode ? "#374151" : "#f5f5dc"}
+                  strokeWidth="40"
+                  strokeDasharray={`${absentPercentage * 6.283} 628.3`}
+                  strokeDashoffset={`-${presentPercentage * 6.283}`}
+                  transform="rotate(-90 140 140)"
+                />
+              </>
             )}
-          </div>
+            <text x="140" y="125" textAnchor="middle" fontSize="22"
+              fill={darkMode ? "#60a5fa" : "#5b8dc4"} fontWeight="500">
+              {presentPercentage}% Present
+            </text>
+            <text x="140" y="155" textAnchor="middle" fontSize="22"
+              fill="#d4af37" fontWeight="500">
+              {absentPercentage}% Absent
+            </text>
+            {totalRelevantDays > 0 && (
+              <text x="140" y="182" textAnchor="middle" fontSize="13"
+                fill={darkMode ? "#6b7280" : "#9ca3af"}>
+                {presentCount}/{totalRelevantDays} days
+              </text>
+            )}
+          </svg>
         </div>
 
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -364,7 +356,7 @@ export default function Chart({
               backgroundColor: darkMode ? "#3b82f6" : "#5b8dc4",
               borderRadius: "20px",
               transition: "width 0.3s ease"
-            }}></div>
+            }} />
             <div style={{
               position: "absolute", right: "20px", top: "50%",
               transform: "translateY(-50%)", fontSize: "24px"
