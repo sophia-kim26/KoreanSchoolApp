@@ -6,6 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 import logo from '../assets/logo.png';
 import Chart from "./Chart";
+import { translations, Language } from './translations';
 
 // Type definitions
 interface UserLocation {
@@ -14,41 +15,44 @@ interface UserLocation {
   accuracy: number;
 }
 
-type Language = 'en' | 'ko';
-
-interface Translations {
-  [key: string]: {
-    assignedClassroom: string;
-    firstName: string;
-    lastName: string;
-    koreanName: string;
-    date: string;
-    attendance: string;
-    clockIn: string;
-    clockOut: string;
-    elapsedTime: string;
-    notes: string;
-    settings: string;
-    signOut: string;
-    present: string;
-    tardy: string;
-    earlyLeave: string;
-    parentInformation: string;
-    phone: string;
-    email: string;
-    totalHours: string;
-    emergencyPhone: string;
-    analytics: string;
-    hoursCompleted: string;
-    hoursByMonth: string;
-    appearance: string;
-    account: string;
-    privacy: string;
-    languagePreferences: string;
-    theme: string;
-    textIconSize: string;
-  };
-}
+// interface Translations {
+//   [key: string]: {
+//     assignedClassroom: string;
+//     firstName: string;
+//     lastName: string;
+//     koreanName: string;
+//     date: string;
+//     attendance: string;
+//     clockIn: string;
+//     clockOut: string;
+//     elapsedTime: string;
+//     notes: string;
+//     settings: string;
+//     signOut: string;
+//     present: string;
+//     tardy: string;
+//     earlyLeave: string;
+//     parentInformation: string;
+//     phone: string;
+//     email: string;
+//     totalHours: string;
+//     emergencyPhone: string;
+//     analytics: string;
+//     hoursCompleted: string;
+//     hoursByMonth: string;
+//     appearance: string;
+//     account: string;
+//     privacy: string;
+//     languagePreferences: string;
+//     theme: string;
+//     textIconSize: string;
+//     noNotes: string,
+//     lightMode: string,
+//     darkMode: string,
+//     english: string,
+//     korean: string
+//   };
+// }
 
 interface ElapsedTime {
   hours: number;
@@ -126,29 +130,6 @@ const getUserLocation = (): Promise<UserLocation> => {
     );
   });
 };
-
-const translations: Translations = {
-    en: {
-      assignedClassroom: "Assigned Classroom", firstName: "First Name", lastName: "Last Name", koreanName: "Korean Name",
-      date: "Date", attendance: "Attendance", clockIn: "Clock In", clockOut: "Clock Out",
-      elapsedTime: "Elapsed Time", notes: "Notes", settings: "Settings", signOut: "Sign Out",
-      present: "Present", tardy: "Tardy", earlyLeave: "Early Leave", parentInformation: "Parent Information",
-      phone: "Phone", email: "Email", totalHours: "Total Hours", emergencyPhone: "Emergency Phone",
-      analytics: "Analytics", hoursCompleted: "Hours Completed", hoursByMonth: "Hours by Month",
-      appearance: "Appearance", account: "Account", privacy: "Privacy", languagePreferences: "Language Preferences",
-      theme: "Theme", textIconSize: "Text/Icon Size"
-    },
-    ko: {
-      assignedClassroom: "교실", firstName: "이름", lastName: "성", koreanName: "한국어 이름",
-      date: "날짜", attendance: "출석", clockIn: "Clock In", clockOut: "Clock Out",
-      elapsedTime: "Elapsed Time", notes: "기타사항", settings: "설정", signOut: "Sign Out",
-      present: "출석", tardy: "지각", earlyLeave: "조퇴", parentInformation: "보호자 정보",
-      phone: "전화번호", email: "Email", totalHours: "총 시간", emergencyPhone: "비상 전화",
-      analytics: "통계", hoursCompleted: "총 시간", hoursByMonth: "월별 시간",
-      appearance: "웹사이트 외모", account: "계정", privacy: "개인 정보", languagePreferences: "언어 설정",
-      theme: "테마", textIconSize: "텍스트/아이콘 크기"
-    }
-  };
 
 // Helper function for bar graph
 const parseElapsedToHours = (elapsed: string | null): number => {
@@ -683,6 +664,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     }
   };
 
+  // Add this helper inside the formatter, before the return:
+  const translateStatus = (status: string) => {
+    if (status === 'Tardy') return translations[language].tardy;
+    if (status === 'Early Leave') return translations[language].earlyLeave;
+    return translations[language].present;
+  };
+
+
   const gridColumns = useMemo(() => [
     {
       name: "ID",
@@ -746,7 +735,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
               }
             }
-          }, cell || 'Present'),
+          }, translateStatus(cell || 'Present')),
           h('div', {
             id: dropdownId,
             style: `
@@ -779,13 +768,13 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Present';
+                  (button as HTMLElement).textContent = translations[language].present;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
                 toggleAttendance(shiftId, 'Present');
               }
-            }, 'Present'),
+            }, translations[language].present),
             h('div', {
               style: `
                 padding: 8px 12px;
@@ -802,13 +791,13 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Tardy';
+                  (button as HTMLElement).textContent = translations[language].tardy;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
                 toggleAttendance(shiftId, 'Tardy');
               }
-            }, 'Tardy'),
+            }, translations[language].tardy),
             h('div', {
               style: `
                 padding: 8px 12px;
@@ -825,13 +814,13 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 if (button) {
                   (button as HTMLElement).style.backgroundColor = colors.bg;
                   (button as HTMLElement).style.color = colors.text;
-                  (button as HTMLElement).textContent = 'Early Leave';
+                  (button as HTMLElement).textContent = translations[language].earlyLeave;
                 }
                 const dropdown = document.getElementById(dropdownId);
                 if (dropdown) dropdown.style.display = 'none';
                 toggleAttendance(shiftId, 'Early Leave');
               }
-            }, 'Early Leave'),
+            }, translations[language].earlyLeave),
           ])
         ]);
       }
@@ -860,7 +849,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         }, [
           h('span', {
             style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
-          }, currentNotes || 'No notes'),
+          }, currentNotes || translations[language].noNotes),
           h('button', {
             style: `
               background: none;
@@ -900,7 +889,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   // Derive the active font size for inline use where CSS var may not cascade
   const activeFontSize = TEXT_SIZE_MAP[textSize];
-
   return (
     <div
       className={`page-container${darkMode ? ' dark-mode' : ''}`}
@@ -927,7 +915,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={clockedIn}
             >
-              Clock In
+              {translations[language].clockIn}
             </button>
             
             <button
@@ -935,19 +923,19 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               className="btn-primary"
               disabled={!clockedIn}
             >
-              Clock Out
+              {translations[language].clockOut}
             </button>
             <button 
               onClick={() => setShowSettingsModal(true)}
               className="btn-settings"
             >
-              Settings
+              {translations[language].settings}
             </button>
             <button 
               onClick={handleSignOut}
               className="btn-danger"
             >
-              Sign Out
+              {translations[language].signOut}
             </button>
           </div>
       </div>
@@ -965,7 +953,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         fontWeight: "500",
         color: darkMode ? "#93c5fd" : "#0c4a6e"
       }}>
-        <strong>Assigned Classroom: </strong> {assignedClassroom}
+        <strong>{translations[language].assignedClassroom}: </strong> {assignedClassroom}
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
@@ -986,7 +974,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <p>No data found.</p>
       ) : (
           <Grid
-            key="ta-shifts-grid"
+              key={`ta-shifts-grid-${language}`}
             data={gridData}
             columns={gridColumns}
             search={true}
@@ -1005,6 +993,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
           monthLabels={monthLabels}
           shifts={taData}
           totalHours={totalHours}
+          language={language}
         />
       )}
 
@@ -1161,7 +1150,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
               >
                 ←
               </button>
-              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
+              <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>{translations[language].settings}</h2>
             </div>
 
             <div style={{ 
@@ -1183,7 +1172,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'appearance' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Appearance
+                {translations[language].appearance}
               </button>
               <button 
                 onClick={() => setActiveTab('account')}
@@ -1196,7 +1185,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'account' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Account
+                {translations[language].account}
               </button>
               <button 
                 onClick={() => setActiveTab('privacy')}
@@ -1209,7 +1198,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                   fontWeight: '500',
                   color: activeTab === 'privacy' ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#9ca3af' : '#6b7280')
                 }}>
-                Privacy
+                {translations[language].privacy}
               </button>
             </div>
 
@@ -1223,7 +1212,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                 <>
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Language Preferences
+                      {translations[language].languagePreferences}
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {(['en', 'ko'] as Language[]).map(lang => (
@@ -1233,14 +1222,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                           color: language === lang ? (darkMode ? '#93c5fd' : '#1e40af') : (darkMode ? '#d1d5db' : '#374151'),
                           border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
                           borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                        }}>{lang === 'en' ? 'English' : 'Korean'}</button>
+                        }}>{lang === 'en' ? translations[language].english : translations[language].korean}</button>
                       ))}
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Theme
+                      {translations[language].theme}
                     </h3>
                     <button
                       onClick={() => setDarkMode(false)}
@@ -1254,7 +1243,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         fontSize: '14px',
                         fontWeight: '500'
                       }}>
-                      Light Mode
+                      {translations[language].lightMode}
                     </button>
                     <button
                       onClick={() => setDarkMode(true)}
@@ -1267,14 +1256,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
                         cursor: 'pointer',
                         fontSize: '14px'
                       }}>
-                      Dark Mode
+                      {translations[language].darkMode}
                     </button>
                   </div>
 
                   {/* Text / Icon Size */}
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                      Text/Icon Size
+                      {translations[language].textIconSize}
                     </h3>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {(['S', 'M', 'L'] as TextSize[]).map((size) => (
