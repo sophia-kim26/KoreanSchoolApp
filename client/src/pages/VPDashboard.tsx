@@ -690,7 +690,6 @@ function VPDashboard(): React.ReactElement {
 
       {mainTab === 'friday' && (
         <>
-          <p style={{ marginBottom: 20, color: subTextColor, fontSize: '14px' }}>Total Records: {fridayData.length}</p>
           {fridayData.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No Friday data found. Please select dates in Settings.</p>
@@ -744,7 +743,6 @@ function VPDashboard(): React.ReactElement {
 
       {mainTab === 'saturday' && (
         <>
-          <p style={{ marginBottom: 20, color: subTextColor, fontSize: '14px' }}>Total Records: {saturdayData.length}</p>
           {saturdayData.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No Saturday data found. Please select dates in Settings.</p>
