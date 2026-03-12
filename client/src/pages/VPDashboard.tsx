@@ -53,8 +53,8 @@ interface Translations {
     firstName: string;
     lastName: string;
     koreanName: string;
-    sessionDay: string;
     classroom: string;
+    sessionDay: string;
     active: string;
     totalHours: string;
     attendance: string;
@@ -641,8 +641,8 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].firstName, width: '120px' },
                   { name: translations[language].lastName, width: '120px' },
                   { name: translations[language].koreanName, width: '120px' },
-                  { name: translations[language].classroom, width: '150px' },
                   { name: translations[language].sessionDay, width: '120px' },
+                  { name: translations[language].classroom, width: '150px' },
                   // { name: translations[language].active, width: '80px', formatter: (cell: any) => cell ? 'Yes' : 'No' },
                   { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                   {
