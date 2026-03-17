@@ -462,9 +462,7 @@ function VPDashboard(): React.ReactElement {
 
   const gridData: (string | number | boolean)[][] = data.map(row => [
     row.first_name, row.last_name, row.korean_name, row.session_day,
-    // row.classroom || '', row.is_active, row.total_hours || '0.00', row.attendance, row.id,
     row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
-
   ]);
 
   const isDateInPast = (dateKey: string): boolean => {
@@ -475,12 +473,13 @@ function VPDashboard(): React.ReactElement {
     return date < today;
   };
 
+  const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
     const sampleRow = fridayData[0];
     const keys = Object.keys(sampleRow);
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count', 'classroom'];
-    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
     const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(date => date.replace(/-/g, '_')));
     const dateKeys = keys.filter(key => {
@@ -495,12 +494,16 @@ function VPDashboard(): React.ReactElement {
     const insertAt = koreanNameIndex >= 0 ? koreanNameIndex + 1 : nonDateKeys.length;
     nonDateKeys.splice(insertAt, 0, 'classroom');
     const finalKeys = [...nonDateKeys, ...dateKeys];
-    return finalKeys.map(key => ({
-      name: dateRegex.test(key) ? key.replace(/_/g, '-')
-        : key === 'classroom' ? 'Classroom'
-        : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-      id: key
-    }));
+    return [
+      ...finalKeys.map(key => ({
+        name: dateRegex.test(key) ? key.replace(/_/g, '-')
+          : key === 'classroom' ? 'Classroom'
+          : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        id: key
+      })),
+      { name: 'Days Present', id: '__days_present__' },
+      { name: 'Days Absent', id: '__days_absent__' },
+    ];
   };
 
   const getSaturdayColumns = (): Array<{ name: string; id: string }> => {
@@ -508,7 +511,6 @@ function VPDashboard(): React.ReactElement {
     const sampleRow = saturdayData[0];
     const keys = Object.keys(sampleRow);
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
-    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
     const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(date => date.replace(/-/g, '_')));
     const dateKeys = keys.filter(key => {
@@ -520,11 +522,15 @@ function VPDashboard(): React.ReactElement {
     });
     dateKeys.sort();
     const finalKeys = [...nonDateKeys, ...dateKeys];
-    return finalKeys.map(key => ({
-      name: dateRegex.test(key) ? key.replace(/_/g, '-')
-        : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-      id: key
-    }));
+    return [
+      ...finalKeys.map(key => ({
+        name: dateRegex.test(key) ? key.replace(/_/g, '-')
+          : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        id: key
+      })),
+      { name: 'Days Present', id: '__days_present__' },
+      { name: 'Days Absent', id: '__days_absent__' },
+    ];
   };
 
   const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
@@ -538,8 +544,35 @@ function VPDashboard(): React.ReactElement {
     setEnrichedFridayData(enriched);
   }, [fridayData, data]);
 
-  const fridayGridData: any[][] = enrichedFridayData.map(row => getFridayColumns().map(col => row[col.id]));
-  const saturdayGridData: any[][] = saturdayData.map(row => getSaturdayColumns().map(col => row[col.id]));
+  const selectedDatesUnderscored = new Set(Array.from(selectedDates).map(d => d.replace(/-/g, '_')));
+
+  const fridayGridData: any[][] = enrichedFridayData.map(row => {
+    const cols = getFridayColumns();
+    const selectedFridayKeys = cols
+      .map(c => c.id)
+      .filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
+    const daysPresent = selectedFridayKeys.filter(k => row[k] === true).length;
+    const daysAbsent = selectedFridayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
+    return cols.map(col => {
+      if (col.id === '__days_present__') return daysPresent;
+      if (col.id === '__days_absent__') return daysAbsent;
+      return row[col.id];
+    });
+  });
+
+  const saturdayGridData: any[][] = saturdayData.map(row => {
+    const cols = getSaturdayColumns();
+    const selectedSaturdayKeys = cols
+      .map(c => c.id)
+      .filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
+    const daysPresent = selectedSaturdayKeys.filter(k => row[k] === true).length;
+    const daysAbsent = selectedSaturdayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
+    return cols.map(col => {
+      if (col.id === '__days_present__') return daysPresent;
+      if (col.id === '__days_absent__') return daysAbsent;
+      return row[col.id];
+    });
+  });
 
   const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
     setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
@@ -602,10 +635,6 @@ function VPDashboard(): React.ReactElement {
         </div>
       </div>
 
-      <p style={{ marginBottom: 30, color: subTextColor, fontSize: '14px' }}>
-        Logged in as: {user?.email || user?.name}
-      </p>
-
       {/* Main Tab Selector */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: tabBorderBottom }}>
         {(['tas', 'friday', 'saturday'] as MainTab[]).map(tab => (
@@ -627,7 +656,6 @@ function VPDashboard(): React.ReactElement {
 
       {mainTab === 'tas' && (
         <>
-          <p style={{ marginBottom: 20, color: subTextColor, fontSize: '14px' }}>Total TAs: {data.length}</p>
           {data.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No data found.</p>
@@ -643,7 +671,6 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].koreanName, width: '120px' },
                   { name: translations[language].sessionDay, width: '120px' },
                   { name: translations[language].classroom, width: '150px' },
-                  // { name: translations[language].active, width: '80px', formatter: (cell: any) => cell ? 'Yes' : 'No' },
                   { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                   {
                     name: translations[language].attendance,
@@ -701,8 +728,18 @@ function VPDashboard(): React.ReactElement {
                 data={fridayGridData}
                 columns={getFridayColumns().map((col) => ({
                   name: col.name,
-                  width: col.id === 'classroom' ? '180px' : '150px',
+                  width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
                   formatter: (cell: any, row: any) => {
+                    if (col.id === '__days_present__') {
+                      return h('span', {
+                        style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};`
+                      }, String(cell ?? 0));
+                    }
+                    if (col.id === '__days_absent__') {
+                      return h('span', {
+                        style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};`
+                      }, String(cell ?? 0));
+                    }
                     if (col.id === 'classroom') {
                       const fridayColumns = getFridayColumns();
                       const idColIndex = fridayColumns.findIndex(c => c.id === 'korean_name');
@@ -720,7 +757,6 @@ function VPDashboard(): React.ReactElement {
                         ...CLASSROOMS.map(room => h('option', { value: room, selected: cell === room }, room))
                       ]);
                     }
-                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
                     if (dateRegex.test(col.id)) {
                       if (cell === true) return '✓';
                       if (isDateInPast(col.id)) return '✗';
@@ -754,9 +790,18 @@ function VPDashboard(): React.ReactElement {
                 data={saturdayGridData}
                 columns={getSaturdayColumns().map((col) => ({
                   name: col.name,
-                  width: '150px',
+                  width: col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
                   formatter: (cell: any) => {
-                    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
+                    if (col.id === '__days_present__') {
+                      return h('span', {
+                        style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};`
+                      }, String(cell ?? 0));
+                    }
+                    if (col.id === '__days_absent__') {
+                      return h('span', {
+                        style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};`
+                      }, String(cell ?? 0));
+                    }
                     if (dateRegex.test(col.id)) {
                       if (cell === true) return '✓';
                       if (isDateInPast(col.id)) return '✗';
