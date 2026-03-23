@@ -1,4 +1,5 @@
 import express from 'express';
+import { validateParentCreate, validateParentUpdate } from '../middleware/validate.js';
 
 import { 
   getAllParents, 
@@ -48,16 +49,9 @@ router.get('/ta/:taId', async (req, res, next) => {
 });
 
 // POST /api/parents - create a new parent
-router.post('/', async (req, res, next) => {
+router.post('/', validateParentCreate, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    
-    if (!english_name || !phone) {
-      return res.status(400).json({ 
-        error: 'English name and phone are required' 
-      });
-    }
-    
     const result = await createParent({ 
       english_name, 
       korean_name, 
@@ -72,7 +66,7 @@ router.post('/', async (req, res, next) => {
 });
 
 // PUT /api/parents/:id - update a parent
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', validateParentUpdate, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
     

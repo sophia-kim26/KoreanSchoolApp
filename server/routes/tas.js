@@ -1,5 +1,6 @@
 import express from 'express';
 import { checkJwt } from '../middleware/protect.js';
+import { validateClassroom } from '../middleware/validate.js';
 
 import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '../services/taService.js';
 
@@ -40,12 +41,9 @@ router.patch('/:id/deactivate', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/classroom
-router.patch('/:id/classroom', async (req, res, next) => {
+router.patch('/:id/classroom', validateClassroom, async (req, res, next) => {
     try {
         const { classroom } = req.body;
-        if (!classroom) {
-            return res.status(400).json({ message: 'Classroom is required' });
-        }
         const result = await updateClassroom(req.params.id, classroom);
         res.json(result);
     } catch (error) {
@@ -54,7 +52,7 @@ router.patch('/:id/classroom', async (req, res, next) => {
 });
 
 // change assigned classroom
-router.patch('/api/tas/:id/classroom', async (req, res, next) => {
+router.patch('/api/tas/:id/classroom', validateClassroom, async (req, res, next) => {
   try {
     const { classroom } = req.body;
     const { id } = req.params;

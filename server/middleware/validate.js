@@ -1,4 +1,5 @@
 import { isIPv4 } from 'net';
+import { z } from 'zod';
 
 // allowed IP addresses or network ranges
 const ALLOWED_IPS = [
@@ -65,34 +66,87 @@ export const validateLocation = (req, res, next) => {
   next();
 };
 
-export const validateClockIn = (req, res, next) => {
-  const { ta_id } = req.body;
-  if (!ta_id) {
-    return res.status(400).json({ error: 'TA ID is required' });
+const errorResponse = (res, error) => {
+  return res.status(400).json({ error: error.issues ?? error.message });
+};
+
+const validateWithSchema = (schema) => (req, res, next) => {
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    return errorResponse(res, parsed.error);
   }
+  req.body = parsed.data;
   next();
 };
 
-export const validateCreateAccount = (req, res, next) => {
-  const { first_name, last_name, email, ta_code, session_day } = req.body;
-  
-  if (!first_name || !last_name || !email || !ta_code || !session_day) {
-    return res.status(400).json({ error: 'All fields are required' });
-  }
-  
-  if (!/\S+@\S+\.\S+/.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
-  }
-  
-  next();
-};
+const dateString = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-export const validateShift = (req, res, next) => {
-  const { ta_id, clock_in } = req.body;
-  
-  if (!ta_id || !clock_in) {
-    return res.status(400).json({ error: 'TA ID and clock in time are required' });
-  }
-  
-  next();
-};
+const clockInSchema = z.object({
+  ta_id: z.coerce.number().int().positive()
+}).strip();
+
+const createAccountSchema = z.object({
+  first_name: z.string().trim().min(1).max(100),
+  last_name: z.string().trim().min(1).max(100),
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  ta_code: z.string().trim().min(1).max(20),
+  session_day: z.string().trim().min(1).max(20),
+  korean_name: z.string().trim().max(100).optional(),
+  classroom: z.string().trim().max(50).optional()
+}).strip();
+
+const signInSchema = z.object({
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  ta_code: z.string().trim().min(1).max(20)
+}).strip();
+
+const shiftCreateSchema = z.object({
+  ta_id: z.coerce.number().int().positive(),
+  clock_in: z.string().trim().min(1),
+  clock_out: z.string().trim().min(1).optional(),
+  notes: z.string().trim().max(1000).optional()
+}).strip();
+
+const shiftUpdateSchema = z.object({
+  clock_in: z.string().trim().min(1).optional(),
+  clock_out: z.string().trim().min(1).optional(),
+  notes: z.string().trim().max(1000).optional(),
+  elapsed_time: z.coerce.number().int().nonnegative().optional(),
+  attendance: z.string().trim().min(1).max(20).optional()
+}).strip().refine((data) => Object.keys(data).length > 0, {
+  message: 'At least one field is required'
+});
+
+const parentCreateSchema = z.object({
+  english_name: z.string().trim().min(1).max(100),
+  korean_name: z.string().trim().max(100).optional(),
+  phone: z.string().trim().min(1).max(50),
+  email: z.string().trim().email().optional()
+}).strip();
+
+const parentUpdateSchema = z.object({
+  english_name: z.string().trim().max(100).optional(),
+  korean_name: z.string().trim().max(100).optional(),
+  phone: z.string().trim().max(50).optional(),
+  email: z.string().trim().email().optional()
+}).strip().refine((data) => Object.keys(data).length > 0, {
+  message: 'At least one field is required'
+});
+
+const classroomSchema = z.object({
+  classroom: z.string().trim().min(1).max(50)
+}).strip();
+
+const calendarDatesSchema = z.object({
+  dates: z.array(dateString)
+}).strip();
+
+export const validateClockIn = validateWithSchema(clockInSchema);
+export const validateCreateAccount = validateWithSchema(createAccountSchema);
+export const validateSignIn = validateWithSchema(signInSchema);
+export const validateShift = validateWithSchema(shiftCreateSchema);
+export const validateShiftUpdate = validateWithSchema(shiftUpdateSchema);
+export const validateParentCreate = validateWithSchema(parentCreateSchema);
+export const validateParentUpdate = validateWithSchema(parentUpdateSchema);
+export const validateClassroom = validateWithSchema(classroomSchema);
+export const validateCalendarDates = validateWithSchema(calendarDatesSchema);

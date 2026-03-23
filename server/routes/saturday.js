@@ -1,5 +1,6 @@
 import express from 'express';
 import { checkJwt } from '../middleware/protect.js';
+import { validateCalendarDates } from '../middleware/validate.js';
 
 import { 
     getAllSaturdayData, 
@@ -35,21 +36,12 @@ router.get('/get-calendar-dates', async (req, res, next) => {
 });
 
 // POST /api/saturday/save-calendar-dates
-router.post('/save-calendar-dates', async (req, res, next) => {
+router.post('/save-calendar-dates', validateCalendarDates, async (req, res, next) => {
   try {
     console.log('POST /api/saturday/save-calendar-dates called');
     console.log('Request body:', req.body);
     
     const { dates } = req.body;
-    
-    if (!dates || !Array.isArray(dates)) {
-      console.log('Invalid dates format');
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid dates format. Expected array.' 
-      });
-    }
-    
     console.log('Saving dates:', dates);
     const result = await saveCalendarDates(dates);
     console.log('Save result:', result);
