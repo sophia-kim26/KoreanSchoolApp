@@ -30,8 +30,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/deactivate
-router.patch('/:id/deactivate', async (req, res, next) => {
-// router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
+router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
     try {
         const result = await deactivateTA(req.params.id);
         res.json(result);
@@ -41,18 +40,21 @@ router.patch('/:id/deactivate', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/classroom
-router.patch('/:id/classroom', validateClassroom, async (req, res, next) => {
-    try {
-        const { classroom } = req.body;
-        const result = await updateClassroom(req.params.id, classroom);
-        res.json(result);
-    } catch (error) {
-        next(error);
-    }
+router.patch('/:id/classroom', checkJwt, async (req, res, next) => {
+  try {
+      const { classroom } = req.body;
+      if (!classroom) {
+          return res.status(400).json({ message: 'Classroom is required' });
+      }
+      const result = await updateClassroom(req.params.id, classroom);
+      res.json(result);
+  } catch (error) {
+      next(error);
+  }
 });
 
-// change assigned classroom
-router.patch('/api/tas/:id/classroom', validateClassroom, async (req, res, next) => {
+// change assigned classroom but this is a duplicate so idk which one to keep
+router.patch('/api/tas/:id/classroom', checkJwt, async (req, res, next) => {
   try {
     const { classroom } = req.body;
     const { id } = req.params;
