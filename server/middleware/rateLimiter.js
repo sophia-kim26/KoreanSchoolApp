@@ -20,7 +20,7 @@ export const createAccountLimiter = rateLimit({
 
 export const createAccountLimiterVp = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 50, // 3 account creations per hour per IP
+  max: 50, // 50 account creations per hour per IP
   message: { error: 'Too many account creation attempts. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
