@@ -1,6 +1,4 @@
 import express from 'express';
-import { checkJwt } from '../middleware/protect.js';
-
 import { 
   getAllShifts, 
   createShift, 
@@ -8,7 +6,7 @@ import {
   getActiveShift,
   getShiftsForTA
 } from '../services/shiftService.js';
-import { validateShift, validateShiftUpdate, validateLocation } from '../middleware/validate.js';
+import { validateShift, validateLocation } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -42,8 +40,8 @@ router.get('/active/:ta_id', async (req, res, next) => {
   }
 });
 
-// POST /api/shifts - ADD validateLocation middleware
-router.post('/', validateShift, validateLocation, checkJwt, async (req, res, next) => {
+// POST /api/shifts
+router.post('/', validateShift, validateLocation, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -53,10 +51,9 @@ router.post('/', validateShift, validateLocation, checkJwt, async (req, res, nex
 });
 
 // POST /api/shifts/manual - Create shift without validation (for manual entry by VP)
-router.post('/manual', checkJwt, async (req, res, next) => {
+router.post('/manual', async (req, res, next) => {
   try {
     const result = await createShift(req.body);
-
     res.json(result);
   } catch (error) {
     console.error('Error:', error);
@@ -67,13 +64,10 @@ router.post('/manual', checkJwt, async (req, res, next) => {
 });
 
 // PUT /api/shifts/:id
-router.put('/:id', checkJwt, async (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
-    
-    // Extract ALL possible fields that might be updated
     const { clock_in, clock_out, notes, elapsed_time, attendance } = req.body;
     
-    // Build update object with only the fields that were sent
     const updateData = {};
     if (clock_in !== undefined) updateData.clock_in = clock_in;
     if (clock_out !== undefined) updateData.clock_out = clock_out;
@@ -82,7 +76,6 @@ router.put('/:id', checkJwt, async (req, res, next) => {
     if (attendance !== undefined) updateData.attendance = attendance;
         
     const result = await updateShift(req.params.id, updateData);
-    
     res.json(result);
   } catch (error) {
     console.error("Update failed:", error);
