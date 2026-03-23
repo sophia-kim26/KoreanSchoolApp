@@ -7,7 +7,7 @@ import { checkJwt } from '../middleware/protect.js';
 const router = express.Router();
 
 // Create account endpoint with rate limiting
-router.post('/api/auth/create-account', createAccountLimiter, validateCreateAccount, async (req, res, next) => {
+router.post('/api/auth/create-account', createAccountLimiter, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
@@ -17,7 +17,7 @@ router.post('/api/auth/create-account', createAccountLimiter, validateCreateAcco
 });
 
 // Create account endpoint without rate limiting
-router.post('/create-account-vp', createAccountLimiterVp, validateCreateAccount, async (req, res, next) => {
+router.post('/create-account-vp', createAccountLimiterVp, async (req, res, next) => {
 // router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
