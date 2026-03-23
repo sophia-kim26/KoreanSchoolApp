@@ -3,23 +3,19 @@ import { checkJwt } from '../middleware/protect.js';
 import { validateCalendarDates } from '../middleware/validate.js';
 
 import { 
-    getAllFridayData, 
+    getAllSaturdayData, 
     getCalendarDates, 
     saveCalendarDates 
-} from '../services/fridayService.js';
+} from '../services/saturdayService.js';
 
 
 const router = express.Router();
 
-router.get('/test', (req, res) => {
-  res.json({ message: 'Friday router is working!' });
-});
-
-// GET /api/friday/
+// GET /api/saturday/
 router.get('/', async (req, res, next) => {
   try {
-    console.log('GET /api/friday/ called');
-    const result = await getAllFridayData();
+    console.log('GET /api/saturday/ called');
+    const result = await getAllSaturdayData();
     res.json(result);
   } catch (error) {
     console.error('Error in GET /:', error);
@@ -27,10 +23,10 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// GET /api/friday/get-calendar-dates
+// GET /api/saturday/get-calendar-dates
 router.get('/get-calendar-dates', async (req, res, next) => {
   try {
-    console.log('GET /api/friday/get-calendar-dates called');
+    console.log('GET /api/saturday/get-calendar-dates called');
     const result = await getCalendarDates();
     res.json(result);
   } catch (error) {
@@ -39,10 +35,10 @@ router.get('/get-calendar-dates', async (req, res, next) => {
   }
 });
 
-// POST /api/friday/save-calendar-dates
-router.post('/save-calendar-dates', checkJwt, async (req, res, next) => {
+// POST /api/saturday/save-calendar-dates
+router.post('/save-calendar-dates', validateCalendarDates, async (req, res, next) => {
   try {
-    console.log('POST /api/friday/save-calendar-dates called');
+    console.log('POST /api/saturday/save-calendar-dates called');
     console.log('Request body:', req.body);
     
     const { dates } = req.body;

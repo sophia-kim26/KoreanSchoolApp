@@ -10,6 +10,7 @@ import tasRoutes from '../routes/tas.js';
 import shiftsRoutes from '../routes/shifts.js';
 import attendanceRoutes from '../routes/attendance.js';
 import fridayRouter from '../routes/friday.js';
+import saturdayRouter from '../routes/saturday.js';
 import parentRoutes from '../routes/parents.js';
 import { errorHandler } from '../middleware/errorHandler.js';
 
@@ -47,6 +48,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
 app.use('/api/friday', fridayRouter);
+app.use('/api/saturday', saturdayRouter);
 app.use('/', authRoutes);
 app.use('/api/parents', parentRoutes);
 

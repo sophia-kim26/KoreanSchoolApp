@@ -1,5 +1,6 @@
 import express from 'express';
 import { checkJwt } from '../middleware/protect.js';
+import { validateClassroom } from '../middleware/validate.js';
 
 import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '../services/taService.js';
 

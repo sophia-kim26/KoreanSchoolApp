@@ -1,5 +1,9 @@
 import express from 'express';
+<<<<<<< HEAD
 import { checkJwt } from '../middleware/protect.js';
+=======
+import { validateParentCreate, validateParentUpdate } from '../middleware/validate.js';
+>>>>>>> b6ae2625b6b16271e4ed78004efdf2e37402e560
 
 import { 
   getAllParents, 
@@ -49,16 +53,13 @@ router.get('/ta/:taId', checkJwt, async (req, res, next) => {
 });
 
 // POST /api/parents - create a new parent
+<<<<<<< HEAD
 router.post('/', checkJwt, async (req, res, next) => {
+=======
+router.post('/', validateParentCreate, async (req, res, next) => {
+>>>>>>> b6ae2625b6b16271e4ed78004efdf2e37402e560
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    
-    if (!english_name || !phone) {
-      return res.status(400).json({ 
-        error: 'English name and phone are required' 
-      });
-    }
-    
     const result = await createParent({ 
       english_name, 
       korean_name, 

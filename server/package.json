@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "server": "node ../server/api/index.js"
+    "server": "node ../server/index.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
@@ -15,6 +15,7 @@
     "express": "^4.18.2",
     "express-jwt": "^8.5.1",
     "express-rate-limit": "^8.2.1",
-    "jwks-rsa": "^3.2.2"
+    "jwks-rsa": "^3.2.2",
+    "zod": "^4.3.6"
   }
 }
