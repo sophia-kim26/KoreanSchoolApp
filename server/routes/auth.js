@@ -1,6 +1,6 @@
 import express from 'express';
 import { createAccount, signIn, resetPin } from '../services/taService.js';
-import { validateCreateAccount } from '../middleware/validate.js';
+import { validateCreateAccount, validateSignIn } from '../middleware/validate.js';
 import { loginLimiter, createAccountLimiter, createAccountLimiterVp } from '../middleware/rateLimiter.js';
 import { checkJwt } from '../middleware/protect.js';
 
@@ -17,8 +17,7 @@ router.post('/api/auth/create-account', createAccountLimiter, validateCreateAcco
 });
 
 // Create account endpoint without rate limiting
-// router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
-router.post('/api/auth/create-account-vp', createAccountLimiterVp, validateCreateAccount, async (req, res, next) => {
+router.post('/create-account-vp', createAccountLimiterVp, checkJwt, validateCreateAccount, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
@@ -28,16 +27,9 @@ router.post('/api/auth/create-account-vp', createAccountLimiterVp, validateCreat
 });
 
 // POST /api/signin or is it /api/auth/signin???
-router.post('/api/auth/signin', async (req, res, next) => {
+router.post('/api/auth/signin', validateSignIn, async (req, res, next) => {
   try {
     const { email, ta_code } = req.body;
-    
-    if (!email || !ta_code) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and PIN are required'
-      });
-    }
 
     const result = await signIn(email, ta_code);
     res.json(result);
@@ -47,8 +39,7 @@ router.post('/api/auth/signin', async (req, res, next) => {
 });
 
 // Reset PIN endpoint
-//router.post('/api/auth/reset-pin/:ta_id', checkJwt, async (req, res, next) => {
-router.post('/api/auth/reset-pin/:ta_id', async (req, res, next) => {
+router.post('/api/auth/reset-pin/:ta_id', checkJwt, async (req, res, next) => {
   try {
     const result = await resetPin(req.params.ta_id);
     res.json(result);
