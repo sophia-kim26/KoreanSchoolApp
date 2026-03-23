@@ -1,9 +1,5 @@
 import express from 'express';
-<<<<<<< HEAD
-import { checkJwt } from '../middleware/protect.js';
-=======
 import { validateParentCreate, validateParentUpdate } from '../middleware/validate.js';
->>>>>>> b6ae2625b6b16271e4ed78004efdf2e37402e560
 
 import { 
   getAllParents, 
@@ -16,8 +12,8 @@ import {
 
 const router = express.Router();
 
-// GET /api/parents - get all parents
-router.get('/', checkJwt, async (req, res, next) => {
+// GET /api/parents
+router.get('/', async (req, res, next) => {
   try {
     const result = await getAllParents();
     res.json(result);
@@ -26,8 +22,8 @@ router.get('/', checkJwt, async (req, res, next) => {
   }
 });
 
-// GET /api/parents/:id - get a specific parent by ID
-router.get('/:id', checkJwt, async (req, res, next) => {
+// GET /api/parents/:id
+router.get('/:id', async (req, res, next) => {
   try {
     const result = await getParentById(req.params.id);
     if (!result) {
@@ -39,8 +35,8 @@ router.get('/:id', checkJwt, async (req, res, next) => {
   }
 });
 
-// GET /api/parents/ta/:taId - get parents for a specific TA
-router.get('/ta/:taId', checkJwt, async (req, res, next) => {
+// GET /api/parents/ta/:taId
+router.get('/ta/:taId', async (req, res, next) => {
   try {
     const result = await getParentsByTAId(req.params.taId);
     if (!result) {
@@ -52,53 +48,33 @@ router.get('/ta/:taId', checkJwt, async (req, res, next) => {
   }
 });
 
-// POST /api/parents - create a new parent
-<<<<<<< HEAD
-router.post('/', checkJwt, async (req, res, next) => {
-=======
+// POST /api/parents
 router.post('/', validateParentCreate, async (req, res, next) => {
->>>>>>> b6ae2625b6b16271e4ed78004efdf2e37402e560
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    const result = await createParent({ 
-      english_name, 
-      korean_name, 
-      phone, 
-      email 
-    });
-    
+    const result = await createParent({ english_name, korean_name, phone, email });
     res.status(201).json(result);
   } catch (error) {
     next(error);
   }
 });
 
-// PUT /api/parents/:id - update a parent
-router.put('/:id', checkJwt, async (req, res, next) => {
+// PUT /api/parents/:id
+router.put('/:id', async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    
-    const result = await updateParent(req.params.id, {
-      english_name,
-      korean_name,
-      phone,
-      email
-    });
-    
+    const result = await updateParent(req.params.id, { english_name, korean_name, phone, email });
     res.json(result);
   } catch (error) {
     next(error);
   }
 });
 
-// DELETE /api/parents/:id - delete a parent
-router.delete('/:id', checkJwt, async (req, res, next) => {
+// DELETE /api/parents/:id
+router.delete('/:id', async (req, res, next) => {
   try {
     const result = await deleteParent(req.params.id);
-    res.json({ 
-      message: 'Parent deleted successfully', 
-      parent: result 
-    });
+    res.json({ message: 'Parent deleted successfully', parent: result });
   } catch (error) {
     next(error);
   }
