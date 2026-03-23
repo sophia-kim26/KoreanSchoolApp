@@ -88,7 +88,7 @@ const clockInSchema = z.object({
 const createAccountSchema = z.object({
   first_name: z.string().trim().min(1).max(100),
   last_name: z.string().trim().min(1).max(100),
-  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  email: z.string().trim().min(1).max(100),
   ta_code: z.string().trim().min(1).max(20),
   session_day: z.string().trim().min(1).max(20),
   korean_name: z.string().trim().max(100).optional(),
