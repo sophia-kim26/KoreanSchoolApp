@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateParentCreate, validateParentUpdate } from '../middleware/validate.js';
+import { checkJwt } from '../middleware/protect.js';
 
 import { 
   getAllParents, 
@@ -12,8 +12,9 @@ import {
 
 const router = express.Router();
 
-// GET /api/parents
+// GET /api/parents - get all parents
 router.get('/', async (req, res, next) => {
+// router.get('/', checkJwt, async (req, res, next) => {
   try {
     const result = await getAllParents();
     res.json(result);
@@ -22,8 +23,9 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// GET /api/parents/:id
+// GET /api/parents/:id - get a specific parent by ID
 router.get('/:id', async (req, res, next) => {
+// router.get('/:id', checkJwt, async (req, res, next) => {
   try {
     const result = await getParentById(req.params.id);
     if (!result) {
@@ -35,8 +37,9 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// GET /api/parents/ta/:taId
+// GET /api/parents/ta/:taId - get parents for a specific TA
 router.get('/ta/:taId', async (req, res, next) => {
+// router.get('/ta/:taId', checkJwt, async (req, res, next) => {
   try {
     const result = await getParentsByTAId(req.params.taId);
     if (!result) {
@@ -48,8 +51,9 @@ router.get('/ta/:taId', async (req, res, next) => {
   }
 });
 
-// POST /api/parents
-router.post('/', validateParentCreate, async (req, res, next) => {
+// POST /api/parents - create a new parent
+router.post('/', async (req, res, next) => {
+// router.post('/', checkJwt, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
     const result = await createParent({ english_name, korean_name, phone, email });
@@ -59,8 +63,9 @@ router.post('/', validateParentCreate, async (req, res, next) => {
   }
 });
 
-// PUT /api/parents/:id
+// PUT /api/parents/:id - update a parent
 router.put('/:id', async (req, res, next) => {
+// router.put('/:id', checkJwt, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
     const result = await updateParent(req.params.id, { english_name, korean_name, phone, email });
@@ -70,8 +75,9 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-// DELETE /api/parents/:id
+// DELETE /api/parents/:id - delete a parent
 router.delete('/:id', async (req, res, next) => {
+// router.delete('/:id', checkJwt, async (req, res, next) => {
   try {
     const result = await deleteParent(req.params.id);
     res.json({ message: 'Parent deleted successfully', parent: result });
