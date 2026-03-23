@@ -41,7 +41,7 @@ router.get('/active/:ta_id', async (req, res, next) => {
 });
 
 // POST /api/shifts - ADD validateLocation middleware
-router.post('/', validateShift, validateLocation, async (req, res, next) => {
+router.post('/', validateLocation, async (req, res, next) => {
 // router.post('/', validateShift, validateLocation, checkJwt, async (req, res, next) => {
   try {
     const result = await createShift(req.body);

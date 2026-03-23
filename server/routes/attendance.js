@@ -7,7 +7,7 @@ import { checkJwt } from '../middleware/protect.js';
 const router = express.Router();
 
 // POST /api/attendance/clock-in
-router.post('/clock-in', validateClockIn, async (req, res, next) => {
+router.post('/clock-in', async (req, res, next) => {
 // router.post('/clock-in', checkJwt, validateClockIn, async (req, res, next) => {
   try {
     const result = await clockIn(req.body.ta_id);

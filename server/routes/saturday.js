@@ -36,7 +36,7 @@ router.get('/get-calendar-dates', async (req, res, next) => {
 });
 
 // POST /api/saturday/save-calendar-dates
-router.post('/save-calendar-dates', validateCalendarDates, async (req, res, next) => {
+router.post('/save-calendar-dates', async (req, res, next) => {
   try {
     console.log('POST /api/saturday/save-calendar-dates called');
     console.log('Request body:', req.body);
