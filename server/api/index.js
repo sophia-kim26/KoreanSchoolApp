@@ -32,32 +32,16 @@ app.use((req, res, next) => {
 // 1. Fix: Basic Security/Proxy setting
 app.set('trust proxy', 1); 
 
-const allowedOrigins = [
-  'https://korean-school-app-2.vercel.app',   // your current frontend
-  process.env.FRONTEND_URL,                    // for flexibility across environments
-];
-
 // 2. Fix: Clean CORS implementation
 // Remove the 'const express = require' lines entirely
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin} not allowed`));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,   // needed for Auth0 JWT in Authorization header
+  origin: ["https://korean-school-app-2.vercel.app", "http://localhost:5173"],
+  methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json()); 
-
-app.options('*', cors()); // handle preflight for all routes
 
 // 3. Routes
 app.use('/api/attendance', attendanceRoutes);
