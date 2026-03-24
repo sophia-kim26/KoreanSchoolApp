@@ -7,6 +7,7 @@ import {
   getShiftsForTA
 } from '../services/shiftService.js';
 import { validateShift, validateLocation } from '../middleware/validate.js';
+import { checkJwt } from '../middleware/protect.js';
 
 const router = express.Router();
 
