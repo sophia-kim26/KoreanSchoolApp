@@ -281,12 +281,6 @@ function VPDashboard(): React.ReactElement {
     fetchSaturdayData();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/vp/login');
-    }
-  }, [isLoading, isAuthenticated, navigate]);
-
   const fetchSavedDates = (): void => {
     fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`)
       .then(res => res.json())
@@ -593,15 +587,6 @@ function VPDashboard(): React.ReactElement {
   };
 
   if (isLoading) return <div style={{ padding: 20, background: bg, color: headingColor, minHeight: '100vh' }}>Loading...</div>;
-
-  if (!isAuthenticated) {
-    return (
-      <div style={{ padding: 20 }}>
-        <h1>Access Denied</h1>
-        <p>Redirecting to login...</p>
-      </div>
-    );
-  }
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
