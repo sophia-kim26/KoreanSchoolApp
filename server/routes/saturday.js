@@ -11,6 +11,11 @@ import {
 
 const router = express.Router();
 
+function routeError(next, err, publicMsg) {
+  console.error(publicMsg, err);
+  next(new Error(publicMsg));
+}
+
 // GET /api/saturday/
 router.get('/', checkJwt, async (req, res, next) => {
   try {
@@ -18,8 +23,7 @@ router.get('/', checkJwt, async (req, res, next) => {
     const result = await getAllSaturdayData();
     res.json(result);
   } catch (error) {
-    console.error('Error in GET /:', error);
-    next(error);
+    routeError(next, error, 'Unable to load Saturday data');
   }
 });
 
@@ -30,8 +34,7 @@ router.get('/get-calendar-dates', checkJwt, async (req, res, next) => {
     const result = await getCalendarDates();
     res.json(result);
   } catch (error) {
-    console.error('Error in get-calendar-dates route:', error);
-    next(error);
+    routeError(next, error, 'Unable to load Saturday calendar dates');
   }
 });
 
@@ -51,12 +54,7 @@ router.post('/save-calendar-dates', checkJwt, validateCalendarDates, async (req,
         message: `Saved ${result.count} dates` 
     });
   } catch (error) {
-    console.error('Error in save-calendar-dates route:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
+    routeError(next, error, 'Unable to save Saturday calendar dates');
   }
 });
 
