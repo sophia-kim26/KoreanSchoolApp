@@ -56,13 +56,7 @@ router.get('/ta/:taId', checkJwt, async (req, res, next) => {
 router.post('/', checkJwt, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    const result = await createParent({ 
-      english_name, 
-      korean_name, 
-      phone, 
-      email 
-    });
-    
+    const result = await createParent({ english_name, korean_name, phone, email });
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -74,14 +68,7 @@ router.post('/', checkJwt, async (req, res, next) => {
 router.put('/:id', checkJwt, async (req, res, next) => {
   try {
     const { english_name, korean_name, phone, email } = req.body;
-    
-    const result = await updateParent(req.params.id, {
-      english_name,
-      korean_name,
-      phone,
-      email
-    });
-    
+    const result = await updateParent(req.params.id, { english_name, korean_name, phone, email });
     res.json(result);
   } catch (error) {
     next(error);
@@ -93,10 +80,7 @@ router.put('/:id', checkJwt, async (req, res, next) => {
 router.delete('/:id', checkJwt, async (req, res, next) => {
   try {
     const result = await deleteParent(req.params.id);
-    res.json({ 
-      message: 'Parent deleted successfully', 
-      parent: result 
-    });
+    res.json({ message: 'Parent deleted successfully', parent: result });
   } catch (error) {
     next(error);
   }

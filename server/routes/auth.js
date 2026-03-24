@@ -7,7 +7,7 @@ import { checkJwt } from '../middleware/protect.js';
 const router = express.Router();
 
 // Create account endpoint with rate limiting
-router.post('/api/auth/create-account', createAccountLimiter, validateCreateAccount, async (req, res, next) => {
+router.post('/api/auth/create-account', createAccountLimiter, async (req, res, next) => {
   try {
     const result = await createAccount(req.body);
     res.json(result);
@@ -28,7 +28,7 @@ router.post('/api/auth/create-account-vp', createAccountLimiterVp, checkJwt, val
 });
 
 // POST /api/signin or is it /api/auth/signin???
-router.post('/api/auth/signin', validateSignIn, async (req, res, next) => {
+router.post('/api/auth/signin', async (req, res, next) => {
   try {
     const { email, ta_code } = req.body;
 
