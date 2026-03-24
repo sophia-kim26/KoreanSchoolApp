@@ -57,7 +57,7 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
     // Check if email already exists
     const existing = await sql`SELECT * FROM ta_list WHERE email = ${email}`;
     if (existing.length > 0) {
-        const error = new Error('Account already exists with this email');
+        const error = new Error('Unable to create account');
         error.status = 400;
         throw error;
     }
@@ -95,7 +95,7 @@ export const signIn = async (email, ta_code) => {
 
     if (tas.length === 0) {
         const error = new Error('Invalid email or PIN');
-        error.status = 404;
+        error.status = 401;
         throw error;
     }
 
@@ -105,7 +105,7 @@ export const signIn = async (email, ta_code) => {
     const isMatch = await bcrypt.compare(ta_code, ta.ta_code);
     if (!isMatch) {
         const error = new Error('Invalid email or PIN');
-        error.status = 404;
+        error.status = 401;
         throw error;
     }
 

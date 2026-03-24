@@ -11,6 +11,11 @@ import {
 
 const router = express.Router();
 
+function routeError(next, err, publicMsg) {
+  console.error(publicMsg, err);
+  next(new Error(publicMsg));
+}
+
 router.get('/test', (req, res) => {
   res.json({ message: 'Friday router is working!' });
 });
@@ -22,8 +27,7 @@ router.get('/', checkJwt, async (req, res, next) => {
     const result = await getAllFridayData();
     res.json(result);
   } catch (error) {
-    console.error('Error in GET /:', error);
-    next(error);
+    routeError(next, error, 'Unable to load Friday data');
   }
 });
 
@@ -34,14 +38,13 @@ router.get('/get-calendar-dates', async (req, res, next) => {
     const result = await getCalendarDates();
     res.json(result);
   } catch (error) {
-    console.error('Error in get-calendar-dates route:', error);
-    next(error);
+    routeError(next, error, 'Unable to load Friday calendar dates');
   }
 });
 
 // POST /api/friday/save-calendar-dates
 // router.post('/save-calendar-dates', async (req, res, next) => {
-router.post('/save-calendar-dates', checkJwt, async (req, res, next) => {
+router.post('/save-calendar-dates', checkJwt, validateCalendarDates, async (req, res, next) => {
   try {
     console.log('POST /api/friday/save-calendar-dates called');
     console.log('Request body:', req.body);
@@ -56,12 +59,7 @@ router.post('/save-calendar-dates', checkJwt, async (req, res, next) => {
         message: `Saved ${result.count} dates` 
     });
   } catch (error) {
-    console.error('Error in save-calendar-dates route:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
+    routeError(next, error, 'Unable to save Friday calendar dates');
   }
 });
 
