@@ -191,6 +191,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const navigate: NavigateFunction = useNavigate();
 
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
+  const [lastClockInTime, setLastClockInTime] = useState<Date | null>(null);
   const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<ElapsedTime | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -628,6 +629,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       console.log("Resetting state...");
       setClockedIn(false);
       setActiveShiftId(null);
+      setLastClockInTime(clockInTime);
       setClockInTime(null);
       
       alert("Successfully clocked out!");
@@ -957,8 +959,8 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       </div>
 
       <div style={{ marginBottom: "10px", fontSize: "18px" }}>
-        {clockInTime && (
-          <p><strong>Clocked In:</strong> {clockInTime.toLocaleString()}</p>
+        {(clockInTime || lastClockInTime) && (
+          <p><strong>Clocked In:</strong> {(clockInTime || lastClockInTime)!.toLocaleString()}</p>
         )}
 
         {clockOutTime && (
