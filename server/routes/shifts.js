@@ -11,7 +11,7 @@ import { validateShift, validateLocation } from '../middleware/validate.js';
 const router = express.Router();
 
 // GET /api/shifts
-router.get('/', async (req, res, next) => {
+router.get('/', checkJwt, async (req, res, next) => {
   try {
     const result = await getAllShifts();
     res.json(result);
@@ -21,7 +21,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/shifts/ta/:ta_id - get all shifts for a specific TA
-router.get('/ta/:ta_id', async (req, res, next) => {
+router.get('/ta/:ta_id', checkJwt, async (req, res, next) => {
   try {
     const result = await getShiftsForTA(parseInt(req.params.ta_id));
     res.json(result);
@@ -31,7 +31,7 @@ router.get('/ta/:ta_id', async (req, res, next) => {
 });
 
 // GET /api/shifts/active/:ta_id
-router.get('/active/:ta_id', async (req, res, next) => {
+router.get('/active/:ta_id', checkJwt, async (req, res, next) => {
   try {
     const result = await getActiveShift(req.params.ta_id);
     res.json(result);
@@ -41,8 +41,8 @@ router.get('/active/:ta_id', async (req, res, next) => {
 });
 
 // POST /api/shifts - ADD validateLocation middleware
-router.post('/', validateShift, validateLocation, async (req, res, next) => {
-// router.post('/', validateShift, validateLocation, checkJwt, async (req, res, next) => {
+// router.post('/', validateShift, validateLocation, async (req, res, next) => {
+router.post('/', validateShift, validateLocation, checkJwt, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -52,8 +52,8 @@ router.post('/', validateShift, validateLocation, async (req, res, next) => {
 });
 
 // POST /api/shifts/manual - Create shift without validation (for manual entry by VP)
-router.post('/manual', async (req, res, next) => {
-// router.post('/manual', checkJwt, async (req, res, next) => {
+// router.post('/manual', async (req, res, next) => {
+router.post('/manual', checkJwt, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -66,8 +66,8 @@ router.post('/manual', async (req, res, next) => {
 });
 
 // PUT /api/shifts/:id
-router.put('/:id', async (req, res, next) => {
-// router.put('/:id', checkJwt, async (req, res, next) => {
+// router.put('/:id', async (req, res, next) => {
+router.put('/:id', checkJwt, async (req, res, next) => {
   try {
     const { clock_in, clock_out, notes, elapsed_time, attendance } = req.body;
     
