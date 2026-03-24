@@ -1,7 +1,7 @@
 import express from 'express';
 import { getAllShifts, createShift, updateShift, getActiveShift, getShiftsForTA } from '../services/shiftService.js';
 import { validateShift, validateLocation } from '../middleware/validate.js';
-import { checkJwt } from '../middleware/protect.js';
+import { checkJwt, checkTAJwt } from '../middleware/protect.js';
 
 const router = express.Router();
 
@@ -34,7 +34,7 @@ router.get('/active/:ta_id', async (req, res, next) => {
 });
 
 // ✅ PROTECTED — checkJwt must come BEFORE validateShift/validateLocation
-router.post('/', checkJwt, validateShift, validateLocation, async (req, res, next) => {
+router.post('/', checkTAJwt, validateShift, validateLocation, async (req, res, next) => {
   try {
     const result = await createShift(req.body);
     res.json(result);
@@ -54,7 +54,7 @@ router.post('/manual', checkJwt, async (req, res, next) => {
 });
 
 // ✅ PROTECTED — editing shifts
-router.put('/:id', checkJwt, async (req, res, next) => {
+router.put('/:id', checkTAJwt, async (req, res, next) => {
   try {
     const { clock_in, clock_out, notes, elapsed_time, attendance } = req.body;
     const updateData = {};

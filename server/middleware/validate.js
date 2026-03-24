@@ -67,7 +67,13 @@ export const validateLocation = (req, res, next) => {
 };
 
 const errorResponse = (res, error) => {
-  return res.status(400).json({ error: error.issues ?? error.message });
+  // Avoid leaking schema internals (e.g. issue path, expected types) to clients.
+  // Log internal detail for debugging in server logs.
+  console.warn('Validation failed:', error.format ? JSON.stringify(error.format(), null, 2) : error.message);
+
+  return res.status(400).json({
+    error: 'Invalid request data.'
+  });
 };
 
 const validateWithSchema = (schema) => (req, res, next) => {

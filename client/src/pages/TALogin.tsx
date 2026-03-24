@@ -21,6 +21,7 @@ interface __TAUser__ {
 interface __SignInResponse__ {
     success: boolean;
     ta?: __TAUser__;
+    token?: string;
     error?: string;
 }
 
@@ -162,6 +163,9 @@ export default function TALogin(): React.ReactElement {
             if (data.success && data.ta) {
                 setCurrentUser(data.ta);
                 localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
+                if (data.token) {
+                    localStorage.setItem('ta_token', data.token);
+                }
                 sessionStorage.removeItem('ta_session_ended');
                 setAuthState('authenticated');
                 setError('');

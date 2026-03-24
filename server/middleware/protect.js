@@ -12,3 +12,9 @@ export const checkJwt = expressjwt({
   issuer: `https://${process.env.VITE_AUTH0_DOMAIN}/`,
   algorithms: ['RS256']
 });
+
+// New TA middleware — for TA routes (clock in/out, shifts, etc.)
+export const checkTAJwt = expressjwt({
+  secret: process.env.TA_JWT_SECRET,
+  algorithms: ['HS256']
+});

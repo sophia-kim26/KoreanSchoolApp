@@ -32,7 +32,7 @@ router.get('/', checkJwt, async (req, res, next) => {
 });
 
 // GET /api/friday/get-calendar-dates
-router.get('/get-calendar-dates', checkJwt, async (req, res, next) => {
+router.get('/get-calendar-dates', async (req, res, next) => {
   try {
     console.log('GET /api/friday/get-calendar-dates called');
     const result = await getCalendarDates();
