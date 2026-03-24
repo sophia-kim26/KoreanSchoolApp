@@ -109,12 +109,22 @@ export const signIn = async (email, ta_code) => {
         throw error;
     }
 
-    // Return TA data without the hashed PIN
-    const { ta_code: _, ...taData } = ta;
-    return {
-        success: true,
-        ta: taData
-    };
+    // After verifying the TA, sign a token
+    const token = jwt.sign(
+        { sub: ta.id, email: ta.email, role: 'ta' },
+        process.env.TA_JWT_SECRET,
+        { expiresIn: '8h' }
+    );
+    
+    return { success: true, user: ta, token };
+
+    // // Return TA data without the hashed PIN
+    // const { ta_code: _, ...taData } = ta;
+    // return {
+    //     success: true,
+    //     ta: taData
+    // };
+
 };
 
 export const deactivateTA = async (id) => {
