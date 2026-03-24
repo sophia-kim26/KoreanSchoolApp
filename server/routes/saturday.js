@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 // GET /api/saturday/
-router.get('/', async (req, res, next) => {
+router.get('/', checkJwt, async (req, res, next) => {
   try {
     console.log('GET /api/saturday/ called');
     const result = await getAllSaturdayData();
@@ -24,7 +24,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/saturday/get-calendar-dates
-router.get('/get-calendar-dates', async (req, res, next) => {
+router.get('/get-calendar-dates', checkJwt, async (req, res, next) => {
   try {
     console.log('GET /api/saturday/get-calendar-dates called');
     const result = await getCalendarDates();
@@ -36,7 +36,7 @@ router.get('/get-calendar-dates', async (req, res, next) => {
 });
 
 // POST /api/saturday/save-calendar-dates
-router.post('/save-calendar-dates', async (req, res, next) => {
+router.post('/save-calendar-dates', checkJwt, validateCalendarDates, async (req, res, next) => {
   try {
     console.log('POST /api/saturday/save-calendar-dates called');
     console.log('Request body:', req.body);

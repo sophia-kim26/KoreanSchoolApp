@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Import your routes
 import authRoutes from '../routes/auth.js';
 import tasRoutes from '../routes/tas.js';
 import shiftsRoutes from '../routes/shifts.js';
@@ -18,32 +17,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 dotenv.config();
+
 const app = express();
 
-app.get('/api/test', (req, res) => {
-  res.json({ message: "Backend is reachable!" });
-});
+// 1. Trust proxy (must be first app.set)
+app.set('trust proxy', 1);
 
+// 2. CORS — must be before EVERYTHING else, including routes and body parser
+const allowedOrigins = [
+  'https://korean-school-app-2.vercel.app',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL, // fallback for other preview deployments
+].filter(Boolean); // remove undefined if FRONTEND_URL isn't set
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server requests (no origin) and allowed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+// 3. Handle preflight for ALL routes
+app.options('*', cors());
+
+// 4. Body parser
+app.use(express.json());
+
+// 5. Logger (after CORS so preflight requests are also logged correctly)
 app.use((req, res, next) => {
-  console.log("Requested Path:", req.path);
+  console.log(`[${req.method}] ${req.path}`);
   next();
 });
 
-// 1. Fix: Basic Security/Proxy setting
-app.set('trust proxy', 1); 
+// 6. Routes
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is reachable!' });
+});
 
-// 2. Fix: Clean CORS implementation
-// Remove the 'const express = require' lines entirely
-app.use(cors({
-  origin: ["https://korean-school-app-2.vercel.app", "http://localhost:5173"],
-  methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.use(express.json()); 
-
-// 3. Routes
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
@@ -52,7 +69,7 @@ app.use('/api/saturday', saturdayRouter);
 app.use('/', authRoutes);
 app.use('/api/parents', parentRoutes);
 
-// 4. Error handling
+// 7. Error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;

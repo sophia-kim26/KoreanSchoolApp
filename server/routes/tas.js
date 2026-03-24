@@ -10,7 +10,7 @@ import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '.
 const router = express.Router();
 
 // GET /api/tas - replaces /api/data
-router.get('/', async (req, res, next) => {
+router.get('/', checkJwt, async (req, res, next) => {
     try {
         const result = await getAllTAsWithStatus();
         res.json(result);
@@ -19,7 +19,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', checkJwt, async (req, res, next) => {
   try {
     const result = await getTAById(req.params.id);
     if (!result) return res.status(404).json({ message: 'TA not found' });
@@ -30,8 +30,8 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // PATCH /api/tas/:id/deactivate
-router.patch('/:id/deactivate', async (req, res, next) => {
-// router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
+// router.patch('/:id/deactivate', async (req, res, next) => {
+router.patch('/:id/deactivate', checkJwt, async (req, res, next) => {
     try {
         const result = await deactivateTA(req.params.id);
         res.json(result);
@@ -56,8 +56,8 @@ router.patch('/:id/classroom', checkJwt, async (req, res, next) => {
 });
 
 // change assigned classroom but this is a duplicate so idk which one to keep
-router.patch('/api/tas/:id/classroom', async (req, res, next) => {
-// router.patch('/api/tas/:id/classroom', checkJwt, async (req, res, next) => {
+// router.patch('/api/tas/:id/classroom', async (req, res, next) => {
+router.patch('/api/tas/:id/classroom', checkJwt, async (req, res, next) => {
   try {
     const { classroom } = req.body;
     const { id } = req.params;
