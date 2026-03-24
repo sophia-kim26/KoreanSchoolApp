@@ -530,13 +530,12 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   // Clock in function - IP based validation (no GPS needed)
   const clockIn = async (): Promise<void> => {
     try {
-      const token = localStorage.getItem('ta_token');
       const time = new Date();
       setClockInTime(time);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`},
+        headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
           ta_id: currentUser!.id,
           clock_in: time.toISOString(),
@@ -568,7 +567,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   };
 
   const clockOut = async (): Promise<void> => {
-    const token = localStorage.getItem('ta_token');
     console.log("=== CLOCK OUT STARTED ===");
     console.log("Active Shift ID:", activeShiftId);
     console.log("Clock In Time:", clockInTime);
@@ -609,7 +607,8 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     // const token = await getAccessTokenSilently();
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      // headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(requestBody)
     });
 
