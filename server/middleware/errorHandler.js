@@ -1,6 +1,9 @@
 export const errorHandler = (err, req, res, next) => {
-  const status = err.status || res.statusCode || 500;
+  const status = err.status || 500;
   res.status(status).json({
-    error: err.message || 'Server error',
+    error: "Internal server error",
   });
+
+  // log full error details for debugging only, never in client response
+  console.error(err);
 };
