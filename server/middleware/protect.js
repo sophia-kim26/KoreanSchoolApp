@@ -18,3 +18,19 @@ export const checkTAJwt = expressjwt({
   secret: process.env.TA_JWT_SECRET,
   algorithms: ['HS256']
 });
+
+export const checkAnyJwt = (req, res, next) => {
+  checkJwt(req, res, (auth0Error) => {
+    if (!auth0Error) {
+      return next();
+    }
+
+    checkTAJwt(req, res, (taError) => {
+      if (!taError) {
+        return next();
+      }
+
+      return next(taError || auth0Error);
+    });
+  });
+};

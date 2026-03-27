@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useParams, useNavigate } from "react-router-dom";
 
 // Type Definitions
@@ -34,6 +35,7 @@ interface RouteParams {
 function VPTAView() {
   const { ta_id } = useParams<RouteParams>();
   const navigate = useNavigate();
+  const { getAccessTokenSilently } = useAuth0();
   
   const [allShifts, setAllShifts] = useState<Shift[]>([]);
   const [taInfo, setTaInfo] = useState<TA | null>(null);
@@ -266,13 +268,17 @@ function VPTAView() {
   const handleSaveChanges = async (): Promise<void> => {
     setSaving(true);
     try {
+      const token = await getAccessTokenSilently();
       const updatePromises = Object.entries(editedShifts).map(([shiftId, data]) => {
         const payload: Partial<Shift> = {};
         if (data.clock_in) payload.clock_in = localToISO(data.clock_in) || '';
         if (data.clock_out) payload.clock_out = localToISO(data.clock_out);
         return fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify(payload)
         });
       });
@@ -295,7 +301,10 @@ function VPTAView() {
         };
         const createResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/manual`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify(newShiftPayload)
         });
         if (!createResponse.ok) {
@@ -329,8 +338,12 @@ function VPTAView() {
     if (!confirm(`Are you sure you want to reset the PIN for ${taInfo?.first_name} ${taInfo?.last_name}?`)) return;
     try {
       setResettingPin(true);
+      const token = await getAccessTokenSilently();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-pin/${ta_id}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       if (!response.ok) throw new Error('Failed to reset PIN');
       const result: { unhashed_pin: string } = await response.json();
