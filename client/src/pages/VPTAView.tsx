@@ -59,9 +59,13 @@ function VPTAView() {
       try {
         setLoading(true);
         setError(null);
+        const token = await getAccessTokenSilently();
+        const authHeaders = { Authorization: `Bearer ${token}` };
 
         // Fetch TA information (single TA by ID)
-        const taResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${ta_id}`);
+        const taResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${ta_id}`, {
+          headers: authHeaders
+        });
         if (!taResponse.ok) {
           throw new Error(`Failed to fetch TA info: ${taResponse.status}`);
         }
@@ -72,7 +76,9 @@ function VPTAView() {
         setTaInfo(currentTA);
 
         // Fetch shifts
-        const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`);
+        const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, {
+          headers: authHeaders
+        });
         if (!shiftsResponse.ok) {
           throw new Error(`HTTP error! status: ${shiftsResponse.status}`);
         }
@@ -80,7 +86,9 @@ function VPTAView() {
         setAllShifts(Array.isArray(shiftsData) ? shiftsData : []);
 
         // Fetch saved calendar dates (same endpoint as VPDashboard)
-        const datesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`);
+        const datesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
+          headers: authHeaders
+        });
         if (datesResponse.ok) {
           const datesJson = await datesResponse.json();
           if (datesJson.dates && Array.isArray(datesJson.dates)) {
@@ -313,7 +321,11 @@ function VPTAView() {
         }
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       const data: Shift[] = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);
       handleCloseEdit();

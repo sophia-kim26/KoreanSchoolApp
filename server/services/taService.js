@@ -112,7 +112,7 @@ export const signIn = async (email, ta_code) => {
 
     // After verifying the TA, sign a token
     const token = jwt.sign(
-        { sub: ta.id, email: ta.email, role: 'ta' },
+        { sub: ta.id, ta_id: ta.id, email: ta.email, role: 'ta' },
         process.env.TA_JWT_SECRET,
         { expiresIn: '8h' }
     );

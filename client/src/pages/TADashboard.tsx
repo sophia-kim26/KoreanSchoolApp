@@ -190,6 +190,25 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const { logout } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
+  const getTaAuthHeaders = (includeJson = false): HeadersInit => {
+    const storedUser = localStorage.getItem('current_ta_user');
+    let token: string | undefined;
+    if (storedUser) {
+      try {
+        ({ token } = JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored TA user:', error);
+      }
+    }
+    if (!token) {
+      token = localStorage.getItem('ta_token') || undefined;
+    }
+    if (!token) return includeJson ? { 'Content-Type': 'application/json' } : {};
+    return includeJson
+      ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      : { Authorization: `Bearer ${token}` };
+  };
+
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
   const [lastClockInTime, setLastClockInTime] = useState<Date | null>(null);
   const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
@@ -228,7 +247,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const fetchShifts = async (): Promise<void> => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
+        headers: getTaAuthHeaders()
+      });
       const json: Shift[] = await res.json();
       setData(json);
     } catch (err) {
@@ -238,7 +259,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const checkActiveShift = async (userId: number): Promise<void> => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/active/${userId}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/active/${userId}`, {
+        headers: getTaAuthHeaders()
+      });
       const json: ActiveShiftResponse = await res.json();
       
       if (json.activeShift) {
@@ -260,7 +283,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json"},
+        headers: getTaAuthHeaders(true),
         body: JSON.stringify({
           notes: notes
         })
@@ -452,7 +475,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   }, [navigate]);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/shifts`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
+      headers: getTaAuthHeaders()
+    })
       .then(res => res.json())
       .then((json: Shift[]) => setData(json))
       .catch(err => console.error(err));
@@ -536,7 +561,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json"},
+        headers: getTaAuthHeaders(true),
         body: JSON.stringify({
           ta_id: currentUser!.id,
           clock_in: time.toISOString(),
@@ -608,8 +633,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     // const token = await getAccessTokenSilently();
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      // headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: getTaAuthHeaders(true),
       body: JSON.stringify(requestBody)
     });
 
@@ -648,7 +672,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     try {
       await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getTaAuthHeaders(true),
         body: JSON.stringify({ attendance: newStatus })
       });
 

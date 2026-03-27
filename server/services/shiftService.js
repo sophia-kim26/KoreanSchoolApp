@@ -88,6 +88,11 @@ export const getActiveShift = async (ta_id) => {
   return { activeShift: result.length > 0 ? result[0] : null };
 };
 
+export const getShiftById = async (id) => {
+  const result = await sql`SELECT * FROM shifts WHERE id = ${id}`;
+  return result[0] || null;
+};
+
 export const createShift = async ({ ta_id, clock_in, clock_out, notes }) => {
   try {
     const result = await sql`

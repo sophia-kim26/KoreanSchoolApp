@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkJwt } from '../middleware/protect.js';
+import { checkJwt, checkAnyJwt } from '../middleware/protect.js';
 import { getAllParents, getParentById, getParentsByTAId, createParent, updateParent, deleteParent } from '../services/parentService.js';
 
 const router = express.Router();
@@ -26,7 +26,7 @@ router.get('/:id', checkJwt, async (req, res, next) => {
 });
 
 // ✅ PUBLIC — TAs need to see their assigned parents (contact info for their students)
-router.get('/ta/:taId', async (req, res, next) => {
+router.get('/ta/:taId', checkAnyJwt, async (req, res, next) => {
   try {
     const result = await getParentsByTAId(req.params.taId);
     if (!result) return res.status(404).json({ error: 'No parents found for this TA' });

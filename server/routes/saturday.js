@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkJwt } from '../middleware/protect.js';
+import { checkJwt, checkAnyJwt } from '../middleware/protect.js';
 import { validateCalendarDates } from '../middleware/validate.js';
 
 import { 
@@ -28,7 +28,7 @@ router.get('/', checkJwt, async (req, res, next) => {
 });
 
 // GET /api/saturday/get-calendar-dates
-router.get('/get-calendar-dates', checkJwt, async (req, res, next) => {
+router.get('/get-calendar-dates', checkAnyJwt, async (req, res, next) => {
   try {
     console.log('GET /api/saturday/get-calendar-dates called');
     const result = await getCalendarDates();

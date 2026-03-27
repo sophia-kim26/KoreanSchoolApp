@@ -281,24 +281,32 @@ function VPDashboard(): React.ReactElement {
     fetchSaturdayData();
   }, []);
 
-  const fetchSavedDates = (): void => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`)
-      .then(res => res.json())
-      .then((json: CalendarDatesResponse) => {
-        if (json.dates && Array.isArray(json.dates)) {
-          setSelectedDates(new Set(json.dates));
+  const fetchSavedDates = async (): Promise<void> => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      })
-      .catch(err => console.log("No saved dates found or error fetching them"));
+      });
+      const json: CalendarDatesResponse = await response.json();
+      if (json.dates && Array.isArray(json.dates)) {
+        setSelectedDates(new Set(json.dates));
+      }
+    } catch (err) {
+      console.log("No saved dates found or error fetching them");
+    }
   };
 
   const handleSaveDates = async (): Promise<void> => {
     try {
+      const token = await getAccessTokenSilently();
       const datesArray = Array.from(selectedDates);
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
           ...(import.meta.env.VITE_VERCEL_BYPASS_SECRET
             ? { 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET }
             : {})
@@ -347,7 +355,12 @@ function VPDashboard(): React.ReactElement {
 
   const fetchFridayData = async (): Promise<void> => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`);
+      const token = await getAccessTokenSilently();
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       const json = await res.json();
       setFridayData(Array.isArray(json) ? json : []);
     } catch (err) {
@@ -358,7 +371,12 @@ function VPDashboard(): React.ReactElement {
 
   const fetchSaturdayData = async (): Promise<void> => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saturday`);
+      const token = await getAccessTokenSilently();
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saturday`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       const json = await res.json();
       setSaturdayData(Array.isArray(json) ? json : []);
     } catch (err) {
@@ -389,9 +407,13 @@ function VPDashboard(): React.ReactElement {
     try {
       const pin = generatePIN();
       const dataToSend = { ...formData, ta_code: pin };
+      const token = await getAccessTokenSilently();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(dataToSend)
       });
       if (response.ok) {
@@ -420,11 +442,21 @@ function VPDashboard(): React.ReactElement {
   const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
     try {
       if (currentAttendance === 'Present') {
-        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-out/${taId}`, { method: 'POST' });
+        const token = await getAccessTokenSilently();
+        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-out/${taId}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
       } else {
+        const token = await getAccessTokenSilently();
         await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify({ ta_id: taId })
         });
       }
@@ -438,7 +470,13 @@ function VPDashboard(): React.ReactElement {
   const deactivateTA = async (taId: number): Promise<void> => {
     if (!confirm('Are you sure you want to deactivate this TA?')) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, { method: 'PATCH' });
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         fetchData();
       } else {
@@ -572,9 +610,13 @@ function VPDashboard(): React.ReactElement {
     setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
     setEnrichedFridayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
     try {
+      const token = await getAccessTokenSilently();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ classroom })
       });
       if (!response.ok) throw new Error('Failed to update classroom');

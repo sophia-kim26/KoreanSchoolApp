@@ -12,6 +12,7 @@ import fridayRouter from '../routes/friday.js';
 import saturdayRouter from '../routes/saturday.js';
 import parentRoutes from '../routes/parents.js';
 import { errorHandler } from '../middleware/errorHandler.js';
+import { checkAnyJwt } from '../middleware/protect.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -57,7 +58,7 @@ app.use((req, res, next) => {
 });
 
 // 6. Routes
-app.get('/api/test', (req, res) => {
+app.get('/api/test', checkAnyJwt, (req, res) => {
   res.json({ message: 'Backend is reachable!' });
 });
 
@@ -66,7 +67,7 @@ app.use('/api/shifts', shiftsRoutes);
 app.use('/api/tas', tasRoutes);
 app.use('/api/friday', fridayRouter);
 app.use('/api/saturday', saturdayRouter);
-app.use('/', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/parents', parentRoutes);
 
 // 7. Error handler
