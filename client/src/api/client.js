@@ -15,16 +15,19 @@ class ApiClient {
 
     // 1. Get auth token from 'current_ta_user'
     const taUser = localStorage.getItem('current_ta_user');
+    let token;
     if (taUser) {
       try {
-        const { token } = JSON.parse(taUser);
-        if (token) {
-          console.log("Sending token:", config.headers.Authorization);
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        ({ token } = JSON.parse(taUser));
       } catch (e) {
         console.error("Error parsing stored user for token", e);
       }
+    }
+    if (!token) {
+      token = localStorage.getItem('ta_token');
+    }
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     try {

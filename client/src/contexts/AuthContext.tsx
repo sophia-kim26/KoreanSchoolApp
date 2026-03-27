@@ -6,6 +6,7 @@ interface TAUser {
   first_name: string;
   last_name: string;
   // Add any other properties your TA user object has
+  token?: string;
 }
 
 interface AuthContextType {

@@ -13,9 +13,10 @@ interface __TAUser__ {
     first_name: string;
     last_name: string;
     email: string;
-    ta_code: string;
+    ta_code?: string;
     session_day: string;
     classroom?: string;
+    token?: string;
 }
 
 interface __SignInResponse__ {
@@ -161,8 +162,9 @@ export default function TALogin(): React.ReactElement {
             }
 
             if (data.success && data.ta) {
-                setCurrentUser(data.ta);
-                localStorage.setItem('current_ta_user', JSON.stringify(data.ta));
+                const taUser = data.token ? { ...data.ta, token: data.token } : data.ta;
+                setCurrentUser(taUser);
+                localStorage.setItem('current_ta_user', JSON.stringify(taUser));
                 if (data.token) {
                     localStorage.setItem('ta_token', data.token);
                 }
