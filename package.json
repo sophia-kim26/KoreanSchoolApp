@@ -11,7 +11,8 @@
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
-    "jwks-rsa": "^3.2.0"
+    "jwks-rsa": "^3.2.0",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "server": "node server/api/index.js"
