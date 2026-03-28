@@ -2,13 +2,13 @@ import express from 'express';
 
 import { clockIn, clockOut } from '../services/shiftService.js';
 import { validateClockIn } from '../middleware/validate.js';
-import { checkJwt, checkTAJwt } from '../middleware/protect.js';
+import { checkJwt, checkTAJwt, checkAnyJwt } from '../middleware/protect.js';
 
 const router = express.Router();
 
 // POST /api/attendance/clock-in
 // router.post('/clock-in', validateClockIn, async (req, res, next) => {
-router.post('/clock-in', checkTAJwt, validateClockIn, async (req, res, next) => {
+router.post('/clock-in', checkAnyJwt, validateClockIn, async (req, res, next) => {
   try {
     const result = await clockIn(req.body.ta_id);
     res.json(result);
@@ -19,7 +19,7 @@ router.post('/clock-in', checkTAJwt, validateClockIn, async (req, res, next) => 
 
 // POST /api/attendance/clock-out/:ta_id
 // router.post('/clock-out/:ta_id', async (req, res, next) => {
-router.post('/clock-out/:ta_id', checkTAJwt, async (req, res, next) => {
+router.post('/clock-out/:ta_id', checkAnyJwt, async (req, res, next) => {
   try {
     const result = await clockOut(req.params.ta_id);
     res.json(result);

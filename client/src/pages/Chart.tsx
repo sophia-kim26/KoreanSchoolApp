@@ -71,11 +71,29 @@ export default function Chart({
   const [fullTA, setFullTA] = useState<any>(null);
   const [calendarDates, setCalendarDates] = useState<Set<string>>(new Set());
 
+  const getTaAuthHeaders = (): HeadersInit => {
+    const storedUser = localStorage.getItem('current_ta_user');
+    let token: string | undefined;
+    if (storedUser) {
+      try {
+        ({ token } = JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored TA user:', error);
+      }
+    }
+    if (!token) {
+      token = localStorage.getItem('ta_token') || undefined;
+    }
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     const fetchParents = async () => {
       if (!currentUser?.id) return;
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${currentUser.id}`, {
+          headers: getTaAuthHeaders()
+        });
         if (res.ok) {
           const data = await res.json();
           setParents(data);
@@ -92,7 +110,9 @@ export default function Chart({
 
   useEffect(() => {
     if (!currentUser?.id) return;
-    fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/tas/${currentUser.id}`, {
+      headers: getTaAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => setFullTA(data))
       .catch(err => console.error('Failed to fetch TA info:', err));
@@ -100,7 +120,9 @@ export default function Chart({
 
   // Fetch calendar dates — same endpoint as VPDashboard / VPTAView
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
+      headers: getTaAuthHeaders()
+    })
       .then(res => res.json())
       .then(json => {
         if (json.dates && Array.isArray(json.dates)) {

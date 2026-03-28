@@ -6,10 +6,10 @@ export const checkJwt = expressjwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
-    jwksUri: `https://${process.env.VITE_AUTH0_DOMAIN}/.well-known/jwks.json`
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
   }),
   audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.VITE_AUTH0_DOMAIN}/`,
+  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
   algorithms: ['RS256']
 });
 
@@ -18,3 +18,19 @@ export const checkTAJwt = expressjwt({
   secret: process.env.TA_JWT_SECRET,
   algorithms: ['HS256']
 });
+
+export const checkAnyJwt = (req, res, next) => {
+  checkJwt(req, res, (auth0Error) => {
+    if (!auth0Error) {
+      return next();
+    }
+
+    checkTAJwt(req, res, (taError) => {
+      if (!taError) {
+        return next();
+      }
+
+      return next(taError || auth0Error);
+    });
+  });
+};

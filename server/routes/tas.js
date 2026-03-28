@@ -1,11 +1,11 @@
 import express from 'express';
-import { checkJwt } from '../middleware/protect.js';
+import { checkJwt, checkAnyJwt } from '../middleware/protect.js';
 import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '../services/taService.js';
 
 const router = express.Router();
 
 // ✅ PUBLIC — TAs need to load the TA list and their own profile for the clock-in UI
-router.get('/', async (req, res, next) => {
+router.get('/', checkAnyJwt, async (req, res, next) => {
   try {
     const result = await getAllTAsWithStatus();
     res.json(result);
@@ -14,7 +14,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', checkAnyJwt, async (req, res, next) => {
   try {
     const result = await getTAById(req.params.id);
     if (!result) return res.status(404).json({ message: 'TA not found' });

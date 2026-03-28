@@ -1,5 +1,6 @@
 import { sql } from '../config/database.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const SALT_ROUNDS = 10;
 
@@ -111,12 +112,13 @@ export const signIn = async (email, ta_code) => {
 
     // After verifying the TA, sign a token
     const token = jwt.sign(
-        { sub: ta.id, email: ta.email, role: 'ta' },
+        { sub: ta.id, ta_id: ta.id, email: ta.email, role: 'ta' },
         process.env.TA_JWT_SECRET,
         { expiresIn: '8h' }
     );
     
-    return { success: true, user: ta, token };
+    const { ta_code: _, ...taData } = ta;
+    return { success: true, ta: taData, token };
 
     // // Return TA data without the hashed PIN
     // const { ta_code: _, ...taData } = ta;
