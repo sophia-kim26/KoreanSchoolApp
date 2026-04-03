@@ -40,11 +40,9 @@ function AuthProviderWithNavigate() {
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
       authorizationParams={{
         redirect_uri: window.location.origin,
-<<<<<<< HEAD
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE as string,
-=======
-        audience: 'https://korean-school-app/api',
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
+        ...(import.meta.env.VITE_AUTH0_AUDIENCE
+          ? { audience: import.meta.env.VITE_AUTH0_AUDIENCE as string }
+          : {})
       }}
       onRedirectCallback={onRedirectCallback}
     >

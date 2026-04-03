@@ -285,20 +285,6 @@ function VPDashboard(): React.ReactElement {
   const fetchSavedDates = async (): Promise<void> => {
     try {
       const token = await getAccessTokenSilently();
-<<<<<<< HEAD
-      fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then((json: CalendarDatesResponse) => {
-          if (json.dates && Array.isArray(json.dates)) {
-            setSelectedDates(new Set(json.dates));
-          }
-        })
-        .catch(err => console.log("No saved dates found or error fetching them"));
-    } catch (err) {
-      console.error("Could not get token for fetchSavedDates:", err);
-=======
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -310,7 +296,6 @@ function VPDashboard(): React.ReactElement {
       }
     } catch (err) {
       console.log("No saved dates found or error fetching them");
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
     }
   };
 
@@ -374,17 +359,10 @@ function VPDashboard(): React.ReactElement {
     console.log('JWT?', token.split('.').length === 3);
     try {
       const token = await getAccessTokenSilently();
-<<<<<<< HEAD
-      console.log('TOKEN:', token); // 👈 add this
-      console.log('TOKEN length:', token?.length);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-=======
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
       });
       const json = await res.json();
       setFridayData(Array.isArray(json) ? json : []);
@@ -398,13 +376,9 @@ function VPDashboard(): React.ReactElement {
     try {
       const token = await getAccessTokenSilently();
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saturday`, {
-<<<<<<< HEAD
-        headers: { 'Authorization': `Bearer ${token}` }
-=======
         headers: {
           Authorization: `Bearer ${token}`
         }
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
       });
       const json = await res.json();
       setSaturdayData(Array.isArray(json) ? json : []);
@@ -502,13 +476,9 @@ function VPDashboard(): React.ReactElement {
       const token = await getAccessTokenSilently();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
         method: 'PATCH',
-<<<<<<< HEAD
-        headers: { 'Authorization': `Bearer ${token}` }
-=======
         headers: {
           Authorization: `Bearer ${token}`
         }
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
       });
       if (response.ok) {
         fetchData();
@@ -648,11 +618,7 @@ function VPDashboard(): React.ReactElement {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-<<<<<<< HEAD
-          'Authorization': `Bearer ${token}`
-=======
           Authorization: `Bearer ${token}`
->>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
         },
         body: JSON.stringify({ classroom })
       });
