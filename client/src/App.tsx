@@ -25,10 +25,13 @@ function RequireVPAuth({ children }: { children: React.ReactElement }) {
 }
 
 function AuthProviderWithNavigate() {
+  useEffect(() => {
+    localStorage.clear(); // nuke cached Auth0 tokens
+  }, []);
   const navigate = useNavigate();
 
   const onRedirectCallback = (appState: any) => {
-    navigate(appState?.returnTo || "/vp/dashboard");
+    navigate(appState?.returnTo ?? "/vp/dashboard");
   };
 
   return (
@@ -37,7 +40,11 @@ function AuthProviderWithNavigate() {
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
       authorizationParams={{
         redirect_uri: window.location.origin,
+<<<<<<< HEAD
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE as string,
+=======
         audience: 'https://korean-school-app/api',
+>>>>>>> 5009a8951e3a6868a128f46982a02e1bd5ddb534
       }}
       onRedirectCallback={onRedirectCallback}
     >

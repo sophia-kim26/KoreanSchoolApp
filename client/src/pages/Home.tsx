@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 import './style/global.css';
 import logo from '../assets/logo.png';
+import { useAuth0 } from "@auth0/auth0-react";
 
 function Home(): React.ReactElement {
-  const navigate: NavigateFunction = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth0();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/vp/dashboard");
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   const handleClickVP = (): void => {
     navigate('/vp/login');
