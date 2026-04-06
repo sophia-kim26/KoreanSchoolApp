@@ -139,7 +139,7 @@ const parentUpdateSchema = z.object({
 });
 
 const classroomSchema = z.object({
-  classroom: z.string().trim().min(1).max(50)
+  classroom: z.string().trim().min(1).max(50).optional()
 }).strip();
 
 const calendarDatesSchema = z.object({
