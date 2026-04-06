@@ -5,7 +5,6 @@ import "gridjs/dist/theme/mermaid.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, NavigateFunction } from "react-router-dom";
 
-// Type definitions
 interface TAData {
   id: number;
   first_name: string;
@@ -104,8 +103,8 @@ function VPDashboard(): React.ReactElement {
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
 
-  // Dark mode — same pattern as TADashboard
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('vp_dark_mode') === 'true';
   });
@@ -120,90 +119,48 @@ function VPDashboard(): React.ReactElement {
     classroom: ""
   });
 
-  // Dark mode class + persist
   useEffect(() => {
     localStorage.setItem('vp_dark_mode', String(darkMode));
     document.body.classList.toggle('dark-mode', darkMode);
   }, [darkMode]);
 
-  // Dark mode CSS injection for gridjs elements
   useEffect(() => {
     const styleId = 'vp-dark-mode-styles';
     const existing = document.getElementById(styleId);
     if (existing) existing.remove();
-
     if (darkMode) {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
         body.dark-mode { background-color: #111827 !important; color: #f9fafb !important; }
         body.dark-mode .page-container { background-color: #111827 !important; }
-
-        body.dark-mode .gridjs-wrapper { 
-          background-color: #1f2937 !important; 
-          border: 1px solid #374151 !important; 
-          border-radius: 10px !important;
-          overflow: hidden !important;
-        }
+        body.dark-mode .gridjs-wrapper { background-color: #1f2937 !important; border: 1px solid #374151 !important; border-radius: 10px !important; overflow: hidden !important; }
         body.dark-mode .gridjs-thead { background-color: #273549 !important; }
-        body.dark-mode .gridjs-th { 
-          background-color: #273549 !important; 
-          color: #93c5fd !important; 
-          border-color: #374151 !important; 
-          font-weight: 600 !important;
-        }
+        body.dark-mode .gridjs-th { background-color: #273549 !important; color: #93c5fd !important; border-color: #374151 !important; font-weight: 600 !important; }
         body.dark-mode .gridjs-th-content { color: #93c5fd !important; }
-        body.dark-mode .gridjs-tr { 
-          background-color: #1f2937 !important; 
-          border-bottom: 1px solid #2d3748 !important; 
-        }
+        body.dark-mode .gridjs-tr { background-color: #1f2937 !important; border-bottom: 1px solid #2d3748 !important; }
         body.dark-mode .gridjs-tr:hover { background-color: #263348 !important; }
-        body.dark-mode .gridjs-td { 
-          color: #e5e7eb !important; 
-          border-color: #2d3748 !important; 
-          background-color: transparent !important; 
-        }
-        body.dark-mode .gridjs-search-input { 
-          background-color: #1f2937 !important; 
-          color: #f9fafb !important; 
-          border: 1px solid #4b5563 !important; 
-          border-radius: 8px !important;
-        }
+        body.dark-mode .gridjs-td { color: #e5e7eb !important; border-color: #2d3748 !important; background-color: transparent !important; }
+        body.dark-mode .gridjs-search-input { background-color: #1f2937 !important; color: #f9fafb !important; border: 1px solid #4b5563 !important; border-radius: 8px !important; }
         body.dark-mode .gridjs-search-input::placeholder { color: #6b7280 !important; }
-        body.dark-mode .gridjs-pagination { 
-          background-color: #1f2937 !important; 
-          border-top: 1px solid #374151 !important; 
-          color: #9ca3af !important;
-        }
-        body.dark-mode .gridjs-pages button { 
-          background-color: #273549 !important; 
-          color: #d1d5db !important; 
-          border: 1px solid #374151 !important;
-          border-radius: 6px !important;
-        }
+        body.dark-mode .gridjs-pagination { background-color: #1f2937 !important; border-top: 1px solid #374151 !important; color: #9ca3af !important; }
+        body.dark-mode .gridjs-pages button { background-color: #273549 !important; color: #d1d5db !important; border: 1px solid #374151 !important; border-radius: 6px !important; }
         body.dark-mode .gridjs-pages button:hover { background-color: #334155 !important; color: #f9fafb !important; }
-        body.dark-mode .gridjs-pages button.gridjs-currentPage { 
-          background-color: #3b82f6 !important; 
-          color: white !important; 
-          border-color: #3b82f6 !important;
-        }
+        body.dark-mode .gridjs-pages button.gridjs-currentPage { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
         body.dark-mode .gridjs-summary { color: #6b7280 !important; }
       `;
       document.head.appendChild(style);
     }
   }, [darkMode]);
 
-  // Color shorthands for inline styles
   const dm = darkMode;
   const bg = dm ? '#111827' : undefined;
   const cardBg = dm ? '#1f2937' : 'white';
-  const cardBorder = dm ? '1px solid #374151' : undefined;
   const inputBg = dm ? '#273549' : 'white';
   const inputBorder = dm ? '1px solid #4b5563' : '1px solid #d1d5db';
   const inputColor = dm ? '#e5e7eb' : '#374151';
   const labelColor = dm ? '#9ca3af' : '#374151';
   const headingColor = dm ? '#f9fafb' : 'inherit';
-  const subTextColor = dm ? '#9ca3af' : '#374151';
   const tabPanelBg = dm ? '#172a45' : '#dbeafe';
   const tabBorderBottom = dm ? '2px solid #374151' : '2px solid #e5e7eb';
   const mainTabBg = (active: boolean) => active ? (dm ? '#1e3a5f' : '#bfdbfe') : 'transparent';
@@ -228,112 +185,50 @@ function VPDashboard(): React.ReactElement {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  const { isLoading, isAuthenticated, user, logout, getAccessTokenSilently } = useAuth0();
+  const { isLoading, isAuthenticated, logout, getAccessTokenSilently } = useAuth0();
   const navigate: NavigateFunction = useNavigate();
 
-  const getDaysInMonth = (date: Date): { daysInMonth: number; startingDayOfWeek: number } => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    return { daysInMonth, startingDayOfWeek };
+  // ✅ Get token once, pass to all fetches — fixes the race condition
+  const getToken = (): Promise<string> => {
+    return getAccessTokenSilently({
+      authorizationParams: {
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+      }
+    });
   };
-
-  const formatDateKey = (year: number, month: number, day: number): string => {
-    const m = (month + 1).toString().padStart(2, '0');
-    const d = day.toString().padStart(2, '0');
-    return `${year}-${m}-${d}`;
-  };
-
-  const toggleDate = (day: number): void => {
-    const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const newSelected = new Set(selectedDates);
-    if (newSelected.has(dateStr)) {
-      newSelected.delete(dateStr);
-    } else {
-      newSelected.add(dateStr);
-    }
-    setSelectedDates(newSelected);
-  };
-
-  const isDateSelected = (day: number): boolean => {
-    const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return selectedDates.has(dateStr);
-  };
-
-  const changeMonth = (offset: number): void => {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCurrentMonth(newDate);
-  };
-
-  const monthNames: string[] = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
-    fetchData();
-    fetchSavedDates();
-    fetchFridayData();
-    fetchSaturdayData();
+
+    const loadAll = async () => {
+      try {
+        const token = await getToken(); // ✅ one token fetch, used by all
+        await Promise.all([
+          fetchData(token),
+          fetchSavedDates(token),
+          fetchFridayData(token),
+          fetchSaturdayData(token),
+        ]);
+      } catch (err) {
+        console.error('Failed to initialize dashboard:', err);
+      }
+    };
+
+    loadAll();
   }, [isAuthenticated, isLoading]);
 
-  const fetchSavedDates = async (): Promise<void> => {
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const json: CalendarDatesResponse = await response.json();
-      if (json.dates && Array.isArray(json.dates)) {
-        setSelectedDates(new Set(json.dates));
-      }
-    } catch (err) {
-      console.log("No saved dates found or error fetching them");
-    }
-  };
+  useEffect(() => {
+    if (fridayData.length === 0 || data.length === 0) return;
+    const enriched = fridayData.map(row => {
+      const taMatch = data.find(ta => ta.id === row.id);
+      return { ...row, classroom: taMatch?.classroom ?? '' };
+    });
+    setEnrichedFridayData(enriched);
+  }, [fridayData, data]);
 
-  const handleSaveDates = async (): Promise<void> => {
+  // ✅ All fetch functions now accept token as parameter
+  const fetchData = async (token: string): Promise<void> => {
     try {
-      const token = await getAccessTokenSilently();
-      const datesArray = Array.from(selectedDates);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          ...(import.meta.env.VITE_VERCEL_BYPASS_SECRET
-            ? { 'x-vercel-protection-bypass': import.meta.env.VITE_VERCEL_BYPASS_SECRET }
-            : {})
-        },
-        body: JSON.stringify({ dates: datesArray })
-      });
-      if (response.ok) {
-        setShowCalendar(false);
-        await fetchFridayData();
-        await fetchSaturdayData();
-        alert("Dates saved! The table now shows only selected dates.");
-      } else {
-        const responseText = await response.text();
-        console.error("Server returned error status:", response.status);
-        console.error("Response body:", responseText);
-        alert(`Failed to save dates. Status: ${response.status}. Check console for details.`);
-      }
-    } catch (err) {
-      console.error('Error in handleSaveDates:', err);
-      alert(`Error saving dates: ${(err as Error).message}`);
-    }
-  };
-
-  const fetchData = async (): Promise<void> => {
-    try {
-      const token = await getAccessTokenSilently();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
@@ -354,15 +249,24 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const fetchFridayData = async (): Promise<void> => {
-    const token = await getAccessTokenSilently();
-    console.log('JWT?', token.split('.').length === 3);
+  const fetchSavedDates = async (token: string): Promise<void> => {
     try {
-      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/get-calendar-dates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json: CalendarDatesResponse = await response.json();
+      if (json.dates && Array.isArray(json.dates)) {
+        setSelectedDates(new Set(json.dates));
+      }
+    } catch (err) {
+      console.error("Error fetching saved dates:", err);
+    }
+  };
+
+  const fetchFridayData = async (token: string): Promise<void> => {
+    try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/friday`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
       setFridayData(Array.isArray(json) ? json : []);
@@ -372,19 +276,141 @@ function VPDashboard(): React.ReactElement {
     }
   };
 
-  const fetchSaturdayData = async (): Promise<void> => {
+  const fetchSaturdayData = async (token: string): Promise<void> => {
     try {
-      const token = await getAccessTokenSilently();
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saturday`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
       setSaturdayData(Array.isArray(json) ? json : []);
     } catch (err) {
       console.error("Fetch Saturday error:", err);
       setSaturdayData([]);
+    }
+  };
+
+  // ✅ Actions that are triggered by user interaction get a fresh token at call time
+  const handleSaveDates = async (): Promise<void> => {
+    try {
+      const token = await getToken();
+      const datesArray = Array.from(selectedDates);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friday/save-calendar-dates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          // ✅ Vercel bypass secret REMOVED — security fix
+        },
+        body: JSON.stringify({ dates: datesArray })
+      });
+      if (response.ok) {
+        setShowCalendar(false);
+        const freshToken = await getToken();
+        await Promise.all([fetchFridayData(freshToken), fetchSaturdayData(freshToken)]);
+        alert("Dates saved! The table now shows only selected dates.");
+      } else {
+        const responseText = await response.text();
+        console.error("Server returned error status:", response.status, responseText);
+        alert(`Failed to save dates. Status: ${response.status}.`);
+      }
+    } catch (err) {
+      console.error('Error in handleSaveDates:', err);
+      alert(`Error saving dates: ${(err as Error).message}`);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    if (!formData.session_day) {
+      alert("Please select a session day (Friday, Saturday, or Both)");
+      return;
+    }
+    try {
+      const pin = generatePIN();
+      const dataToSend = { ...formData, ta_code: pin };
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(dataToSend)
+      });
+      if (response.ok) {
+        const result: CreateAccountResponse = await response.json();
+        setGeneratedPin(result.unhashed_pin);
+        setNewTAName(`${formData.first_name} ${formData.last_name}`);
+        setFormData({ first_name: "", last_name: "", korean_name: "", email: "", session_day: "", is_active: true, classroom: "" });
+        setShowModal(false);
+        setShowPinModal(true);
+        const freshToken = await getToken();
+        fetchData(freshToken);
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to add new TA");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error adding new TA");
+    }
+  };
+
+  const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
+    try {
+      const token = await getToken();
+      if (currentAttendance === 'Present') {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-out/${taId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ta_id: taId })
+        });
+      }
+      fetchData(token);
+    } catch (err) {
+      console.error(err);
+      alert('Error updating attendance');
+    }
+  };
+
+  const deactivateTA = async (taId: number): Promise<void> => {
+    if (!confirm('Are you sure you want to deactivate this TA?')) return;
+    try {
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchData(token);
+      } else {
+        alert('Failed to deactivate TA');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deactivating TA');
+    }
+  };
+
+  const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
+    setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
+    setEnrichedFridayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
+    try {
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ classroom })
+      });
+      if (!response.ok) throw new Error('Failed to update classroom');
+    } catch (err) {
+      console.error(err);
+      alert('Error updating classroom');
+      const token = await getToken();
+      await fetchData(token);
+      await fetchFridayData(token);
     }
   };
 
@@ -401,104 +427,51 @@ function VPDashboard(): React.ReactElement {
     setFormData(prev => ({ ...prev, session_day: day }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    if (!formData.session_day) {
-      alert("Please select a session day (Friday, Saturday, or Both)");
-      return;
-    }
-    try {
-      const pin = generatePIN();
-      const dataToSend = { ...formData, ta_code: pin };
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/create-account-vp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(dataToSend)
-      });
-      if (response.ok) {
-        const result: CreateAccountResponse = await response.json();
-        setGeneratedPin(result.unhashed_pin);
-        setNewTAName(`${formData.first_name} ${formData.last_name}`);
-        setFormData({ first_name: "", last_name: "", korean_name: "", email: "", session_day: "", is_active: true, classroom: "" });
-        setShowModal(false);
-        setShowPinModal(true);
-        fetchData();
-      } else {
-        const error = await response.json();
-        alert(error.message || "Failed to add new TA");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error adding new TA");
-    }
-  };
-
   const copyPinToClipboard = (): void => {
     navigator.clipboard.writeText(generatedPin);
     alert('PIN copied to clipboard!');
-  };
-
-  const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
-    try {
-      if (currentAttendance === 'Present') {
-        const token = await getAccessTokenSilently();
-        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-out/${taId}`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-      } else {
-        const token = await getAccessTokenSilently();
-        await fetch(`${import.meta.env.VITE_API_URL}/api/attendance/clock-in`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ ta_id: taId })
-        });
-      }
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error updating attendance');
-    }
-  };
-
-  const deactivateTA = async (taId: number): Promise<void> => {
-    if (!confirm('Are you sure you want to deactivate this TA?')) return;
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/deactivate`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        fetchData();
-      } else {
-        alert('Failed to deactivate TA');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error deactivating TA');
-    }
   };
 
   const handleRowClick = (taId: number): void => {
     navigate(`/vp/ta-view/${taId}`);
   };
 
-  const gridData: (string | number | boolean)[][] = data.map(row => [
-    row.first_name, row.last_name, row.korean_name, row.session_day,
-    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
-  ]);
+  const getDaysInMonth = (date: Date): { daysInMonth: number; startingDayOfWeek: number } => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    return { daysInMonth: lastDay.getDate(), startingDayOfWeek: firstDay.getDay() };
+  };
+
+  const formatDateKey = (year: number, month: number, day: number): string => {
+    const m = (month + 1).toString().padStart(2, '0');
+    const d = day.toString().padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  };
+
+  const toggleDate = (day: number): void => {
+    const dateStr = formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const newSelected = new Set(selectedDates);
+    if (newSelected.has(dateStr)) newSelected.delete(dateStr);
+    else newSelected.add(dateStr);
+    setSelectedDates(newSelected);
+  };
+
+  const isDateSelected = (day: number): boolean => {
+    return selectedDates.has(formatDateKey(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+  };
+
+  const changeMonth = (offset: number): void => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setCurrentMonth(newDate);
+  };
+
+  const monthNames: string[] = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const isDateInPast = (dateKey: string): boolean => {
     const [year, month, day] = dateKey.split('_').map(Number);
@@ -512,28 +485,21 @@ function VPDashboard(): React.ReactElement {
 
   const getFridayColumns = (): Array<{ name: string; id: string }> => {
     if (fridayData.length === 0) return [];
-    const sampleRow = fridayData[0];
-    const keys = Object.keys(sampleRow);
+    const keys = Object.keys(fridayData[0]);
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count', 'classroom'];
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
-    const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(date => date.replace(/-/g, '_')));
+    const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(d => d.replace(/-/g, '_')));
     const dateKeys = keys.filter(key => {
-      if (!dateRegex.test(key)) return false;
-      if (!selectedDatesWithUnderscores.has(key)) return false;
+      if (!dateRegex.test(key) || !selectedDatesWithUnderscores.has(key)) return false;
       const [year, month, day] = key.split('_').map(Number);
-      const date = new Date(year, month - 1, day);
-      return date.getDay() === 5;
-    });
-    dateKeys.sort();
+      return new Date(year, month - 1, day).getDay() === 5;
+    }).sort();
     const koreanNameIndex = nonDateKeys.indexOf('korean_name');
     const insertAt = koreanNameIndex >= 0 ? koreanNameIndex + 1 : nonDateKeys.length;
     nonDateKeys.splice(insertAt, 0, 'classroom');
-    const finalKeys = [...nonDateKeys, ...dateKeys];
     return [
-      ...finalKeys.map(key => ({
-        name: dateRegex.test(key) ? key.replace(/_/g, '-')
-          : key === 'classroom' ? 'Classroom'
-          : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      ...[...nonDateKeys, ...dateKeys].map(key => ({
+        name: dateRegex.test(key) ? key.replace(/_/g, '-') : key === 'classroom' ? 'Classroom' : key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         id: key
       })),
       { name: 'Days Present', id: '__days_present__' },
@@ -543,24 +509,18 @@ function VPDashboard(): React.ReactElement {
 
   const getSaturdayColumns = (): Array<{ name: string; id: string }> => {
     if (saturdayData.length === 0) return [];
-    const sampleRow = saturdayData[0];
-    const keys = Object.keys(sampleRow);
+    const keys = Object.keys(saturdayData[0]);
     const hiddenColumns = ['id', 'ta_code', 'email', 'session_day', 'is_active', 'created_at', 'phone', 'attendance_count', 'absence_count'];
     const nonDateKeys = keys.filter(key => !dateRegex.test(key) && !hiddenColumns.includes(key));
-    const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(date => date.replace(/-/g, '_')));
+    const selectedDatesWithUnderscores = new Set(Array.from(selectedDates).map(d => d.replace(/-/g, '_')));
     const dateKeys = keys.filter(key => {
-      if (!dateRegex.test(key)) return false;
-      if (!selectedDatesWithUnderscores.has(key)) return false;
+      if (!dateRegex.test(key) || !selectedDatesWithUnderscores.has(key)) return false;
       const [year, month, day] = key.split('_').map(Number);
-      const date = new Date(year, month - 1, day);
-      return date.getDay() === 6;
-    });
-    dateKeys.sort();
-    const finalKeys = [...nonDateKeys, ...dateKeys];
+      return new Date(year, month - 1, day).getDay() === 6;
+    }).sort();
     return [
-      ...finalKeys.map(key => ({
-        name: dateRegex.test(key) ? key.replace(/_/g, '-')
-          : key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      ...[...nonDateKeys, ...dateKeys].map(key => ({
+        name: dateRegex.test(key) ? key.replace(/_/g, '-') : key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         id: key
       })),
       { name: 'Days Present', id: '__days_present__' },
@@ -568,24 +528,11 @@ function VPDashboard(): React.ReactElement {
     ];
   };
 
-  const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (fridayData.length === 0 || data.length === 0) return;
-    const enriched = fridayData.map(row => {
-      const taMatch = data.find(ta => ta.id === row.id);
-      return { ...row, classroom: taMatch?.classroom ?? '' };
-    });
-    setEnrichedFridayData(enriched);
-  }, [fridayData, data]);
-
   const selectedDatesUnderscored = new Set(Array.from(selectedDates).map(d => d.replace(/-/g, '_')));
 
   const fridayGridData: any[][] = enrichedFridayData.map(row => {
     const cols = getFridayColumns();
-    const selectedFridayKeys = cols
-      .map(c => c.id)
-      .filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
+    const selectedFridayKeys = cols.map(c => c.id).filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
     const daysPresent = selectedFridayKeys.filter(k => row[k] === true).length;
     const daysAbsent = selectedFridayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
     return cols.map(col => {
@@ -597,9 +544,7 @@ function VPDashboard(): React.ReactElement {
 
   const saturdayGridData: any[][] = saturdayData.map(row => {
     const cols = getSaturdayColumns();
-    const selectedSaturdayKeys = cols
-      .map(c => c.id)
-      .filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
+    const selectedSaturdayKeys = cols.map(c => c.id).filter(id => dateRegex.test(id) && selectedDatesUnderscored.has(id));
     const daysPresent = selectedSaturdayKeys.filter(k => row[k] === true).length;
     const daysAbsent = selectedSaturdayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
     return cols.map(col => {
@@ -609,27 +554,10 @@ function VPDashboard(): React.ReactElement {
     });
   });
 
-  const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
-    setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
-    setEnrichedFridayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ classroom })
-      });
-      if (!response.ok) throw new Error('Failed to update classroom');
-    } catch (err) {
-      console.error(err);
-      alert('Error updating classroom');
-      await fetchData();
-      await fetchFridayData();
-    }
-  };
+  const gridData: (string | number | boolean)[][] = data.map(row => [
+    row.first_name, row.last_name, row.korean_name, row.session_day,
+    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
+  ]);
 
   if (isLoading) return <div style={{ padding: 20, background: bg, color: headingColor, minHeight: '100vh' }}>Loading...</div>;
 
@@ -637,48 +565,23 @@ function VPDashboard(): React.ReactElement {
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
-      
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
           VP Dashboard - {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
         </h1>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-          >
-            Settings
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-          >
-            Add New TA
-          </button>
-          <button
-            onClick={handleSignOut}
-            style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-          >
-            Sign Out
-          </button>
+          <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
+          <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
+          <button onClick={handleSignOut} style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Sign Out</button>
         </div>
       </div>
 
       {/* Main Tab Selector */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: tabBorderBottom }}>
         {(['tas', 'friday', 'saturday'] as MainTab[]).map(tab => (
-          <button key={tab} onClick={() => setMainTab(tab)} style={{
-            padding: '12px 24px',
-            background: mainTabBg(mainTab === tab),
-            border: 'none',
-            borderTopLeftRadius: 8,
-            borderTopRightRadius: 8,
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: '600',
-            color: mainTabColor(mainTab === tab)
-          }}>
+          <button key={tab} onClick={() => setMainTab(tab)} style={{ padding: '12px 24px', background: mainTabBg(mainTab === tab), border: 'none', borderTopLeftRadius: 8, borderTopRightRadius: 8, cursor: 'pointer', fontSize: '16px', fontWeight: '600', color: mainTabColor(mainTab === tab) }}>
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
@@ -689,7 +592,7 @@ function VPDashboard(): React.ReactElement {
           {data.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No data found.</p>
-              <button onClick={fetchData} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
+              <button onClick={async () => { const t = await getToken(); fetchData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
             </div>
           ) : (
             <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
@@ -703,8 +606,7 @@ function VPDashboard(): React.ReactElement {
                   { name: translations[language].classroom, width: '150px' },
                   { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                   {
-                    name: translations[language].attendance,
-                    width: '120px',
+                    name: translations[language].attendance, width: '120px',
                     formatter: (cell: any, row: any) => {
                       const taId = row.cells[7].data;
                       return h('button', {
@@ -714,18 +616,14 @@ function VPDashboard(): React.ReactElement {
                     }
                   },
                   {
-                    name: translations[language].analytics,
-                    width: "140px",
-                    formatter: (cell: any) => {
-                      return h('button', {
-                        style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
-                        onclick: (e: Event) => { e.stopPropagation(); handleRowClick(cell); }
-                      }, 'View Analytics');
-                    }
+                    name: translations[language].analytics, width: "140px",
+                    formatter: (cell: any) => h('button', {
+                      style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
+                      onclick: (e: Event) => { e.stopPropagation(); handleRowClick(cell); }
+                    }, 'View Analytics')
                   },
                   {
-                    name: translations[language].actions,
-                    width: '100px',
+                    name: translations[language].actions, width: '100px',
                     formatter: (cell: any, row: any) => {
                       const taId = row.cells[7].data;
                       return h('button', {
@@ -750,7 +648,7 @@ function VPDashboard(): React.ReactElement {
           {fridayData.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No Friday data found. Please select dates in Settings.</p>
-              <button onClick={fetchFridayData} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
+              <button onClick={async () => { const t = await getToken(); fetchFridayData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
             </div>
           ) : (
             <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
@@ -760,16 +658,8 @@ function VPDashboard(): React.ReactElement {
                   name: col.name,
                   width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
                   formatter: (cell: any, row: any) => {
-                    if (col.id === '__days_present__') {
-                      return h('span', {
-                        style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};`
-                      }, String(cell ?? 0));
-                    }
-                    if (col.id === '__days_absent__') {
-                      return h('span', {
-                        style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};`
-                      }, String(cell ?? 0));
-                    }
+                    if (col.id === '__days_present__') return h('span', { style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};` }, String(cell ?? 0));
+                    if (col.id === '__days_absent__') return h('span', { style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};` }, String(cell ?? 0));
                     if (col.id === 'classroom') {
                       const fridayColumns = getFridayColumns();
                       const idColIndex = fridayColumns.findIndex(c => c.id === 'korean_name');
@@ -778,14 +668,8 @@ function VPDashboard(): React.ReactElement {
                       const taId = taMatch?.id;
                       return h('select', {
                         style: `padding: 4px 8px; border-radius: 4px; border: 1px solid ${dm ? '#4b5563' : '#93c5fd'}; background-color: ${dm ? '#273549' : '#eff6ff'}; color: ${dm ? '#e5e7eb' : '#1e40af'}; font-size: 13px; cursor: pointer; width: 100%;`,
-                        onchange: (e: Event) => {
-                          const newClassroom = (e.target as HTMLSelectElement).value;
-                          if (taId) updateClassroom(taId, newClassroom);
-                        }
-                      }, [
-                        h('option', { value: '' }, '— Select —'),
-                        ...CLASSROOMS.map(room => h('option', { value: room, selected: cell === room }, room))
-                      ]);
+                        onchange: (e: Event) => { if (taId) updateClassroom(taId, (e.target as HTMLSelectElement).value); }
+                      }, [h('option', { value: '' }, '— Select —'), ...CLASSROOMS.map(room => h('option', { value: room, selected: cell === room }, room))]);
                     }
                     if (dateRegex.test(col.id)) {
                       if (cell === true) return '✓';
@@ -798,9 +682,7 @@ function VPDashboard(): React.ReactElement {
                     return cell;
                   }
                 }))}
-                search={true}
-                pagination={{ limit: 10 }}
-                sort={true}
+                search={true} pagination={{ limit: 10 }} sort={true}
               />
             </div>
           )}
@@ -812,7 +694,7 @@ function VPDashboard(): React.ReactElement {
           {saturdayData.length === 0 ? (
             <div>
               <p style={{ color: dm ? '#d1d5db' : 'inherit' }}>No Saturday data found. Please select dates in Settings.</p>
-              <button onClick={fetchSaturdayData} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
+              <button onClick={async () => { const t = await getToken(); fetchSaturdayData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
             </div>
           ) : (
             <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
@@ -822,16 +704,8 @@ function VPDashboard(): React.ReactElement {
                   name: col.name,
                   width: col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
                   formatter: (cell: any) => {
-                    if (col.id === '__days_present__') {
-                      return h('span', {
-                        style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};`
-                      }, String(cell ?? 0));
-                    }
-                    if (col.id === '__days_absent__') {
-                      return h('span', {
-                        style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};`
-                      }, String(cell ?? 0));
-                    }
+                    if (col.id === '__days_present__') return h('span', { style: `font-weight: 600; color: ${dm ? '#4ade80' : '#16a34a'};` }, String(cell ?? 0));
+                    if (col.id === '__days_absent__') return h('span', { style: `font-weight: 600; color: ${dm ? '#f87171' : '#dc2626'};` }, String(cell ?? 0));
                     if (dateRegex.test(col.id)) {
                       if (cell === true) return '✓';
                       if (isDateInPast(col.id)) return '✗';
@@ -843,9 +717,7 @@ function VPDashboard(): React.ReactElement {
                     return cell;
                   }
                 }))}
-                search={true}
-                pagination={{ limit: 10 }}
-                sort={true}
+                search={true} pagination={{ limit: 10 }} sort={true}
               />
             </div>
           )}
@@ -892,37 +764,23 @@ function VPDashboard(): React.ReactElement {
                     style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: inputBorder, fontSize: '14px', boxSizing: 'border-box', background: inputBg, color: inputColor }} />
                 </div>
               ))}
-
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: labelColor }}>Session Day:</label>
                 <div style={{ display: 'flex', gap: 10 }}>
                   {(['Friday', 'Saturday', 'Both'] as const).map(day => (
-                    <button key={day} type="button" onClick={() => handleSessionDaySelect(day)} style={{
-                      flex: 1, padding: '10px',
-                      background: formData.session_day === day ? '#2563eb' : (dm ? '#374151' : '#e5e7eb'),
-                      color: formData.session_day === day ? 'white' : (dm ? '#d1d5db' : '#374151'),
-                      border: 'none', borderRadius: 6, cursor: 'pointer',
-                      fontWeight: formData.session_day === day ? '600' : '500', fontSize: '14px'
-                    }}>{day}</button>
+                    <button key={day} type="button" onClick={() => handleSessionDaySelect(day)} style={{ flex: 1, padding: '10px', background: formData.session_day === day ? '#2563eb' : (dm ? '#374151' : '#e5e7eb'), color: formData.session_day === day ? 'white' : (dm ? '#d1d5db' : '#374151'), border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: formData.session_day === day ? '600' : '500', fontSize: '14px' }}>{day}</button>
                   ))}
                 </div>
-                {formData.session_day && (
-                  <p style={{ marginTop: 6, fontSize: 13, color: '#059669' }}>Selected: {formData.session_day}</p>
-                )}
+                {formData.session_day && <p style={{ marginTop: 6, fontSize: 13, color: '#059669' }}>Selected: {formData.session_day}</p>}
               </div>
-
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: '14px', fontWeight: '500', color: labelColor }}>Classroom (Optional):</label>
-                <select
-                  value={formData.classroom}
-                  onChange={(e) => setFormData(prev => ({ ...prev, classroom: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: inputBorder, fontSize: '14px', boxSizing: 'border-box', background: inputBg, color: formData.classroom ? inputColor : (dm ? '#6b7280' : '#9ca3af'), cursor: 'pointer' }}
-                >
+                <select value={formData.classroom} onChange={(e) => setFormData(prev => ({ ...prev, classroom: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: inputBorder, fontSize: '14px', boxSizing: 'border-box', background: inputBg, color: formData.classroom ? inputColor : (dm ? '#6b7280' : '#9ca3af'), cursor: 'pointer' }}>
                   <option value="">— Select Classroom —</option>
                   {CLASSROOMS.map(room => <option key={room} value={room}>{room}</option>)}
                 </select>
               </div>
-
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: labelColor }}>
                   <input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleInputChange} style={{ width: '16px', height: '16px' }} />
@@ -930,14 +788,8 @@ function VPDashboard(): React.ReactElement {
                 </label>
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowModal(false)}
-                  style={{ padding: '10px 20px', background: dm ? '#4b5563' : '#6b7280', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-                  Cancel
-                </button>
-                <button type="submit"
-                  style={{ padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-                  Add TA
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: dm ? '#4b5563' : '#6b7280', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Cancel</button>
+                <button type="submit" style={{ padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add TA</button>
               </div>
             </form>
           </div>
@@ -953,13 +805,7 @@ function VPDashboard(): React.ReactElement {
               <h2 style={{ margin: 0, fontSize: '32px', fontWeight: '700' }}>Settings</h2>
             </div>
             <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: tabBorderBottom }}>
-              <button onClick={() => setActiveTab('appearance')} style={{
-                padding: '12px 24px',
-                background: mainTabBg(activeTab === 'appearance'),
-                border: 'none', borderTopLeftRadius: 8, borderTopRightRadius: 8, cursor: 'pointer',
-                fontSize: '14px', fontWeight: '500',
-                color: mainTabColor(activeTab === 'appearance')
-              }}>Appearance</button>
+              <button onClick={() => setActiveTab('appearance')} style={{ padding: '12px 24px', background: mainTabBg(activeTab === 'appearance'), border: 'none', borderTopLeftRadius: 8, borderTopRightRadius: 8, cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: mainTabColor(activeTab === 'appearance') }}>Appearance</button>
             </div>
             <div style={{ background: tabPanelBg, padding: 30, borderRadius: 8, minHeight: '400px' }}>
               {activeTab === 'appearance' && (
@@ -968,43 +814,20 @@ function VPDashboard(): React.ReactElement {
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Language Preferences</h3>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {(['en', 'ko'] as Language[]).map(lang => (
-                        <button key={lang} onClick={() => setLanguage(lang)} style={{
-                          padding: '10px 30px',
-                          background: language === lang ? (dm ? '#1e3a5f' : '#bfdbfe') : (dm ? '#273549' : 'white'),
-                          color: language === lang ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#d1d5db' : '#374151'),
-                          border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                        }}>{lang === 'en' ? 'English' : 'Korean'}</button>
+                        <button key={lang} onClick={() => setLanguage(lang)} style={{ padding: '10px 30px', background: language === lang ? (dm ? '#1e3a5f' : '#bfdbfe') : (dm ? '#273549' : 'white'), color: language === lang ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#d1d5db' : '#374151'), border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>{lang === 'en' ? 'English' : 'Korean'}</button>
                       ))}
                     </div>
                   </div>
-
-                  {/* Theme toggle */}
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Theme</h3>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={() => setDarkMode(false)} style={{
-                        padding: '10px 30px',
-                        background: !dm ? '#1e40af' : (dm ? '#273549' : 'white'),
-                        color: !dm ? 'white' : (dm ? '#d1d5db' : '#374151'),
-                        border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                      }}>Light Mode</button>
-                      <button onClick={() => setDarkMode(true)} style={{
-                        padding: '10px 30px',
-                        background: dm ? '#3b82f6' : 'white',
-                        color: dm ? 'white' : '#374151',
-                        border: '1px solid #4b5563', borderRadius: 6, cursor: 'pointer', fontSize: '14px'
-                      }}>Dark Mode</button>
+                      <button onClick={() => setDarkMode(false)} style={{ padding: '10px 30px', background: !dm ? '#1e40af' : (dm ? '#273549' : 'white'), color: !dm ? 'white' : (dm ? '#d1d5db' : '#374151'), border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Light Mode</button>
+                      <button onClick={() => setDarkMode(true)} style={{ padding: '10px 30px', background: dm ? '#3b82f6' : 'white', color: dm ? 'white' : '#374151', border: '1px solid #4b5563', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>Dark Mode</button>
                     </div>
                   </div>
-
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Schedule</h3>
-                    <button
-                      onClick={() => { setCurrentMonth(new Date()); setShowCalendar(true); }}
-                      style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-                    >
-                      Set Days
-                    </button>
+                    <button onClick={() => { setCurrentMonth(new Date()); setShowCalendar(true); }} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Set Days</button>
                     {selectedDates.size > 0 && (
                       <p style={{ marginTop: 12, fontSize: '14px', color: dm ? '#d1d5db' : '#374151' }}>
                         <strong>{selectedDates.size}</strong> day{selectedDates.size !== 1 ? 's' : ''} selected
@@ -1033,7 +856,7 @@ function VPDashboard(): React.ReactElement {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 12 }}>
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} style={{ textAlign: 'center', padding: '8px 0', fontSize: '12px', fontWeight: '600', color: dm ? '#6b7280' : '#6b7280' }}>{day}</div>
+                <div key={day} style={{ textAlign: 'center', padding: '8px 0', fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>{day}</div>
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
@@ -1042,13 +865,7 @@ function VPDashboard(): React.ReactElement {
                 const day = i + 1;
                 const selected = isDateSelected(day);
                 return (
-                  <button key={day} onClick={() => toggleDate(day)} style={{
-                    aspectRatio: '1', padding: 8,
-                    background: selected ? '#2563eb' : (dm ? '#374151' : '#f3f4f6'),
-                    color: selected ? 'white' : (dm ? '#d1d5db' : '#374151'),
-                    border: 'none', borderRadius: 6, cursor: 'pointer',
-                    fontSize: '14px', fontWeight: selected ? '600' : '500', transition: 'all 0.2s'
-                  }}
+                  <button key={day} onClick={() => toggleDate(day)} style={{ aspectRatio: '1', padding: 8, background: selected ? '#2563eb' : (dm ? '#374151' : '#f3f4f6'), color: selected ? 'white' : (dm ? '#d1d5db' : '#374151'), border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: selected ? '600' : '500', transition: 'all 0.2s' }}
                     onMouseOver={(e) => { if (!selected) e.currentTarget.style.background = dm ? '#4b5563' : '#e5e7eb'; }}
                     onMouseOut={(e) => { if (!selected) e.currentTarget.style.background = dm ? '#374151' : '#f3f4f6'; }}
                   >{day}</button>
