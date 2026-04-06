@@ -97,7 +97,7 @@ const createAccountSchema = z.object({
   ta_code: z.string().trim().min(1).max(20),
   session_day: z.string().trim().min(1).max(20),
   korean_name: z.string().trim().max(100).optional(),
-  classroom: z.string().trim().max(50).optional()
+  classroom: z.string().trim().max(50).optional().nullable()
 }).strip();
 
 const signInSchema = z.object({
