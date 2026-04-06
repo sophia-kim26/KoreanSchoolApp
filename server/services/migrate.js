@@ -1,6 +1,6 @@
 // migrate-pins.js
 import { sql } from '../config/database.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const SALT_ROUNDS = 12;
 
