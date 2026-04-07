@@ -25,9 +25,8 @@ function RequireVPAuth({ children }: { children: React.ReactElement }) {
 }
 
 function AuthProviderWithNavigate() {
-  useEffect(() => {
-    localStorage.clear(); // nuke cached Auth0 tokens
-  }, []);
+
+  console.log("My Audience is:", import.meta.env.VITE_AUTH0_AUDIENCE);
   const navigate = useNavigate();
 
   const onRedirectCallback = (appState: any) => {
@@ -40,9 +39,7 @@ function AuthProviderWithNavigate() {
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string}
       authorizationParams={{
         redirect_uri: window.location.origin,
-        ...(import.meta.env.VITE_AUTH0_AUDIENCE
-          ? { audience: import.meta.env.VITE_AUTH0_AUDIENCE as string }
-          : {})
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE as string,
       }}
       onRedirectCallback={onRedirectCallback}
     >
