@@ -1,6 +1,7 @@
 import { sql } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { sendTACredentials } from './emailService.js'; // add this
 
 const SALT_ROUNDS = 10;
 
@@ -81,7 +82,10 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
         ) 
         RETURNING id, first_name, last_name, email, session_day, korean_name, classroom, is_active, created_at
     `;
-
+    // after the INSERT, before the return:
+    sendTACredentials({ first_name, email, pin: ta_code }).catch(err => {
+        console.error('Failed to send welcome email:', err);
+    });
     return {
         success: true,
         ta: result[0],
