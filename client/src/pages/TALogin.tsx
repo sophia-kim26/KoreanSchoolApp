@@ -1,73 +1,25 @@
 import React, { useState, useRef } from 'react';
-import { Copy, Check } from 'lucide-react';
 import { useNavigate, NavigateFunction } from 'react-router-dom';
+import { useAuth0 } from "@auth0/auth0-react";
 import './style/global.css';
 import logo from '../assets/logo.png';
-import { useAuth0 } from "@auth0/auth0-react";
 
-// Type definitions
-type __AuthState__ = 'home' | 'enterCredentials' | 'authenticated' | 'createAccountForm';
-
-interface __TAUser__ {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    ta_code?: string;
-    session_day: string;
-    classroom?: string;
-    token?: string;
-}
-
-interface __SignInResponse__ {
-    success: boolean;
-    ta?: __TAUser__;
-    token?: string;
-    error?: string;
-}
-
-interface __CreateAccountResponse__ {
-    success: boolean;
-    error?: string;
-}
-
-const CLASSROOMS = [
-    '앵두꽃반',
-    '제비꽃반',
-    '접시꽃반',
-    '초롱꽃반',
-    '풀꽃반',
-    '배꽃반',
-    '백합반',
-    '개나리반',
-    '봉선화반',
-    '수선화반',
-    'KSL1A.도라지꽃반',
-    'KSL1B.프리지아반',
-    'KSL3.붓꽃반',
-    'KSL4.유채꽃반',
-    'KSL5 은방울꽃반',
-    '진달래반',
-    '채송화반',
-    '월계수반',
-    '모란반',
-    '목련반',
-    '난초반',
-    '해바라기반',
-    '장미반',
-    '튤립반',
-    '연꽃반',
-    '국화반',
-    '무궁화반',
-];
+// Imports from our newly split files
+import { AuthState, TAUser, SignInResponse, CreateAccountResponse } from './TALoginTypes';
+import { CLASSROOMS } from './TALoginConstants';
+import { NewPinModal } from './TALoginModals';
 
 export default function TALogin(): React.ReactElement {
     const navigate: NavigateFunction = useNavigate();
-    const [authState, setAuthState] = useState<__AuthState__>('home');
+    const { logout } = useAuth0();
+
+    const [authState, setAuthState] = useState<AuthState>('home');
     const [email, setEmail] = useState<string>('');
     const [pin, setPin] = useState<string>('');
-    const [currentUser, setCurrentUser] = useState<__TAUser__ | null>(null);
+    const [currentUser, setCurrentUser] = useState<TAUser | null>(null);
     const [error, setError] = useState<string>('');
+    
+    // Modal states
     const [showNewPin, setShowNewPin] = useState<boolean>(false);
     const [newlyCreatedPin, setNewlyCreatedPin] = useState<string>('');
     const [newlyCreatedEmail, setNewlyCreatedEmail] = useState<string>('');
@@ -83,9 +35,6 @@ export default function TALogin(): React.ReactElement {
     const emailInputRef = useRef<HTMLInputElement>(null);
     const pinInputRef = useRef<HTMLInputElement>(null);
 
-    const { logout } = useAuth0();
-
-    // Generate random 6-digit PIN
     const generatePin = (): string => {
         return Math.floor(100000 + Math.random() * 900000).toString();
     };
@@ -121,13 +70,11 @@ export default function TALogin(): React.ReactElement {
         });
     };
 
-    // Handle PIN input — digits only, max 6 chars
     const handlePinChange = (value: string): void => {
         const numericValue = value.replace(/\D/g, '').slice(0, 6);
         setPin(numericValue);
     };
 
-    // Verify credentials and redirect to dashboard
     const handleVerifyCredentials = async (): Promise<void> => {
         if (!email || !pin) {
             setError('Please enter both email and PIN');
@@ -148,14 +95,10 @@ export default function TALogin(): React.ReactElement {
                 })
             });
 
-            const data: __SignInResponse__ = await response.json();
+            const data: SignInResponse = await response.json();
 
             if (!response.ok) {
-                if (response.status === 429) {
-                    setError(data.error || 'Too many login attempts. Please try again later.');
-                } else {
-                    setError(data.error || 'Invalid email or PIN. Please try again.');
-                }
+                setError(data.error || 'Invalid email or PIN. Please try again.');
                 setPin('');
                 setTimeout(() => pinInputRef.current?.focus(), 100);
                 return;
@@ -172,7 +115,6 @@ export default function TALogin(): React.ReactElement {
                 setAuthState('authenticated');
                 setError('');
                 setTimeout(() => navigate('/ta/dashboard'), 0);
-
             } else {
                 setError(data.error || 'Invalid email or PIN. Please try again.');
                 setPin('');
@@ -186,15 +128,6 @@ export default function TALogin(): React.ReactElement {
         }
     };
 
-    const handleLogout = (): void => {
-        setCurrentUser(null);
-        setEmail('');
-        setPin('');
-        setAuthState('home');
-        setError('');
-        localStorage.removeItem('current_ta_user');
-    };
-
     const handleBackToHome = (): void => {
         setEmail('');
         setPin('');
@@ -203,7 +136,6 @@ export default function TALogin(): React.ReactElement {
     };
 
     const handleSubmitNewAccount = async (): Promise<void> => {
-
         if (!firstName || !lastName || !formEmail || !sessionDay) {
             setError('Please fill in all required fields');
             return;
@@ -231,14 +163,10 @@ export default function TALogin(): React.ReactElement {
                 })
             });
 
-            const data: __CreateAccountResponse__ = await response.json();
+            const data: CreateAccountResponse = await response.json();
 
             if (!response.ok) {
-                if (response.status === 429) {
-                    setError(data.error || 'Too many account creation attempts. Please try again later.');
-                } else {
-                    setError(data.error || 'Failed to create account');
-                }
+                setError(data.error || 'Failed to create account');
                 return;
             }
 
@@ -263,12 +191,9 @@ export default function TALogin(): React.ReactElement {
         }
     };
 
-    // Handle form submission with Enter key
     const handleKeyPress = (e: React.KeyboardEvent): void => {
-        if (e.key === 'Enter') {
-            if (authState === 'enterCredentials') {
-                handleVerifyCredentials();
-            }
+        if (e.key === 'Enter' && authState === 'enterCredentials') {
+            handleVerifyCredentials();
         }
     };
 
@@ -304,10 +229,7 @@ export default function TALogin(): React.ReactElement {
                                 Sign In
                             </button>
                             <div className="flex justify-center">
-                                <button
-                                    onClick={handleBack}
-                                    className="btn-danger"
-                                >
+                                <button onClick={handleBack} className="btn-danger">
                                     ← Back
                                 </button>
                             </div>
@@ -351,8 +273,6 @@ export default function TALogin(): React.ReactElement {
                                 onChange={(e) => setFormEmail(e.target.value)}
                                 className="w-full border-2 border-gray-300 p-3 rounded-lg"
                             />
-
-                            {/* Session Day — required */}
                             <select
                                 value={sessionDay}
                                 onChange={(e) => setSessionDay(e.target.value)}
@@ -363,8 +283,6 @@ export default function TALogin(): React.ReactElement {
                                 <option value="Saturday">Saturday</option>
                                 <option value="Both">Both</option>
                             </select>
-
-                            {/* Classroom — optional */}
                             <select
                                 value={classroom}
                                 onChange={(e) => setClassroom(e.target.value)}
@@ -465,66 +383,16 @@ export default function TALogin(): React.ReactElement {
                 )}
             </div>
 
-            {/* ── NEW PIN MODAL ── */}
+            {/* ── NEW PIN MODAL COMPONENT ── */}
             {showNewPin && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-                        <div className="text-center space-y-4">
-                            <h2 className="text-2xl font-bold text-gray-800">Account Created!</h2>
-                            <p className="text-gray-600">Your credentials are:</p>
-
-                            <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6 space-y-3">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Email:</p>
-                                    <div className="text-lg font-semibold text-blue-600">
-                                        {newlyCreatedEmail}
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">PIN:</p>
-                                    <div className="text-4xl font-bold text-blue-600 tracking-wider mb-3">
-                                        {newlyCreatedPin}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleCopyPin}
-                                    className="flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 mx-auto"
-                                >
-                                    {copied ? (
-                                        <>
-                                            <Check className="w-4 h-4" />
-                                            <span className="text-green-600">Copied PIN!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="w-4 h-4" />
-                                            Copy PIN
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                                ⚠️ Save both your email and PIN. You'll need both to sign in.
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                                <button
-                                    onClick={handleGoToSignIn}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                                >
-                                    Sign In Now
-                                </button>
-                                <button
-                                    onClick={handleCloseNewPin}
-                                    className="w-full text-gray-600 text-sm hover:text-gray-800"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <NewPinModal 
+                    email={newlyCreatedEmail}
+                    pin={newlyCreatedPin}
+                    copied={copied}
+                    onCopyPin={handleCopyPin}
+                    onGoToSignIn={handleGoToSignIn}
+                    onClose={handleCloseNewPin}
+                />
             )}
         </div>
     );
