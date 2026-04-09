@@ -111,6 +111,30 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
+  const exportToCSV = () => {
+    const headers = ['Date', 'Attendance', 'Clock In', 'Clock Out', 'Elapsed Time', 'Notes'];
+    const rows = taData.map(row => [
+      formatDate(row.clock_in),
+      row.attendance ?? '',
+      formatTime(row.clock_in),
+      formatTime(row.clock_out),
+      row.elapsed_time ?? '',
+      row.notes ?? '',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `timesheet_${taName.replace(/\s+/g, '_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={`page-container${darkMode ? ' dark-mode' : ''}`} style={{ fontSize: activeFontSize }}>
 
@@ -163,14 +187,21 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       {taData.length === 0 ? (
         <p>No data found.</p>
       ) : (
-        <Grid
-          key={`ta-shifts-grid-${language}`}
-          data={gridData}
-          columns={gridColumns}
-          search={true}
-          pagination={{ limit: 8 }}
-          sort={true}
-        />
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <button onClick={exportToCSV} className="btn-primary">
+              Export CSV
+            </button>
+          </div>
+          <Grid
+            key={`ta-shifts-grid-${language}`}
+            data={gridData}
+            columns={gridColumns}
+            search={true}
+            pagination={{ limit: 8 }}
+            sort={true}
+          />
+        </div>
       )}
 
       {/* Chart */}
