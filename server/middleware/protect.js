@@ -23,7 +23,7 @@ export const checkJwt = expressjwt({
 
 // TA routes — your own HS256 tokens
 export const checkTAJwt = expressjwt({
-  secret: process.env.TA_JWT_SECRET,
+  secret: process.env.TA_JWT_SECRET || 'placeholder',
   algorithms: ['HS256']
 });
 
