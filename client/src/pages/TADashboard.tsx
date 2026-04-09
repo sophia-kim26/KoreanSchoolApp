@@ -187,12 +187,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       {taData.length === 0 ? (
         <p>No data found.</p>
       ) : (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-            <button onClick={exportToCSV} className="btn-primary">
-              Export CSV
-            </button>
-          </div>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={exportToCSV}
+            className="btn-primary"
+            style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1 }}
+          >
+            Export CSV
+          </button>
           <Grid
             key={`ta-shifts-grid-${language}`}
             data={gridData}
