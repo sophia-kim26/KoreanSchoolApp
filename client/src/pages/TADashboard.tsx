@@ -139,9 +139,14 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     <div className={`page-container${darkMode ? ' dark-mode' : ''}`} style={{ fontSize: activeFontSize }}>
 
       {/* Header */}
-      <div className="page-header" style={{ justifyContent: 'flex-start', gap: '40px' }}>
-        <img src={logo} alt="Logo" className="page-logo" />
-        <h1 className="page-title">TA Dashboard - Timesheet for {taName}</h1>
+      <div className="page-header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
+  <img src={logo} alt="Logo" style={{ height: '64px', width: 'auto' }} />
+  <h1 className="page-title" style={{ margin: 0, fontSize: '28px', fontWeight: '700', textAlign: 'center', letterSpacing: '0.5px' }}>
+    TA Dashboard
+  </h1>
+  <p style={{ margin: 0, fontSize: '15px', color: darkMode ? '#9ca3af' : '#6b7280', fontWeight: '400' }}>
+    Timesheet for <strong style={{ color: darkMode ? '#93c5fd' : '#0369a1' }}>{taName}</strong>
+  </p>
         <div style={{ position: 'absolute', top: '100px', right: '20px', display: 'flex', gap: 10, zIndex: 10 }}>
           <button onClick={() => setShowClockInConfirm(true)} className="btn-primary" disabled={clockedIn}>
             {translations[language].clockIn}
