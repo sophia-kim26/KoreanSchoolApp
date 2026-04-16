@@ -139,11 +139,14 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
-          VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
-        </h1>
-        <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 30, gap: '6px' }}>
+  <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: headingColor, textAlign: 'center', letterSpacing: '0.5px' }}>
+    VP Dashboard
+  </h1>
+  <p style={{ margin: 0, fontSize: '15px', color: dm ? '#9ca3af' : '#6b7280', fontWeight: '400' }}>
+    {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+  </p>
+  <div style={{ display: 'flex', gap: 10, marginTop: '8px' }}>
           <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
           <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
           <button
