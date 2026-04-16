@@ -191,6 +191,35 @@ export const useVPTAView = () => {
     return hours > 0 ? hours.toFixed(2) : '0';
   };
 
+  const handleDeleteShift = async (shiftId: number): Promise<void> => {
+    if (!confirm('Are you sure you want to delete this shift? This action cannot be undone.')) return;
+    try {
+      setSaving(true);
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete shift');
+      
+      // Remove from editedShifts state
+      setEditedShifts(prev => {
+        const updated = { ...prev };
+        delete updated[shiftId];
+        return updated;
+      });
+      
+      // Refetch all shifts to update display
+      const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data: Shift[] = await shiftsResponse.json();
+      setAllShifts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      alert('Error deleting shift: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleResetPin = async (): Promise<void> => {
     if (!confirm(`Are you sure you want to reset the PIN for ${taInfo?.first_name} ${taInfo?.last_name}?`)) return;
     try {
@@ -221,6 +250,6 @@ export const useVPTAView = () => {
     shiftsByMonth, totalHours, presentCount, absentCount, totalRelevantDays,
     presentPercentage, absentPercentage, resettingPin, editingMonth,
     editedShifts, newShift, saving, showResetPinModal, newPin, setShowResetPinModal, setNewShift,
-    handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleResetPin, copyPinToClipboard, calculateEditedHours
+    handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours
   };
 };

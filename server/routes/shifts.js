@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllShifts, createShift, updateShift, getActiveShift, getShiftsForTA, getShiftById } from '../services/shiftService.js';
+import { getAllShifts, createShift, updateShift, deleteShift, getActiveShift, getShiftsForTA, getShiftById } from '../services/shiftService.js';
 import { validateShift, validateLocation } from '../middleware/validate.js';
 import { checkJwt, checkTAJwt, checkAnyJwt } from '../middleware/protect.js';
 
@@ -73,6 +73,16 @@ router.put('/:id', checkAnyJwt, async (req, res, next) => {
     if (attendance !== undefined) updateData.attendance = attendance;
     const result = await updateShift(req.params.id, updateData);
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ✅ PROTECTED — deleting shifts (VP only)
+router.delete('/:id', checkJwt, async (req, res, next) => {
+  try {
+    const result = await deleteShift(req.params.id);
+    res.json({ message: 'Shift deleted successfully', shift: result });
   } catch (error) {
     next(error);
   }
