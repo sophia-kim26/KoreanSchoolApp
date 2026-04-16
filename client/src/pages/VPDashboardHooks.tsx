@@ -79,9 +79,9 @@ export function useVPData(getToken: () => Promise<string>) {
       const json = await response.json();
       if (Array.isArray(json)) {
         const sorted = json.sort((a, b) => {
-          if (a.is_active === b.is_active) return a.id - b.id;
-          return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
-        });
+  if (a.is_active === b.is_active) return b.id - a.id;
+  return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
+});
         setData(sorted);
       } else {
         setData([]);

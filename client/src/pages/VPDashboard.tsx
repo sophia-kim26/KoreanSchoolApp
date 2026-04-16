@@ -103,9 +103,15 @@ function VPDashboard(): React.ReactElement {
   // Grid data
   const translations = VP_TRANSLATIONS;
   const gridData = data.map(row => [
-    row.first_name, row.last_name, row.korean_name, row.session_day,
-    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
-  ]);
+  row.first_name || '',
+  row.last_name || '',
+  row.korean_name || '',
+  row.session_day || '',
+  row.classroom || '',
+  row.total_hours || '0.00',
+  row.attendance || 'Absent',
+  row.id,
+]);
 
   const fridayCols = getFridayColumns(fridayData, selectedDates);
   const saturdayCols = getSaturdayColumns(saturdayData, selectedDates);
