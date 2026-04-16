@@ -50,8 +50,8 @@ export const getAllTAsWithStatus = async () => {
             AND DATE(shifts.clock_in) = CURRENT_DATE
             AND shifts.clock_out IS NULL
         ORDER BY 
-            ta_list.is_active DESC,
-            ta_list.id ASC
+    ta_list.is_active DESC,
+    ta_list.created_at DESC
     `;
 };
 
@@ -59,7 +59,7 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
     // Check if email already exists
     const existing = await sql`SELECT * FROM ta_list WHERE email = ${email}`;
     if (existing.length > 0) {
-        const error = new Error('Unable to create account');
+        const error = new Error('Account with that email already exists');
         error.status = 400;
         throw error;
     }

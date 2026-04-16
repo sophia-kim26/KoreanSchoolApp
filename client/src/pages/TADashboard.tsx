@@ -41,7 +41,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     checkActiveShift, clockIn, clockOut,
   } = useClock(currentUser, fetchShifts);
 
-  // Grid columns
   const handleEditNotes = (shiftId: number, currentNotes: string) => {
     setEditingShiftId(shiftId);
     setEditingNotes(currentNotes || '');
@@ -59,7 +58,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const gridColumns = useGridColumns({ language, toggleAttendance, handleEditNotes });
 
-  // Grid data
   const gridData = useMemo(() =>
     taData.map(row => [
       row.id,
@@ -73,7 +71,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     [taData]
   );
 
-  // Monthly hours for chart
   const totalHours = taData.reduce((sum, shift) => {
     if (!shift.clock_in || !shift.clock_out) return sum;
     const hours = (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60);
@@ -121,11 +118,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       row.elapsed_time ?? '',
       row.notes ?? '',
     ]);
-
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -139,35 +134,40 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     <div className={`page-container${darkMode ? ' dark-mode' : ''}`} style={{ fontSize: activeFontSize }}>
 
       {/* Header */}
-      <div className="page-header" style={{ justifyContent: 'flex-start', gap: '40px' }}>
-        <img src={logo} alt="Logo" className="page-logo" />
-        <h1 className="page-title">TA Dashboard - Timesheet for {taName}</h1>
-        <div style={{ position: 'absolute', top: '100px', right: '20px', display: 'flex', gap: 10, zIndex: 10 }}>
-          <button onClick={() => setShowClockInConfirm(true)} className="btn-primary" disabled={clockedIn}>
-            {translations[language].clockIn}
-          </button>
-          <button onClick={() => setShowClockOutConfirm(true)} className="btn-primary" disabled={!clockedIn}>
-            {translations[language].clockOut}
-          </button>
-          <button onClick={() => setShowSettingsModal(true)} className="btn-settings">
-            {translations[language].settings}
-          </button>
-          <button onClick={handleSignOut} className="btn-danger">
-            {translations[language].signOut}
-          </button>
-        </div>
+      <div className="page-header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
+        <img src={logo} alt="Logo" style={{ height: '64px', width: 'auto' }} />
+        <h1 className="page-title" style={{ margin: 0, fontSize: '28px', fontWeight: '700', textAlign: 'center', letterSpacing: '0.5px' }}>
+          TA Dashboard
+        </h1>
+        <p style={{ margin: 0, fontSize: '15px', color: darkMode ? '#9ca3af' : '#6b7280', fontWeight: '400' }}>
+          Timesheet for <strong style={{ color: darkMode ? '#93c5fd' : '#0369a1' }}>{taName}</strong>
+        </p>
       </div>
 
-      {/* Assigned Classroom */}
-      <div style={{
-        marginTop: '20px', marginBottom: '20px', padding: '12px 20px',
-        backgroundColor: darkMode ? '#1e3a5f' : '#e0f2fe',
-        border: darkMode ? '2px solid #3b82f6' : '2px solid #0ea5e9',
-        borderRadius: '8px', display: 'inline-block',
-        fontSize: '16px', fontWeight: '500',
-        color: darkMode ? '#93c5fd' : '#0c4a6e',
-      }}>
-        <strong>{translations[language].assignedClassroom}: </strong>{assignedClassroom}
+      {/* Classroom + all action buttons on one line */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{
+          padding: '12px 20px',
+          backgroundColor: darkMode ? '#1e3a5f' : '#e0f2fe',
+          border: darkMode ? '2px solid #3b82f6' : '2px solid #0ea5e9',
+          borderRadius: '8px',
+          fontSize: '16px', fontWeight: '500',
+          color: darkMode ? '#93c5fd' : '#0c4a6e',
+        }}>
+          <strong>{translations[language].assignedClassroom}: </strong>{assignedClassroom}
+        </div>
+        <button onClick={() => setShowClockInConfirm(true)} className="btn-primary" disabled={clockedIn}>
+          {translations[language].clockIn}
+        </button>
+        <button onClick={() => setShowClockOutConfirm(true)} className="btn-primary" disabled={!clockedIn}>
+          {translations[language].clockOut}
+        </button>
+        <button onClick={() => setShowSettingsModal(true)} className="btn-settings">
+          {translations[language].settings}
+        </button>
+        <button onClick={handleSignOut} className="btn-danger">
+          {translations[language].signOut}
+        </button>
       </div>
 
       {/* Clock status */}
