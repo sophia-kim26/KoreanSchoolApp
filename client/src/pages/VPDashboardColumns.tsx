@@ -101,6 +101,14 @@ export const buildFridayGridColumns = (
 
     if (DATE_REGEX.test(col.id)) {
       if (cell === true) return '✓';
+      if (cell === false) {
+        // clocked in but not out yet — still show ✓ for today
+        const [y, m, d] = col.id.split('_').map(Number);
+        const colDate = new Date(y, m - 1, d);
+        const today = new Date(); today.setHours(0,0,0,0);
+        if (colDate.getTime() === today.getTime()) return '✓';
+        return '✗';
+      }
       if (isDateInPast(col.id)) return '✗';
       return '';
     }

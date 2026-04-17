@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { Grid } from 'gridjs-react';
 import { h } from 'gridjs';
 import 'gridjs/dist/theme/mermaid.css';
 import logo from '../assets/logo.png';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 import { FormData, Language, MainTab, VP_TRANSLATIONS, CreateAccountResponse, CLASSROOMS } from './VPDashboardTypes';
 import { generatePIN, formatDateKey } from './VPDashboardUtils';
@@ -113,7 +113,14 @@ function VPDashboard(): React.ReactElement {
   const saturdayCols = getSaturdayColumns(saturdayData, selectedDates);
   const selectedDatesUnderscored = new Set(Array.from(selectedDates).map(d => d.replace(/-/g, '_')));
 
-  const fridayGridData = enrichedFridayData.map(row => {
+  console.log('enrichedFridayData sample:', enrichedFridayData[0]);
+  console.log('selectedDates:', Array.from(selectedDates));
+  console.log('selectedDatesUnderscored:', Array.from(selectedDatesUnderscored));
+  console.log('fridayCols ids:', fridayCols.map(c => c.id));
+
+  console.log('raw enrichedFridayData[0]:', JSON.stringify(enrichedFridayData[1], null, 2));
+
+  const fridayGridData= enrichedFridayData.map(row => {
     const selectedFridayKeys = fridayCols.map(c => c.id).filter(id => DATE_REGEX.test(id) && selectedDatesUnderscored.has(id));
     const daysPresent = selectedFridayKeys.filter(k => row[k] === true).length;
     const daysAbsent = selectedFridayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
@@ -134,6 +141,16 @@ function VPDashboard(): React.ReactElement {
       return row[col.id];
     });
   });
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const token = await getToken();
+      if (mainTab === 'friday') fetchFridayData(token);
+      if (mainTab === 'saturday') fetchSaturdayData(token);
+    }, 60_000); // refresh every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [mainTab, getToken, fetchFridayData, fetchSaturdayData]);
 
   if (isLoading) return <div style={{ padding: 20, minHeight: '100vh', color: headingColor }}>Loading...</div>;
 
