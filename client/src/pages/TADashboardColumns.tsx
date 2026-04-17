@@ -112,7 +112,7 @@ export function useGridColumns({ language, toggleAttendance, handleEditNotes }: 
         const shiftId = row.cells[0].data;
         const currentNotes = cell || '';
 
-        return h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
+        return h('div', { 'data-notes-shift': String(shiftId), style: 'display: flex; align-items: center; gap: 8px;' }, [
           h('span', {
             style: 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
           }, currentNotes || translations[language].noNotes),

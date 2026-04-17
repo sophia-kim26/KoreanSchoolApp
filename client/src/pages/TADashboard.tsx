@@ -50,6 +50,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const handleSaveNotes = async () => {
     if (editingShiftId) {
       await updateNotes(editingShiftId, editingNotes);
+      // update the grid cell dom directly, avoiding flicker (hopefully)
+      const cell = document.querySelector(`[data-notes-shift="${editingShiftId}"] span`);
+      if (cell) cell.textContent = editingNotes || translations[language].noNotes;
       setShowNotesModal(false);
       setEditingShiftId(null);
       setEditingNotes('');
