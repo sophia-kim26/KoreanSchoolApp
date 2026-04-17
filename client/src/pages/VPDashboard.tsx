@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Grid } from 'gridjs-react';
 import { h } from 'gridjs';
 import 'gridjs/dist/theme/mermaid.css';
+import logo from '../assets/logo.png';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -139,6 +140,7 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
 
       {/* Header */}
+      <img src={logo} alt="Logo" className="page-logo" />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
           VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
