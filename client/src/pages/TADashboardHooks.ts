@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shift, CurrentUser, ActiveShiftResponse, TextSize, ElapsedTime } from './TADashboardTypes';
 import { getTaAuthHeaders } from './TADashboardUtils';
@@ -164,18 +164,22 @@ export function useShifts(currentUser: CurrentUser | null) {
         body: JSON.stringify({ notes }),
       });
       if (!res.ok) throw new Error('Failed to update notes');
-      setData(prev =>
-        prev.map(shift => (shift.id === shiftId ? { ...shift, notes } : shift))
-      );
+      // mutate in place so grid.js won't rebuild
+      const shift = data.find(s => s.id === shiftId);
+      if (shift) shift.notes = notes;
+      // setData(prev =>
+      //   prev.map(shift => (shift.id === shiftId ? { ...shift, notes } : shift))
+      // );
     } catch (err) {
       console.error('Failed to update notes:', err);
       alert('Failed to update notes. Please try again.');
     }
   };
 
-  const taData: Shift[] = currentUser
-    ? data.filter(row => row.ta_id === currentUser.id)
-    : [];
+  const taData = useMemo(() =>
+    currentUser ? data.filter(row => row.ta_id === currentUser.id) : [],
+    [data, currentUser]
+  );
 
   return { data, setData, taData, fetchShifts, toggleAttendance, updateNotes };
 }
