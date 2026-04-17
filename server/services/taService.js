@@ -50,8 +50,8 @@ export const getAllTAsWithStatus = async () => {
             AND DATE(shifts.clock_in) = CURRENT_DATE
             AND shifts.clock_out IS NULL
         ORDER BY 
-            ta_list.is_active DESC,
-            ta_list.id ASC
+    ta_list.is_active DESC,
+    ta_list.created_at DESC
     `;
 };
 

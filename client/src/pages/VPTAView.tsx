@@ -8,7 +8,7 @@ function VPTAView() {
     presentCount, absentCount, totalRelevantDays, presentPercentage, absentPercentage,
     resettingPin, editingMonth, editedShifts, newShift, saving, showResetPinModal,
     newPin, setShowResetPinModal, setNewShift, handleEditMonth, handleCloseEdit,
-    handleShiftChange, handleSaveChanges, handleResetPin, copyPinToClipboard, calculateEditedHours
+    handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours
   } = useVPTAView();
 
   if (loading) {
@@ -138,7 +138,16 @@ function VPTAView() {
 
             {shiftsByMonth[editingMonth].map((shift, index) => (
               <div key={shift.id} style={{ marginBottom: 20, padding: '20px', backgroundColor: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: '#5b8bb8', marginBottom: 15 }}>Shift {index + 1} - {formatDate(shift.clock_in)}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+                  <div style={{ fontSize: '16px', fontWeight: '500', color: '#5b8bb8' }}>Shift {index + 1} - {formatDate(shift.clock_in)}</div>
+                  <button
+                    onClick={() => handleDeleteShift(shift.id)}
+                    disabled={saving}
+                    style={{ padding: '6px 12px', backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: '14px', fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                    onMouseOver={(e) => !saving && (e.currentTarget.style.backgroundColor = '#fecaca')}
+                    onMouseOut={(e) => !saving && (e.currentTarget.style.backgroundColor = '#fee2e2')}
+                  >Delete</button>
+                </div>
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: 'block', fontSize: '14px', color: '#6b7280', marginBottom: 6 }}>Clock In</label>
                   <input type="datetime-local" value={editedShifts[shift.id]?.clock_in || ''} onChange={(e) => handleShiftChange(shift.id, 'clock_in', e.target.value)} style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #d1d5db', borderRadius: 6 }} />

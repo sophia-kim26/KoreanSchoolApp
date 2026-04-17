@@ -157,3 +157,24 @@ export const updateShift = async (id, updateData) => {
     throw error;
   }
 };
+
+export const deleteShift = async (id) => {
+  try {
+    const result = await sql`
+      DELETE FROM shifts
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      const error = new Error('Shift not found');
+      error.status = 404;
+      throw error;
+    }
+    
+    return result[0];
+  } catch (error) {
+    console.error("Error deleting shift:", error);
+    throw error;
+  }
+};
