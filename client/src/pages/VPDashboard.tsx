@@ -6,7 +6,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-import { FormData, Language, MainTab, VP_TRANSLATIONS, CreateAccountResponse } from './VPDashboardTypes';
+import { FormData, Language, MainTab, VP_TRANSLATIONS, CreateAccountResponse, CLASSROOMS } from './VPDashboardTypes';
 import { generatePIN, formatDateKey } from './VPDashboardUtils';
 import { useVPSettings, useVPToken, useVPData, useVPActions } from './VPDashboardHooks';
 import { getFridayColumns, getSaturdayColumns, buildFridayGridColumns, buildSaturdayGridColumns } from './VPDashboardColumns';
@@ -39,11 +39,12 @@ function VPDashboard(): React.ReactElement {
     saturdayData,
     selectedDates, setSelectedDates,
     enrichedFridayData, setEnrichedFridayData,
+    enrichedSaturdayData, setEnrichedSaturdayData,
     fetchData, fetchFridayData, fetchSaturdayData,
   } = useVPData(getToken);
   const { toggleAttendance, deactivateTA, updateClassroom, handleSaveDates } = useVPActions(
     getToken, fetchData, fetchFridayData, fetchSaturdayData,
-    setData, setEnrichedFridayData, selectedDates, setShowCalendar,
+    setData, setEnrichedFridayData, setEnrichedSaturdayData, selectedDates, setShowCalendar,
   );
 
   // Dark-mode style shorthands
@@ -130,7 +131,7 @@ function VPDashboard(): React.ReactElement {
     });
   });
 
-  const saturdayGridData = saturdayData.map(row => {
+  const saturdayGridData = enrichedSaturdayData.map(row => {
     const selectedSaturdayKeys = saturdayCols.map(c => c.id).filter(id => DATE_REGEX.test(id) && selectedDatesUnderscored.has(id));
     const daysPresent = selectedSaturdayKeys.filter(k => row[k] === true).length;
     const daysAbsent = selectedSaturdayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
@@ -157,12 +158,15 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
-        <img src={logo} alt="Logo" className="page-logo" />
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
-          VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
-        </h1>
-        <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 30, gap: '6px' }}>
+  <img src={logo} alt="Logo" style={{ height: '64px', width: 'auto' }} />
+  <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: headingColor, textAlign: 'center', letterSpacing: '0.5px' }}>
+    VP Dashboard
+  </h1>
+  <p style={{ margin: 0, fontSize: '15px', color: dm ? '#9ca3af' : '#6b7280', fontWeight: '400' }}>
+    {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+  </p>
+  <div style={{ display: 'flex', gap: 10, marginTop: '8px' }}>
           <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
           <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
           <button
@@ -200,7 +204,19 @@ function VPDashboard(): React.ReactElement {
                 { name: translations[language].lastName, width: '120px' },
                 { name: translations[language].koreanName, width: '120px' },
                 { name: translations[language].sessionDay, width: '120px' },
-                { name: translations[language].classroom, width: '150px' },
+                {
+                  name: translations[language].classroom, width: '180px',
+                  formatter: (cell: any, row: any) => {
+                    const taId = row.cells[7].data;
+                    return h('select', {
+                      style: `padding: 4px 8px; border-radius: 4px; border: 1px solid ${dm ? '#4b5563' : '#93c5fd'}; background-color: ${dm ? '#273549' : '#eff6ff'}; color: ${dm ? '#e5e7eb' : '#1e40af'}; font-size: 13px; cursor: pointer; width: 100%;`,
+                      onchange: (e: Event) => updateClassroom(taId, (e.target as HTMLSelectElement).value),
+                    }, [
+                      h('option', { value: '' }, '— Select —'),
+                      ...CLASSROOMS.map(room => h('option', { value: room, selected: cell === room }, room)),
+                    ]);
+                  },
+                },
                 { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                 {
                   name: translations[language].attendance, width: '120px',
@@ -259,7 +275,7 @@ function VPDashboard(): React.ReactElement {
           </div>
         ) : (
           <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'hidden' }}>
-            <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, dm)} search pagination={{ limit: 10 }} sort />
+            <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, saturdayData, dm, updateClassroom)} search pagination={{ limit: 10 }} sort />
           </div>
         )
       )}
