@@ -95,16 +95,24 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
 };
 
 export const signIn = async (email, ta_code) => {
-    // Query for a single TA by email
-    const tas = await sql`SELECT * FROM ta_list WHERE email = ${email} AND is_active = true`;
+    // Query for a single TA by email (include inactive to give specific error)
+    const tas = await sql`SELECT * FROM ta_list WHERE email = ${email}`;
 
     if (tas.length === 0) {
+        // Generic message to prevent user enumeration
         const error = new Error('Invalid email or PIN');
         error.status = 401;
         throw error;
     }
 
     const ta = tas[0];
+
+    // Check if account is deactivated (safe to reveal - user knows their own email)
+    if (!ta.is_active) {
+        const error = new Error('This account has been deactivated. Please contact an administrator.');
+        error.status = 401;
+        throw error;
+    }
 
     // Perform bcrypt comparison
     const isMatch = await bcrypt.compare(ta_code, ta.ta_code);

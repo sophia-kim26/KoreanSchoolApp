@@ -67,11 +67,54 @@ export const validateLocation = (req, res, next) => {
   next();
 };
 
+const formatZodError = (zodError) => {
+  const issues = zodError.issues;
+  if (!issues || issues.length === 0) return 'Invalid request data.';
+
+  // Get the first error and make it user-friendly
+  const issue = issues[0];
+  const field = issue.path.join('.');
+  
+  // Map field names to user-friendly labels
+  const fieldLabels = {
+    first_name: 'First name',
+    last_name: 'Last name',
+    email: 'Email',
+    ta_code: 'PIN',
+    session_day: 'Session day',
+    korean_name: 'Korean name',
+    classroom: 'Classroom',
+    phone: 'Phone number',
+    english_name: 'English name'
+  };
+
+  const label = fieldLabels[field] || field;
+
+  // Create user-friendly messages based on error type
+  switch (issue.code) {
+    case 'too_small':
+      if (issue.minimum === 1) return `${label} is required.`;
+      return `${label} must be at least ${issue.minimum} characters.`;
+    case 'too_big':
+      return `${label} must be ${issue.maximum} characters or less.`;
+    case 'invalid_string':
+      if (issue.validation === 'email') return 'Please enter a valid email address.';
+      return `${label} is invalid.`;
+    case 'invalid_type':
+      if (issue.received === 'undefined') return `${label} is required.`;
+      return `${label} must be a ${issue.expected}.`;
+    default:
+      return issue.message || 'Invalid request data.';
+  }
+};
+
 const errorResponse = (res, error) => {
   console.warn('Validation failed:', error.format ? JSON.stringify(error.format(), null, 2) : error.message);
 
+  const message = error.issues ? formatZodError(error) : 'Invalid request data.';
+  
   return res.status(400).json({
-    error: 'Invalid request data.'
+    error: message
   });
 };
 
