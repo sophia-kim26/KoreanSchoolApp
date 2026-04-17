@@ -140,8 +140,8 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
 
       {/* Header */}
-      <img src={logo} alt="Logo" className="page-logo" />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+        <img src={logo} alt="Logo" className="page-logo" />
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
           VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
         </h1>
