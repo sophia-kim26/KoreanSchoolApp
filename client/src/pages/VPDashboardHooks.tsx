@@ -68,6 +68,7 @@ export function useVPData(getToken: () => Promise<string>) {
   const [saturdayData, setSaturdayData] = useState<SaturdayData[]>([]);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [enrichedFridayData, setEnrichedFridayData] = useState<any[]>([]);
+  const [enrichedSaturdayData, setEnrichedSaturdayData] = useState<any[]>([]);
 
   const { isLoading, isAuthenticated } = useAuth0();
 
@@ -161,12 +162,23 @@ export function useVPData(getToken: () => Promise<string>) {
     setEnrichedFridayData(enriched);
   }, [fridayData, data]);
 
+  // Enrich saturday data with classroom from TA list
+  useEffect(() => {
+    if (saturdayData.length === 0 || data.length === 0) return;
+    const enriched = saturdayData.map(row => {
+      const taMatch = data.find(ta => ta.id === row.id);
+      return { ...row, classroom: taMatch?.classroom ?? '' };
+    });
+    setEnrichedSaturdayData(enriched);
+  }, [saturdayData, data]);
+
   return {
     data, setData,
     fridayData, setFridayData,
     saturdayData, setSaturdayData,
     selectedDates, setSelectedDates,
     enrichedFridayData, setEnrichedFridayData,
+    enrichedSaturdayData, setEnrichedSaturdayData,
     fetchData, fetchFridayData, fetchSaturdayData, fetchSavedDates,
   };
 }
@@ -181,6 +193,7 @@ export function useVPActions(
   fetchSaturdayData: (token: string) => Promise<void>,
   setData: React.Dispatch<React.SetStateAction<TAData[]>>,
   setEnrichedFridayData: React.Dispatch<React.SetStateAction<any[]>>,
+  setEnrichedSaturdayData: React.Dispatch<React.SetStateAction<any[]>>,
   selectedDates: Set<string>,
   setShowCalendar: (v: boolean) => void,
 ) {
@@ -228,6 +241,7 @@ export function useVPActions(
   const updateClassroom = async (taId: number, classroom: string): Promise<void> => {
     setData(prev => prev.map(ta => ta.id === taId ? { ...ta, classroom } : ta));
     setEnrichedFridayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
+    setEnrichedSaturdayData(prev => prev.map(row => row.id === taId ? { ...row, classroom } : row));
     try {
       const token = await getToken();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${taId}/classroom`, {
@@ -242,6 +256,7 @@ export function useVPActions(
       const token = await getToken();
       await fetchData(token);
       await fetchFridayData(token);
+      await fetchSaturdayData(token);
     }
   };
 
