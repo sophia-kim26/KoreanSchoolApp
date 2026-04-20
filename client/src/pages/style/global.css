@@ -221,6 +221,7 @@ body.dark-mode {
 .dark-mode .page-container {
   background-color: #111827 !important;
   color: #f9fafb !important;
+  padding-top: 80px;
 }
 
 .dark-mode .page-header {
