@@ -261,7 +261,7 @@ function VPDashboard(): React.ReactElement {
           </div>
         ) : (
           <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
-            <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, dm)} search pagination={{ limit: 10 }} sort />
+            <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, saturdayData, dm, updateClassroom)} search pagination={{ limit: 10 }} sort />
           </div>
         )
       )}
