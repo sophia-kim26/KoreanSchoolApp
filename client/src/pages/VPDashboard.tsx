@@ -124,7 +124,7 @@ function VPDashboard(): React.ReactElement {
     });
   });
 
-  const saturdayGridData = saturdayData.map(row => {
+  const saturdayGridData = enrichedSaturdayData.map(row => {
     const selectedSaturdayKeys = saturdayCols.map(c => c.id).filter(id => DATE_REGEX.test(id) && selectedDatesUnderscored.has(id));
     const daysPresent = selectedSaturdayKeys.filter(k => row[k] === true).length;
     const daysAbsent = selectedSaturdayKeys.filter(k => row[k] !== true && isDateInPast(k)).length;
@@ -149,11 +149,18 @@ function VPDashboard(): React.ReactElement {
   if (isLoading) return <div style={{ padding: 20, minHeight: '100vh', color: headingColor }}>Loading...</div>;
 
   return (
-    <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit' }}>
+    <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit', overflowX: 'auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 30,
+        paddingTop: 80
+      }}>
         <img src={logo} alt="Logo" className="page-logo" />
+        <div style={{ width: 200 }} />  {/* empty left spacer */}
         <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
           VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
         </h1>
@@ -186,7 +193,7 @@ function VPDashboard(): React.ReactElement {
             <button onClick={async () => { const t = await getToken(); fetchData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
           </div>
         ) : (
-          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
             <Grid
               key={language}
               data={gridData}
@@ -239,7 +246,7 @@ function VPDashboard(): React.ReactElement {
             <button onClick={async () => { const t = await getToken(); fetchFridayData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
           </div>
         ) : (
-          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
             <Grid data={fridayGridData} columns={buildFridayGridColumns(fridayCols, fridayData, dm, updateClassroom)} search pagination={{ limit: 10 }} sort />
           </div>
         )
@@ -253,7 +260,7 @@ function VPDashboard(): React.ReactElement {
             <button onClick={async () => { const t = await getToken(); fetchSaturdayData(t); }} style={{ padding: '10px 20px', marginTop: 10 }}>Retry Load</button>
           </div>
         ) : (
-          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
             <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, dm)} search pagination={{ limit: 10 }} sort />
           </div>
         )

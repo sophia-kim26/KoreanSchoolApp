@@ -208,6 +208,7 @@ button.btn-absent {
   right: 16px;
   height: 64px;
   width: auto;
+  z-index: 10;
 }
 
 /* ===== DARK MODE ===== */

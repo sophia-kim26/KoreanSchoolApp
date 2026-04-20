@@ -154,7 +154,7 @@ export function useVPData(getToken: () => Promise<string>) {
 
   // Enrich friday data with classroom from TA list
   useEffect(() => {
-    if (fridayData.length === 0 || data.length === 0) return;
+    if (fridayData.length === 0) return;
     const enriched = fridayData.map(row => {
       const taMatch = data.find(ta => ta.id === row.id);
       return { ...row, classroom: taMatch?.classroom ?? '' };
