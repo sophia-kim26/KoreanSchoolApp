@@ -186,29 +186,37 @@ function VPDashboard(): React.ReactElement {
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: dm ? '#111827' : undefined, minHeight: '100vh', color: dm ? '#f9fafb' : 'inherit', overflowX: 'auto' }}>
 
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
         marginBottom: 30,
-        paddingTop: 80
+        paddingTop: 80,
+        gap: 12,
       }}>
-        <img src={logo} alt="Logo" className="page-logo" />
-        <div style={{ width: 200 }} />  {/* empty left spacer */}
-<h1 style={{ margin: 0, fontSize: '42px', fontWeight: '800', color: headingColor }}>
-  VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
-</h1>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
-          <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
+        {/* Top row: logo, title, main buttons */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src={logo} alt="Logo" className="page-logo" />
+          <div style={{ width: 200 }} />  {/* empty left spacer */}
+          <h1 style={{ margin: 0, fontSize: '42px', fontWeight: '800', color: headingColor }}>
+            VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+          </h1>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
+            <button onClick={() => { setCurrentMonth(new Date()); setShowCalendar(true); }} style={{ padding: '12px 24px', background: dm ? '#16a34a' : '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Set Days</button>
+            <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
+            <button
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+              style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+
+        {/* Second row: Export CSV aligned to the right */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button onClick={exportToCSV} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
             Export CSV
-          </button>
-          <button
-            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-            style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
-          >
-            Sign Out
           </button>
         </div>
       </div>
