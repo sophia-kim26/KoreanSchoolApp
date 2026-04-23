@@ -146,6 +146,40 @@ function VPDashboard(): React.ReactElement {
     return () => clearInterval(interval);
   }, [mainTab, getToken, fetchFridayData, fetchSaturdayData]);
 
+  const exportToCSV = () => {
+    let headers: string[] = [];
+    let rows: (string | number | boolean)[][] = [];
+    let filename = 'export.csv';
+
+    if (mainTab === 'tas') {
+      headers = ['First Name', 'Last Name', 'Korean Name', 'Session Day', 'Classroom', 'Total Hours', 'Attendance'];
+      rows = data.map(row => [
+        row.first_name, row.last_name, row.korean_name ?? '', row.session_day,
+        row.classroom ?? '', row.total_hours ?? '0.00', row.attendance ?? '',
+      ]);
+      filename = 'ta_list.csv';
+    } else if (mainTab === 'friday') {
+      headers = fridayCols.map(c => c.name as string);
+      rows = fridayGridData as (string | number | boolean)[][];
+      filename = 'friday_attendance.csv';
+    } else if (mainTab === 'saturday') {
+      headers = saturdayCols.map(c => c.name as string);
+      rows = saturdayGridData as (string | number | boolean)[][];
+      filename = 'saturday_attendance.csv';
+    }
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) return <div style={{ padding: 20, minHeight: '100vh', color: headingColor }}>Loading...</div>;
 
   return (
@@ -161,13 +195,16 @@ function VPDashboard(): React.ReactElement {
       }}>
         <img src={logo} alt="Logo" className="page-logo" />
         <div style={{ width: 200 }} />  {/* empty left spacer */}
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
-          VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
-        </h1>
+<h1 style={{ margin: 0, fontSize: '42px', fontWeight: '800', color: headingColor }}>
+  VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
           <button onClick={() => { setCurrentMonth(new Date()); setShowCalendar(true); }} style={{ padding: '12px 24px', background: dm ? '#1d4ed8' : '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Set Days</button>
           <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
+          <button onClick={exportToCSV} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+            Export CSV
+          </button>
           <button
             onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
             style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}

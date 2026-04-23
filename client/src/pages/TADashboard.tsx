@@ -139,9 +139,9 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       {/* Header */}
       <div className="page-header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
         <img src={logo} alt="Logo" style={{ position: 'fixed', top: '16px', right: '16px', height: '64px', width: 'auto', zIndex: 10 }} />
-        <h1 className="page-title" style={{ margin: 0, fontSize: '28px', fontWeight: '700', textAlign: 'center', letterSpacing: '0.5px' }}>
-          TA Dashboard
-        </h1>
+<h1 className="page-title" style={{ margin: 0, fontSize: '42px', fontWeight: '800', textAlign: 'center', letterSpacing: '0.5px' }}>
+  TA Dashboard
+</h1>
         <p style={{ margin: 0, fontSize: '15px', color: darkMode ? '#9ca3af' : '#6b7280', fontWeight: '400' }}>
           Timesheet for <strong style={{ color: darkMode ? '#93c5fd' : '#0369a1' }}>{taName}</strong>
         </p>
@@ -193,8 +193,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <div style={{ position: 'relative' }}>
           <button
             onClick={exportToCSV}
-            className="btn-primary"
-            style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1 }}
+            style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1, padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
           >
             Export CSV
           </button>
