@@ -161,9 +161,9 @@ function VPDashboard(): React.ReactElement {
       }}>
         <img src={logo} alt="Logo" className="page-logo" />
         <div style={{ width: 200 }} />  {/* empty left spacer */}
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '600', color: headingColor }}>
-          VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
-        </h1>
+<h1 style={{ margin: 0, fontSize: '42px', fontWeight: '800', color: headingColor }}>
+  VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
           <button onClick={() => setShowModal(true)} style={{ padding: '12px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add New TA</button>
