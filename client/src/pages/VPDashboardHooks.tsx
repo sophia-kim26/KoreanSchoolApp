@@ -25,7 +25,7 @@ export function useVPSettings() {
       style.textContent = `
         body.dark-mode { background-color: #111827 !important; color: #f9fafb !important; }
         body.dark-mode .page-container { background-color: #111827 !important; }
-        body.dark-mode .gridjs-wrapper { background-color: #1f2937 !important; border: 1px solid #374151 !important; border-radius: 10px !important; overflow: hidden !important; }
+        body.dark-mode .gridjs-wrapper { background-color: #1f2937 !important; border: 1px solid #374151 !important; border-radius: 10px !important; overflow-x: auto !important; overflow-y: hidden !important; }
         body.dark-mode .gridjs-thead { background-color: #273549 !important; }
         body.dark-mode .gridjs-th { background-color: #273549 !important; color: #93c5fd !important; border-color: #374151 !important; font-weight: 600 !important; }
         body.dark-mode .gridjs-th-content { color: #93c5fd !important; }
@@ -154,7 +154,7 @@ export function useVPData(getToken: () => Promise<string>) {
 
   // Enrich friday data with classroom from TA list
   useEffect(() => {
-    if (fridayData.length === 0 || data.length === 0) return;
+    if (fridayData.length === 0) return;
     const enriched = fridayData.map(row => {
       const taMatch = data.find(ta => ta.id === row.id);
       return { ...row, classroom: taMatch?.classroom ?? '' };

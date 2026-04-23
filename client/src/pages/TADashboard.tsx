@@ -138,7 +138,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
       {/* Header */}
       <div className="page-header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
-        <img src={logo} alt="Logo" style={{ height: '64px', width: 'auto' }} />
+        <img src={logo} alt="Logo" style={{ position: 'fixed', top: '16px', right: '16px', height: '64px', width: 'auto', zIndex: 10 }} />
         <h1 className="page-title" style={{ margin: 0, fontSize: '28px', fontWeight: '700', textAlign: 'center', letterSpacing: '0.5px' }}>
           TA Dashboard
         </h1>
