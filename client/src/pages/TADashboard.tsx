@@ -193,8 +193,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <div style={{ position: 'relative' }}>
           <button
             onClick={exportToCSV}
-            className="btn-primary"
-            style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1 }}
+            style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1, padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
           >
             Export CSV
           </button>
