@@ -12,6 +12,7 @@ import { useGridColumns } from './TADashboardColumns';
 import { ClockInConfirmModal, ClockOutConfirmModal, NotesEditModal } from './TADashboardModals';
 import { SettingsModal } from './TADashboardSettings';
 import 'gridjs/dist/theme/mermaid.css';
+import * as XLSX from 'xlsx';
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -111,7 +112,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
-  const exportToCSV = () => {
+  const exportToXLSX = async () => {
     const headers = ['Date', 'Attendance', 'Clock In', 'Clock Out', 'Elapsed Time', 'Notes'];
     const rows = taData.map(row => [
       formatDate(row.clock_in),
@@ -121,16 +122,10 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       row.elapsed_time ?? '',
       row.notes ?? '',
     ]);
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `timesheet_${taName.replace(/\s+/g, '_')}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Timesheet');
+    XLSX.writeFile(workbook, `timesheet_${taName.replace(/\s+/g, '_')}.xlsx`);
   };
 
   return (
@@ -192,10 +187,10 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
       ) : (
         <div style={{ position: 'relative' }}>
           <button
-            onClick={exportToCSV}
+            onClick={exportToXLSX}
             style={{ position: 'absolute', top: '-40px', right: '0', zIndex: 1, padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
           >
-            Export CSV
+            Export XLSX
           </button>
           <Grid
             key={`ta-shifts-grid-${language}`}
