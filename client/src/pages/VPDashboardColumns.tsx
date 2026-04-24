@@ -7,9 +7,6 @@ interface ColumnDef {
   id: string;
 }
 
-// ---------------------------------------------------------------------------
-// Column definition builders
-// ---------------------------------------------------------------------------
 export const getFridayColumns = (fridayData: FridayData[], selectedDates: Set<string>): ColumnDef[] => {
   if (fridayData.length === 0) return [];
   const keys = Object.keys(fridayData[0]);
@@ -29,7 +26,7 @@ export const getFridayColumns = (fridayData: FridayData[], selectedDates: Set<st
   return [
     ...[...nonDateKeys, ...dateKeys].map(key => ({
       name: DATE_REGEX.test(key)
-        ? key.replace(/_/g, '-')
+        ? key.split('_').slice(1).join('-') // get rid of the year
         : key === 'classroom'
           ? 'Classroom'
           : key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
@@ -59,7 +56,7 @@ export const getSaturdayColumns = (saturdayData: any[], selectedDates: Set<strin
   return [
     ...[...nonDateKeys, ...dateKeys].map(key => ({
       name: DATE_REGEX.test(key)
-        ? key.replace(/_/g, '-')
+        ? key.split('_').slice(1).join('-') // get rid of the year
         : key === 'classroom'
           ? 'Classroom'
           : key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
@@ -70,9 +67,6 @@ export const getSaturdayColumns = (saturdayData: any[], selectedDates: Set<strin
   ];
 };
 
-// ---------------------------------------------------------------------------
-// Cell formatter builders (returns gridjs column config arrays)
-// ---------------------------------------------------------------------------
 export const buildFridayGridColumns = (
   cols: ColumnDef[],
   fridayData: FridayData[],
@@ -80,7 +74,7 @@ export const buildFridayGridColumns = (
   updateClassroom: (taId: number, classroom: string) => void,
 ) => cols.map(col => ({
   name: col.name,
-  width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
+  width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '100px' : DATE_REGEX.test(col.id) ? '90px' : '150px',
   formatter: (cell: any, row: any) => {
     if (col.id === '__days_present__') return h('span', { style: `font-weight: 600; color: ${darkMode ? '#4ade80' : '#16a34a'};` }, String(cell ?? 0));
     if (col.id === '__days_absent__') return h('span', { style: `font-weight: 600; color: ${darkMode ? '#f87171' : '#dc2626'};` }, String(cell ?? 0));
@@ -127,7 +121,7 @@ export const buildSaturdayGridColumns = (
   updateClassroom: (taId: number, classroom: string) => void,
 ) => cols.map(col => ({
   name: col.name,
-  width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '120px' : '150px',
+  width: col.id === 'classroom' ? '180px' : col.id === '__days_present__' || col.id === '__days_absent__' ? '100px' : DATE_REGEX.test(col.id) ? '90px' : '150px',
   formatter: (cell: any, row: any) => {
     if (col.id === '__days_present__') return h('span', { style: `font-weight: 600; color: ${darkMode ? '#4ade80' : '#16a34a'};` }, String(cell ?? 0));
     if (col.id === '__days_absent__') return h('span', { style: `font-weight: 600; color: ${darkMode ? '#f87171' : '#dc2626'};` }, String(cell ?? 0));
