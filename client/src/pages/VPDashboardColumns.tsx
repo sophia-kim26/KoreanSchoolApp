@@ -32,8 +32,8 @@ export const getFridayColumns = (fridayData: FridayData[], selectedDates: Set<st
           : key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
       id: key,
     })),
-    { name: 'Days Present', id: '__days_present__' },
-    { name: 'Days Absent', id: '__days_absent__' },
+    { name: 'Presences', id: '__days_present__' },
+    { name: 'Absences', id: '__days_absent__' },
   ];
 };
 
@@ -62,8 +62,8 @@ export const getSaturdayColumns = (saturdayData: any[], selectedDates: Set<strin
           : key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
       id: key,
     })),
-    { name: 'Days Present', id: '__days_present__' },
-    { name: 'Days Absent', id: '__days_absent__' },
+    { name: 'Presences', id: '__days_present__' },
+    { name: 'Absences', id: '__days_absent__' },
   ];
 };
 
