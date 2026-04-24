@@ -214,19 +214,19 @@ export default function TALogin(): React.ReactElement {
                         </div>
                         <div className="space-y-3">
                             <button
-                                onClick={handleCreateAccount}
-                                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                            >
-                                Create New Account
-                            </button>
-                            <button
                                 onClick={() => {
                                     setAuthState('enterCredentials');
                                     setTimeout(() => emailInputRef.current?.focus(), 100);
                                 }}
-                                className="w-full bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                             >
                                 Sign In
+                            </button>
+                            <button
+                                onClick={handleCreateAccount}
+                                className="w-full bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                            >
+                                Create New Account
                             </button>
                             <div className="flex justify-center">
                                 <button onClick={handleBack} className="btn-danger">
