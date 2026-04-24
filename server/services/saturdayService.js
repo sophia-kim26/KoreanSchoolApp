@@ -12,48 +12,47 @@ const sql = neon(process.env.DATABASE_URL);
 export const getAllSaturdayData = async () => {
   try {
     const calendarDates = await sql`SELECT date FROM calendar_dates ORDER BY date`;
-    
     if (calendarDates.length === 0) return [];
-    
-    // Use a subquery to get counts so we don't have to list 20 columns in GROUP BY
-    const allData = await sql`
-      SELECT 
-        f.*,
-        COALESCE(counts.attendance_count, 0) as attendance_count,
-        COALESCE(counts.absence_count, 0) as absence_count
-      FROM saturday f
-      LEFT JOIN (
-        SELECT 
-          ta_id,
-          COUNT(CASE WHEN clock_out IS NOT NULL THEN 1 END) as attendance_count,
-          COUNT(CASE WHEN clock_out IS NULL AND clock_in IS NOT NULL THEN 1 END) as absence_count
-        FROM shifts
-        GROUP BY ta_id
-      ) counts ON f.id = counts.ta_id
-      ORDER BY f.id
-    `;
-    
-    if (allData.length === 0) return [];
-    
-    const selectedDates = calendarDates.map(row => row.date.replace(/-/g, '_'));
-    const dateRegex = /^\d{4}_\d{2}_\d{2}$/;
 
-    return allData.map(row => {
-      const filteredRow = {};
-      
-      Object.keys(row).forEach(col => {
-        if (!dateRegex.test(col)) {
-          filteredRow[col] = row[col];
-        }
-      });
-      
+    const allTAs = await sql`SELECT * FROM saturday ORDER BY id`;
+    if (allTAs.length === 0) return [];
+
+    const shifts = await sql`
+      SELECT 
+        s.ta_id,
+        TO_CHAR(s.clock_in AT TIME ZONE 'America/New_York', 'YYYY_MM_DD') as shift_date,
+        (s.clock_out IS NOT NULL) as completed
+      FROM shifts s
+      INNER JOIN saturday sat ON s.ta_id = sat.id
+      WHERE s.clock_in IS NOT NULL
+    `;
+
+    const shiftMap = {};
+    for (const shift of shifts) {
+      if (!shiftMap[shift.ta_id]) shiftMap[shift.ta_id] = {};
+      shiftMap[shift.ta_id][shift.shift_date] = shift.completed;
+    }
+
+    const selectedDates = calendarDates.map(row => row.date.replace(/-/g, '_'));
+
+    return allTAs.map(row => {
+      const taShifts = shiftMap[row.id] || {};
+      const attendanceDates = selectedDates.filter(d => taShifts[d] === true);
+      const absenceDates = selectedDates.filter(d => taShifts[d] === false);
+
+      const dateColumns = {};
       selectedDates.forEach(dateKey => {
-        filteredRow[dateKey] = row.hasOwnProperty(dateKey) ? row[dateKey] : null;
+        dateColumns[dateKey] = taShifts[dateKey] ?? null;
       });
-      
-      return filteredRow;
+
+      return {
+        ...row,
+        attendance_count: attendanceDates.length,
+        absence_count: absenceDates.length,
+        ...dateColumns,
+      };
     });
-    
+
   } catch (error) {
     console.error('Error in getAllSaturdayData:', error);
     throw error;
