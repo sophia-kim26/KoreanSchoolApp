@@ -5,6 +5,7 @@ import logo from '../assets/logo.png';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 
 import { FormData, Language, MainTab, VP_TRANSLATIONS, CreateAccountResponse, CLASSROOMS } from './VPDashboardTypes';
 import { generatePIN, formatDateKey } from './VPDashboardUtils';
@@ -146,10 +147,11 @@ function VPDashboard(): React.ReactElement {
     return () => clearInterval(interval);
   }, [mainTab, getToken, fetchFridayData, fetchSaturdayData]);
 
-  const exportToCSV = () => {
+  const exportToXLSX = () => {
     let headers: string[] = [];
     let rows: (string | number | boolean)[][] = [];
-    let filename = 'export.csv';
+    let filename = 'export.xlsx';
+    let sheetName = 'Export';
 
     if (mainTab === 'tas') {
       headers = ['First Name', 'Last Name', 'Korean Name', 'Session Day', 'Classroom', 'Total Hours', 'Attendance'];
@@ -157,27 +159,25 @@ function VPDashboard(): React.ReactElement {
         row.first_name, row.last_name, row.korean_name ?? '', row.session_day,
         row.classroom ?? '', row.total_hours ?? '0.00', row.attendance ?? '',
       ]);
-      filename = 'ta_list.csv';
+      filename = 'ta_list.xlsx';
+      sheetName = 'TA List';
     } else if (mainTab === 'friday') {
       headers = fridayCols.map(c => c.name as string);
       rows = fridayGridData as (string | number | boolean)[][];
-      filename = 'friday_attendance.csv';
+      filename = 'friday_attendance.xlsx';
+      sheetName = 'Friday';
     } else if (mainTab === 'saturday') {
       headers = saturdayCols.map(c => c.name as string);
       rows = saturdayGridData as (string | number | boolean)[][];
-      filename = 'saturday_attendance.csv';
+      filename = 'saturday_attendance.xlsx';
+      sheetName = 'Saturday';
     }
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    const wsData = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
   };
 
   if (isLoading) return <div style={{ padding: 20, minHeight: '100vh', color: headingColor }}>Loading...</div>;
@@ -215,8 +215,8 @@ function VPDashboard(): React.ReactElement {
 
         {/* Second row: Export CSV aligned to the right */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={exportToCSV} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-            Export CSV
+          <button onClick={exportToXLSX} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+            Export XLSX
           </button>
         </div>
       </div>
