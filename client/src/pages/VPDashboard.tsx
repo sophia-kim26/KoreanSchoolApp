@@ -23,7 +23,7 @@ function VPDashboard(): React.ReactElement {
   const [generatedPin, setGeneratedPin] = useState('');
   const [newTAName, setNewTAName] = useState('');
   const [mainTab, setMainTab] = useState<MainTab>('tas');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('ko');
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [formData, setFormData] = useState<FormData>({
     first_name: '', last_name: '', email: '', session_day: '',
@@ -53,6 +53,16 @@ function VPDashboard(): React.ReactElement {
   const tabBorderBottom = dm ? '2px solid #374151' : '2px solid #e5e7eb';
   const mainTabBg = (active: boolean) => active ? (dm ? '#1e3a5f' : '#bfdbfe') : 'transparent';
   const mainTabColor = (active: boolean) => active ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#9ca3af' : '#6b7280');
+
+  // Tab Translation Helper
+  const getTabName = (tab: MainTab, lang: Language) => {
+    if (lang === 'ko') {
+      if (tab === 'tas') return 'TA 목록';
+      if (tab === 'friday') return '금요일';
+      if (tab === 'saturday') return '토요일';
+    }
+    return tab === 'tas' ? 'TAs' : tab.charAt(0).toUpperCase() + tab.slice(1);
+  };
 
   // TA form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +146,7 @@ function VPDashboard(): React.ReactElement {
     });
   });
 
-  // refreshign table every minute
+  // refreshing table every minute
   useEffect(() => {
     const interval = setInterval(async () => {
       const token = await getToken();
@@ -198,7 +208,7 @@ function VPDashboard(): React.ReactElement {
           <img src={logo} alt="Logo" className="page-logo" />
           <div style={{ width: 200 }} />  {/* empty left spacer */}
           <h1 style={{ margin: 0, fontSize: '42px', fontWeight: '800', color: headingColor }}>
-            VP Dashboard – {mainTab === 'tas' ? 'TA List' : mainTab === 'friday' ? 'Friday Table' : 'Saturday Table'}
+            VP Dashboard – {getTabName(mainTab, language)}
           </h1>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => setShowSettingsModal(true)} style={{ padding: '12px 24px', background: dm ? '#374151' : '#a39898ff', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Settings</button>
@@ -239,7 +249,7 @@ function VPDashboard(): React.ReactElement {
               color: mainTabColor(mainTab === tab) 
             }}
           >
-            {tab === 'tas' ? 'TAs' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {getTabName(tab, language)}
           </button>
         ))}
       </div>
@@ -267,10 +277,15 @@ function VPDashboard(): React.ReactElement {
                   name: translations[language].attendance, width: '120px',
                   formatter: (cell: any, row: any) => {
                     const taId = row.cells[7].data;
+                    const isPresent = cell === 'Present';
+                    const displayText = isPresent 
+                      ? (language === 'ko' ? '출석' : 'Present') 
+                      : (language === 'ko' ? '결석' : 'Absent');
+
                     return h('button', {
-                      style: `display: inline-block; padding: 6px 16px; border-radius: 4px; font-weight: 500; font-size: 13px; background-color: ${cell === 'Present' ? '#dcfce7' : '#fee2e2'}; color: ${cell === 'Present' ? '#166534' : '#991b1b'}; border: none; cursor: pointer;`,
+                      style: `display: inline-block; padding: 6px 16px; border-radius: 4px; font-weight: 500; font-size: 13px; background-color: ${isPresent ? '#dcfce7' : '#fee2e2'}; color: ${isPresent ? '#166534' : '#991b1b'}; border: none; cursor: pointer;`,
                       onclick: () => toggleAttendance(taId, cell),
-                    }, cell || 'Absent');
+                    }, displayText);
                   },
                 },
                 {
@@ -278,7 +293,7 @@ function VPDashboard(): React.ReactElement {
                   formatter: (cell: any) => h('button', {
                     style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
                     onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${cell}`); },
-                  }, 'View Details'),
+                  }, language === 'ko' ? '상세 보기' : 'View Details'),
                 },
                 {
                   name: translations[language].actions, width: '100px',
@@ -306,7 +321,12 @@ function VPDashboard(): React.ReactElement {
           </div>
         ) : (
           <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
-            <Grid data={fridayGridData} columns={buildFridayGridColumns(fridayCols, fridayData, dm, updateClassroom)} search pagination={{ limit: 10 }} sort />
+            <Grid 
+              key={`friday-${language}`} 
+              data={fridayGridData} 
+              columns={buildFridayGridColumns(fridayCols, fridayData, dm, updateClassroom, language)} 
+              search pagination={{ limit: 10 }} sort 
+            />
           </div>
         )
       )}
@@ -320,7 +340,12 @@ function VPDashboard(): React.ReactElement {
           </div>
         ) : (
           <div style={{ background: dm ? '#1f2937' : '#dbeafe', borderRadius: 8, overflow: 'auto' }}>
-            <Grid data={saturdayGridData} columns={buildSaturdayGridColumns(saturdayCols, saturdayData, dm, updateClassroom)} search pagination={{ limit: 10 }} sort />
+            <Grid 
+              key={`saturday-${language}`} 
+              data={saturdayGridData} 
+              columns={buildSaturdayGridColumns(saturdayCols, saturdayData, dm, updateClassroom, language)} 
+              search pagination={{ limit: 10 }} sort 
+            />
           </div>
         )
       )}
