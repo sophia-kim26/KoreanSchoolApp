@@ -264,7 +264,7 @@ function VPDashboard(): React.ReactElement {
                   formatter: (cell: any) => h('button', {
                     style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
                     onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${cell}`); },
-                  }, 'View Analytics'),
+                  }, 'View Details'),
                 },
                 {
                   name: translations[language].actions, width: '100px',
