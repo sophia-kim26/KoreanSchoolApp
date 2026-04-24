@@ -224,8 +224,22 @@ function VPDashboard(): React.ReactElement {
       {/* Main Tab Selector */}
       <div style={{ display: 'flex', marginBottom: 24, borderBottom: tabBorderBottom }}>
         {(['tas', 'friday', 'saturday'] as MainTab[]).map(tab => (
-          <button key={tab} onClick={() => setMainTab(tab)} style={{ padding: '12px 24px', background: mainTabBg(mainTab === tab), border: 'none', borderTopLeftRadius: 8, borderTopRightRadius: 8, cursor: 'pointer', fontSize: '16px', fontWeight: '600', color: mainTabColor(mainTab === tab) }}>
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          <button 
+            key={tab} 
+            onClick={() => setMainTab(tab)} 
+            style={{ 
+              padding: '12px 24px', 
+              background: mainTabBg(mainTab === tab), 
+              border: 'none', 
+              borderTopLeftRadius: 8, 
+              borderTopRightRadius: 8, 
+              cursor: 'pointer', 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              color: mainTabColor(mainTab === tab) 
+            }}
+          >
+            {tab === 'tas' ? 'TAs' : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -264,7 +278,7 @@ function VPDashboard(): React.ReactElement {
                   formatter: (cell: any) => h('button', {
                     style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
                     onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${cell}`); },
-                  }, 'View Analytics'),
+                  }, 'View Details'),
                 },
                 {
                   name: translations[language].actions, width: '100px',
