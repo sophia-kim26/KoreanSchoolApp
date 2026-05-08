@@ -7,13 +7,13 @@ const ALLOWED_IPS = [
   '::1',              // localhost IPv6
   '69.121.204.146',   // my home IP
   '173.70.27.192',     // sophia's home IP
-  '24.38.110.100' // korean school IP
 ];
 
 // cIDR ranges
 const ALLOWED_CIDR_RANGES = [
   '168.229.254.0/24',  // BCA BYOD network (covers .0 - .255, includes .66 and .67)
   // '192.168.1.0/24', // add korean school ip address when i actually find out
+  '24.38.110.0/24',    // Korean school network
 ];
 
 // check if the user's IP falls within a CIDR range
