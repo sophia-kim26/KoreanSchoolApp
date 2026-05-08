@@ -14,6 +14,7 @@ const ALLOWED_CIDR_RANGES = [
   '168.229.254.0/24',  // BCA BYOD network (covers .0 - .255, includes .66 and .67)
   // '192.168.1.0/24', // add korean school ip address when i actually find out
   '24.38.110.0/24',    // Korean school network
+  '146.71.0.0/24' // kajeet smartbus
 ];
 
 // check if the user's IP falls within a CIDR range
