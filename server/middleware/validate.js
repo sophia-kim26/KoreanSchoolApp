@@ -6,7 +6,8 @@ const ALLOWED_IPS = [
   '127.0.0.1',        // localhost for testing
   '::1',              // localhost IPv6
   '69.121.204.146',   // my home IP
-  '173.70.27.192' // sophia's home IP
+  '173.70.27.192',     // sophia's home IP
+  '24.38.110.100' // korean school IP
 ];
 
 // cIDR ranges
