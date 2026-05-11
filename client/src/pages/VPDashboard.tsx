@@ -271,7 +271,24 @@ function VPDashboard(): React.ReactElement {
                 { name: translations[language].lastName, width: '120px' },
                 { name: translations[language].koreanName, width: '120px' },
                 { name: translations[language].sessionDay, width: '120px' },
-                { name: translations[language].classroom, width: '150px' },
+                {
+                  name: translations[language].classroom, 
+                  width: '180px',
+                  formatter: (cell: any, row: any) => {
+                    const taId = row.cells[7].data; // ID is in the 8th column (index 7)
+                    
+                    return h('select', {
+                      style: `padding: 4px 8px; border-radius: 4px; border: 1px solid ${dm ? '#4b5563' : '#93c5fd'}; background-color: ${dm ? '#273549' : '#eff6ff'}; color: ${dm ? '#e5e7eb' : '#1e40af'}; font-size: 13px; cursor: pointer; width: 100%;`,
+                      onchange: (e: Event) => { 
+                        const newClassroom = (e.target as HTMLSelectElement).value;
+                        if (taId) updateClassroom(taId, newClassroom); 
+                      },
+                    }, [
+                      h('option', { value: '' }, language === 'ko' ? '— 선택 —' : '— Select —'),
+                      ...CLASSROOMS.map(room => h('option', { value: room, selected: cell === room }, room)),
+                    ]);
+                  }
+                },
                 { name: translations[language].totalHours, width: '100px', formatter: (cell: any) => `${parseFloat(cell || 0).toFixed(2)}h` },
                 {
                   name: translations[language].attendance, width: '120px',
@@ -293,7 +310,7 @@ function VPDashboard(): React.ReactElement {
                   formatter: (cell: any) => h('button', {
                     style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
                     onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${cell}`); },
-                  }, language === 'ko' ? '상세 보기' : 'View Details'),
+                  }, language === 'ko' ? ' 더보기' : 'View Details'),
                 },
                 {
                   name: translations[language].actions, width: '100px',
