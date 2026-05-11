@@ -47,7 +47,6 @@ export const getAllTAsWithStatus = async () => {
         FROM ta_list
         LEFT JOIN shifts 
             ON ta_list.id = shifts.ta_id 
-            AND DATE(shifts.clock_in) = CURRENT_DATE
             AND shifts.clock_out IS NULL
         ORDER BY 
     ta_list.is_active DESC,
