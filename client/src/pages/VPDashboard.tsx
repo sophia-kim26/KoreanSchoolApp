@@ -88,7 +88,7 @@ function VPDashboard(): React.ReactElement {
         setShowModal(false);
         setShowPinModal(true);
         const freshToken = await getToken();
-        fetchData(freshToken);
+        await Promise.all([fetchData(freshToken), fetchFridayData(freshToken), fetchSaturdayData(freshToken)]);
       } else {
         const error = await response.json();
         alert(error.message || 'Failed to add new TA');
