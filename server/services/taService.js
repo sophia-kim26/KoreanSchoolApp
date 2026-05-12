@@ -81,6 +81,37 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
         ) 
         RETURNING id, first_name, last_name, email, session_day, korean_name, classroom, is_active, created_at
     `;
+
+    const taId = result[0].id;
+
+    // Add TA to friday table if session_day is 'Friday' or 'Both'
+    if (session_day === 'Friday' || session_day === 'Both') {
+        try {
+            const fridayResult = await sql`
+                INSERT INTO friday (id, first_name, last_name, email, korean_name, classroom, session_day)
+                VALUES (${taId}, ${first_name}, ${last_name}, ${email}, ${korean_name || null}, ${classroom || null}, ${session_day})
+                ON CONFLICT DO NOTHING
+            `;
+            console.log('Friday insert result:', fridayResult);
+        } catch (err) {
+            console.error('Error inserting into friday table:', err);
+        }
+    }
+
+    // Add TA to saturday table if session_day is 'Saturday' or 'Both'
+    if (session_day === 'Saturday' || session_day === 'Both') {
+        try {
+            const saturdayResult = await sql`
+                INSERT INTO saturday (id, first_name, last_name, email, korean_name, classroom, session_day)
+                VALUES (${taId}, ${first_name}, ${last_name}, ${email}, ${korean_name || null}, ${classroom || null}, ${session_day})
+                ON CONFLICT DO NOTHING
+            `;
+            console.log('Saturday insert result:', saturdayResult);
+        } catch (err) {
+            console.error('Error inserting into saturday table:', err);
+        }
+    }
+
     // after the INSERT, before the return:
     sendTACredentials({ first_name, email, pin: ta_code }).catch(err => {
         console.error('Failed to send welcome email:', err);
