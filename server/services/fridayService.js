@@ -72,10 +72,13 @@ export const getCalendarDates = async () => {
 
 export const saveCalendarDates = async (dates) => {
   try {
-    // Just insert new dates, ignore duplicates
+    // Delete all existing dates first
+    await sql`DELETE FROM calendar_dates`;
+
+    // Then insert the new dates
     if (dates && dates.length > 0) {
       for (const date of dates) {
-        await sql`INSERT INTO calendar_dates (date) VALUES (${date}) ON CONFLICT DO NOTHING`;
+        await sql`INSERT INTO calendar_dates (date) VALUES (${date})`;
       }
     }
 

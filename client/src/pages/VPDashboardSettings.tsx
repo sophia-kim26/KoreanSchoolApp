@@ -6,16 +6,12 @@ interface VPSettingsModalProps {
   setDarkMode: (v: boolean) => void;
   language: Language;
   setLanguage: (v: Language) => void;
-  selectedDates: Set<string>;
-  onOpenCalendar: () => void;
   onClose: () => void;
 }
 
 export function VPSettingsModal({
   darkMode: dm, setDarkMode,
   language, setLanguage,
-  selectedDates,
-  onOpenCalendar,
   onClose,
 }: VPSettingsModalProps) {
   const cardBg = dm ? '#1f2937' : 'white';
@@ -67,17 +63,6 @@ export function VPSettingsModal({
               <button onClick={() => setDarkMode(false)} style={{ padding: '10px 30px', background: !dm ? '#1e40af' : (dm ? '#273549' : 'white'), color: !dm ? 'white' : (dm ? '#d1d5db' : '#374151'), border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Light Mode</button>
               <button onClick={() => setDarkMode(true)} style={{ padding: '10px 30px', background: dm ? '#3b82f6' : 'white', color: dm ? 'white' : '#374151', border: '1px solid #4b5563', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}>Dark Mode</button>
             </div>
-          </div>
-
-          {/* Schedule / Calendar */}
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: 12, color: dm ? '#60a5fa' : '#1e40af' }}>Schedule</h3>
-            <button onClick={onOpenCalendar} style={{ padding: '12px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Set Days</button>
-            {selectedDates.size > 0 && (
-              <p style={{ marginTop: 12, fontSize: '14px', color: dm ? '#d1d5db' : '#374151' }}>
-                <strong>{selectedDates.size}</strong> day{selectedDates.size !== 1 ? 's' : ''} selected
-              </p>
-            )}
           </div>
         </div>
       </div>
