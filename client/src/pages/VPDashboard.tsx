@@ -24,6 +24,7 @@ function VPDashboard(): React.ReactElement {
   const [mainTab, setMainTab] = useState<MainTab>('tas');
   const [language, setLanguage] = useState<Language>('ko');
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [lastDeleteTime, setLastDeleteTime] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
     first_name: '', last_name: '', email: '', session_day: '',
     is_active: true, korean_name: '', classroom: '',
@@ -45,6 +46,7 @@ function VPDashboard(): React.ReactElement {
   const { toggleAttendance, deactivateTA, updateClassroom, handleSaveDates } = useVPActions(
     getToken, fetchData, fetchFridayData, fetchSaturdayData,
     setData, setEnrichedFridayData, setEnrichedSaturdayData, selectedDates, setShowCalendar,
+    () => setLastDeleteTime(Date.now()), // Callback when delete happens
   );
 
   // Dark-mode style shorthands
@@ -148,13 +150,16 @@ function VPDashboard(): React.ReactElement {
   // refreshing table every minute
   useEffect(() => {
     const interval = setInterval(async () => {
+      // Skip automatic refresh if a delete happened in the last 10 seconds
+      if (Date.now() - lastDeleteTime < 10000) return;
+
       const token = await getToken();
       if (mainTab === 'friday') fetchFridayData(token);
       if (mainTab === 'saturday') fetchSaturdayData(token);
     }, 60_000);
 
     return () => clearInterval(interval);
-  }, [mainTab, getToken, fetchFridayData, fetchSaturdayData]);
+  }, [mainTab, getToken, fetchFridayData, fetchSaturdayData, lastDeleteTime]);
 
   const exportToCSV = () => {
     let headers: string[] = [];

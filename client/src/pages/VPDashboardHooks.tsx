@@ -196,6 +196,7 @@ export function useVPActions(
   setEnrichedSaturdayData: React.Dispatch<React.SetStateAction<any[]>>,
   selectedDates: Set<string>,
   setShowCalendar: (v: boolean) => void,
+  onDelete?: () => void,
 ) {
   const toggleAttendance = async (taId: number, currentAttendance: string): Promise<void> => {
     try {
@@ -228,7 +229,11 @@ export function useVPActions(
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
-        fetchData(token);
+        setData(prev => prev.filter(ta => ta.id !== taId));
+        setEnrichedFridayData(prev => prev.filter(row => row.id !== taId));
+        setEnrichedSaturdayData(prev => prev.filter(row => row.id !== taId));
+        onDelete?.(); // Notify that a delete happened
+        await fetchData(token);
       } else {
         alert('Failed to deactivate TA');
       }
