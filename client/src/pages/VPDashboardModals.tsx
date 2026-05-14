@@ -96,13 +96,6 @@ export function AddTAModal({ darkMode: dm, formData, onInputChange, onSessionDay
             </select>
           </div>
 
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '14px', color: getLabelColor(dm) }}>
-              <input type="checkbox" name="is_active" checked={formData.is_active} onChange={onInputChange} style={{ width: '16px', height: '16px' }} />
-              Is Active
-            </label>
-          </div>
-
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button type="button" onClick={onClose} style={{ padding: '10px 20px', background: dm ? '#4b5563' : '#6b7280', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Cancel</button>
             <button type="submit" style={{ padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Add TA</button>

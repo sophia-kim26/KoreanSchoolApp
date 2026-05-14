@@ -25,6 +25,7 @@ function VPDashboard(): React.ReactElement {
   const [mainTab, setMainTab] = useState<MainTab>('tas');
   const [language, setLanguage] = useState<Language>('ko');
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [lastDeleteTime, setLastDeleteTime] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
     first_name: '', last_name: '', email: '', session_day: '',
     is_active: true, korean_name: '', classroom: '',
@@ -46,6 +47,7 @@ function VPDashboard(): React.ReactElement {
   const { toggleAttendance, deactivateTA, updateClassroom, handleSaveDates } = useVPActions(
     getToken, fetchData, fetchFridayData, fetchSaturdayData,
     setData, setEnrichedFridayData, setEnrichedSaturdayData, selectedDates, setShowCalendar,
+    () => setLastDeleteTime(Date.now()), // Callback when delete happens
   );
 
   // Dark-mode style shorthands
@@ -117,7 +119,7 @@ function VPDashboard(): React.ReactElement {
   const translations = VP_TRANSLATIONS;
   const gridData = data.map(row => [
     row.first_name, row.last_name, row.korean_name, row.session_day,
-    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id,
+    row.classroom || '', row.total_hours || '0.00', row.attendance, row.id, row.id,
   ]);
 
   const fridayCols = getFridayColumns(fridayData, selectedDates);
@@ -149,13 +151,16 @@ function VPDashboard(): React.ReactElement {
   // refreshing table every minute
   useEffect(() => {
     const interval = setInterval(async () => {
+      // Skip automatic refresh if a delete happened in the last 10 seconds
+      if (Date.now() - lastDeleteTime < 10000) return;
+
       const token = await getToken();
       if (mainTab === 'friday') fetchFridayData(token);
       if (mainTab === 'saturday') fetchSaturdayData(token);
     }, 60_000);
 
     return () => clearInterval(interval);
-  }, [mainTab, getToken, fetchFridayData, fetchSaturdayData]);
+  }, [mainTab, getToken, fetchFridayData, fetchSaturdayData, lastDeleteTime]);
 
   const exportToXLSX = () => {
     let headers: string[] = [];
@@ -271,7 +276,7 @@ function VPDashboard(): React.ReactElement {
                   name: translations[language].classroom, 
                   width: '180px',
                   formatter: (cell: any, row: any) => {
-                    const taId = row.cells[7].data; // ID is in the 8th column (index 7)
+                    const taId = Number(row.cells[7].data); // ID is in the 8th column (index 7)
                     
                     return h('select', {
                       style: `padding: 4px 8px; border-radius: 4px; border: 1px solid ${dm ? '#4b5563' : '#93c5fd'}; background-color: ${dm ? '#273549' : '#eff6ff'}; color: ${dm ? '#e5e7eb' : '#1e40af'}; font-size: 13px; cursor: pointer; width: 100%;`,
@@ -289,7 +294,7 @@ function VPDashboard(): React.ReactElement {
                 {
                   name: translations[language].attendance, width: '120px',
                   formatter: (cell: any, row: any) => {
-                    const taId = row.cells[7].data;
+                    const taId = Number(row.cells[7].data);
                     const isPresent = cell === 'Present';
                     const displayText = isPresent 
                       ? (language === 'ko' ? '출석' : 'Present') 
@@ -303,18 +308,21 @@ function VPDashboard(): React.ReactElement {
                 },
                 {
                   name: translations[language].analytics, width: '140px',
-                  formatter: (cell: any) => h('button', {
-                    style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
-                    onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${cell}`); },
-                  }, language === 'ko' ? ' 더보기' : 'View Details'),
+                  formatter: (cell: any) => {
+                    const taId = Number(cell);
+                    return h('button', {
+                      style: `padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;`,
+                      onclick: (e: Event) => { e.stopPropagation(); navigate(`/vp/ta-view/${taId}`); },
+                    }, language === 'ko' ? ' 더보기' : 'View Details');
+                  },
                 },
                 {
                   name: translations[language].actions, width: '100px',
                   formatter: (_cell: any, row: any) => {
-                    const taId = row.cells[7].data;
+                    const taId = Number(row.cells[8]?.data ?? _cell);
                     return h('button', {
                       style: `padding: 6px 12px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;`,
-                      onclick: (e: Event) => { e.preventDefault(); e.stopPropagation(); deactivateTA(taId); },
+                      onclick: (e: Event) => { e.preventDefault(); e.stopPropagation(); if (taId) deactivateTA(taId); },
                     }, translations[language].remove);
                   },
                 },
