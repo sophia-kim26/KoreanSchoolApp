@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Grid } from 'gridjs-react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
@@ -41,6 +41,12 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
     clockedIn, clockInTime, lastClockInTime, clockOutTime, elapsed,
     checkActiveShift, clockIn, clockOut,
   } = useClock(currentUser, fetchShifts);
+
+  useEffect(() => {
+    if (currentUser) {
+      checkActiveShift(currentUser.id);
+    }
+  }, [currentUser, checkActiveShift]);
 
   const handleEditNotes = (shiftId: number, currentNotes: string) => {
     setEditingShiftId(shiftId);
