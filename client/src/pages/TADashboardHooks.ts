@@ -262,9 +262,17 @@ export function useClock(
     const time = new Date();
     setClockOutTime(time);
 
+    const savedActiveShiftId = activeShiftId;
+    const savedClockInTime = clockInTime;
+
+    if (!savedActiveShiftId) {
+      alert('Error: No active shift found to clock out.');
+      return;
+    }
+
     let elapsedTimeText = '';
-    if (clockInTime) {
-      const diff = time.getTime() - clockInTime.getTime();
+    if (savedClockInTime) {
+      const diff = time.getTime() - savedClockInTime.getTime();
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
@@ -272,13 +280,12 @@ export function useClock(
       elapsedTimeText = `${hours}hr${minutes.toString().padStart(2, '0')}min`;
     }
 
-    if (!activeShiftId) {
-      alert('Error: No active shift found to clock out.');
-      return;
-    }
+    setClockedIn(false);
+    setActiveShiftId(null);
+    setClockInTime(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${savedActiveShiftId}`, {
         method: 'PUT',
         headers: getTaAuthHeaders(true),
         body: JSON.stringify({ clock_out: time.toISOString(), elapsed_time: elapsedTimeText }),
@@ -288,12 +295,12 @@ export function useClock(
       if (!response.ok) throw new Error(responseData.error || 'Failed to clock out');
 
       await fetchShifts();
-      setClockedIn(false);
-      setActiveShiftId(null);
-      setLastClockInTime(clockInTime);
-      setClockInTime(null);
+      setLastClockInTime(savedClockInTime);
       alert('Successfully clocked out!');
     } catch (err) {
+      setClockedIn(true);
+      setActiveShiftId(savedActiveShiftId);
+      setClockInTime(savedClockInTime);
       console.error('Clock out failed:', err);
       alert((err as Error).message || 'Failed to clock out. Please try again.');
     }
