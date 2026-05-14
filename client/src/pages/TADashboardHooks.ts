@@ -198,6 +198,13 @@ export function useClock(
   const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<ElapsedTime | null>(null);
 
+  useEffect(() => {
+    if (currentUser) {
+      checkActiveShift(currentUser.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   const checkActiveShift = async (userId: number): Promise<void> => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/active/${userId}`, {
