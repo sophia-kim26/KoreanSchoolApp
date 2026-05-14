@@ -14,7 +14,7 @@ export const getAllSaturdayData = async () => {
     const calendarDates = await sql`SELECT date FROM calendar_dates ORDER BY date`;
     if (calendarDates.length === 0) return [];
 
-    const allTAs = await sql`SELECT * FROM saturday ORDER BY id`;
+    const allTAs = await sql`SELECT id, first_name, last_name, email, korean_name, classroom, session_day FROM ta_list WHERE is_active = true AND (session_day = 'Saturday' OR session_day = 'Both') ORDER BY id`;
     if (allTAs.length === 0) return [];
 
     const shifts = await sql`
@@ -23,8 +23,8 @@ export const getAllSaturdayData = async () => {
         TO_CHAR(s.clock_in AT TIME ZONE 'America/New_York', 'YYYY_MM_DD') as shift_date,
         (s.clock_out IS NOT NULL) as completed
       FROM shifts s
-      INNER JOIN saturday sat ON s.ta_id = sat.id
-      WHERE s.clock_in IS NOT NULL
+      INNER JOIN ta_list t ON s.ta_id = t.id
+      WHERE s.clock_in IS NOT NULL AND t.is_active = true AND (t.session_day = 'Saturday' OR t.session_day = 'Both')
     `;
 
     const shiftMap = {};
@@ -71,10 +71,13 @@ export const getCalendarDates = async () => {
 
 export const saveCalendarDates = async (dates) => {
   try {
-    // Just insert new dates, ignore duplicates
+    // Delete all existing dates first
+    await sql`DELETE FROM calendar_dates`;
+
+    // Then insert the new dates
     if (dates && dates.length > 0) {
       for (const date of dates) {
-        await sql`INSERT INTO calendar_dates (date) VALUES (${date}) ON CONFLICT DO NOTHING`;
+        await sql`INSERT INTO calendar_dates (date) VALUES (${date})`;
       }
     }
 

@@ -47,10 +47,9 @@ export const getAllTAsWithStatus = async () => {
         FROM ta_list
         LEFT JOIN shifts 
             ON ta_list.id = shifts.ta_id 
-            AND DATE(shifts.clock_in) = CURRENT_DATE
             AND shifts.clock_out IS NULL
+        WHERE ta_list.is_active = true
         ORDER BY 
-    ta_list.is_active DESC,
     ta_list.created_at DESC
     `;
 };
@@ -82,6 +81,12 @@ export const createAccount = async ({ first_name, last_name, email, ta_code, ses
         ) 
         RETURNING id, first_name, last_name, email, session_day, korean_name, classroom, is_active, created_at
     `;
+
+    const taId = result[0].id;
+
+    // Friday and Saturday tables are now views from ta_list,
+    // so no need to insert separately - just the session_day column handles it
+    
     // after the INSERT, before the return:
     sendTACredentials({ first_name, email, pin: ta_code }).catch(err => {
         console.error('Failed to send welcome email:', err);

@@ -26,12 +26,6 @@ export function SettingsModal({
   onClose,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('appearance');
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Reset password visibility when leaving the privacy tab
-  useEffect(() => {
-    if (activeTab !== 'privacy') setShowPassword(false);
-  }, [activeTab]);
 
   const tabStyle = (tab: TabType): React.CSSProperties => ({
     padding: '12px 24px',
@@ -99,7 +93,7 @@ export function SettingsModal({
           display: 'flex', gap: 0, marginBottom: 24,
           borderBottom: darkMode ? '2px solid #374151' : '2px solid #e5e7eb',
         }}>
-          {(['appearance', 'account', 'privacy'] as TabType[]).map(tab => (
+          {(['appearance', 'account'] as TabType[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={tabStyle(tab)}>
               {translations[language][tab as keyof typeof translations[typeof language]] as string}
             </button>
@@ -204,63 +198,6 @@ export function SettingsModal({
             </>
           )}
 
-          {/* Privacy Tab */}
-          {activeTab === 'privacy' && (
-            <>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 20, color: darkMode ? '#60a5fa' : '#1e40af' }}>
-                Security
-              </h3>
-              <div style={{ marginBottom: 24 }}>
-                <p style={{ marginBottom: 8, fontSize: '14px', color: darkMode ? '#60a5fa' : '#1e40af', fontWeight: '600' }}>
-                  Password
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  <div style={{
-                    ...fieldBoxStyle,
-                    fontFamily: showPassword ? 'inherit' : 'monospace',
-                    letterSpacing: showPassword ? 'normal' : '0.15em',
-                    fontSize: '14px',
-                  }}>
-                    {showPassword
-                      ? (email ? '(managed via Auth0 — reset via email)' : 'No password on file')
-                      : '••••••••'}
-                  </div>
-                  <button
-                    onClick={() => setShowPassword(prev => !prev)}
-                    style={{
-                      padding: '8px 16px',
-                      background: darkMode ? '#273549' : 'white',
-                      border: darkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
-                      borderRadius: 6, cursor: 'pointer', fontSize: '14px',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      color: darkMode ? '#e5e7eb' : '#374151',
-                    }}
-                    onMouseOver={e => (e.currentTarget.style.background = darkMode ? '#334155' : '#f3f4f6')}
-                    onMouseOut={e => (e.currentTarget.style.background = darkMode ? '#273549' : 'white')}
-                  >
-                    {showPassword ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                        <line x1="1" y1="1" x2="23" y2="23"/>
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    )}
-                    {showPassword ? 'Hide' : 'View'}
-                  </button>
-                </div>
-                {showPassword && (
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 4, maxWidth: 320 }}>
-                    Passwords are managed securely through Auth0. To change your password, click "Forgot password" on the login page.
-                  </p>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>
