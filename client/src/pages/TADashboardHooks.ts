@@ -167,9 +167,6 @@ export function useShifts(currentUser: CurrentUser | null) {
       // mutate in place so grid.js won't rebuild
       const shift = data.find(s => s.id === shiftId);
       if (shift) shift.notes = notes;
-      // setData(prev =>
-      //   prev.map(shift => (shift.id === shiftId ? { ...shift, notes } : shift))
-      // );
     } catch (err) {
       console.error('Failed to update notes:', err);
       alert('Failed to update notes. Please try again.');
@@ -228,7 +225,6 @@ export function useClock(
   const clockIn = async (): Promise<void> => {
     try {
       const time = new Date();
-      setClockInTime(time);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: 'POST',
@@ -248,12 +244,18 @@ export function useClock(
       const newShift: Shift = await res.json();
       if (!newShift.id) throw new Error('No shift ID returned from server!');
 
+      // Set state only after confirmed server success
       setClockedIn(true);
       setActiveShiftId(newShift.id);
+      setClockInTime(time);
+
+      // Re-verify with server so local state stays in sync
+      await fetchShifts();
       alert('Successfully clocked in!');
     } catch (err) {
       console.error('Failed to clock in:', err);
-      setClockedIn(false);
+      // Authoritative re-check so buttons reflect true server state
+      if (currentUser) await checkActiveShift(currentUser.id);
       alert((err as Error).message || 'Failed to clock in. Please try again.');
     }
   };
