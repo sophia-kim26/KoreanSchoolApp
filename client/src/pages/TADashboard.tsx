@@ -34,7 +34,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   const navigate = useNavigate();
 
   // Custom hooks
-  const { darkMode, setDarkMode, textSize, setTextSize } = useSettings();
+  const { darkMode, setDarkMode } = useSettings();
   const { currentUser, assignedClassroom } = useAuth();
   const { taData, fetchShifts, toggleAttendance, updateNotes } = useShifts(currentUser);
   const {
@@ -104,7 +104,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   }, [taData]);
 
   const taName = currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Unknown';
-  const activeFontSize = textSize === 'S' ? '13px' : textSize === 'M' ? '16px' : '20px';
 
   const handleSignOut = () => {
     localStorage.removeItem('current_ta_user');
@@ -129,7 +128,7 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
   };
 
   return (
-    <div className={`page-container${darkMode ? ' dark-mode' : ''}`} style={{ fontSize: activeFontSize }}>
+    <div className={`page-container${darkMode ? ' dark-mode' : ''}`}>
 
       {/* Header */}
       <div className="page-header" style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
@@ -251,8 +250,6 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
         <SettingsModal
           darkMode={darkMode}
           setDarkMode={setDarkMode}
-          textSize={textSize}
-          setTextSize={setTextSize}
           language={language}
           setLanguage={setLanguage}
           taName={taName}
