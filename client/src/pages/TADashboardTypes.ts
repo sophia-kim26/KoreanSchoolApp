@@ -40,10 +40,3 @@ export interface ActiveShiftResponse {
 }
 
 export type TabType = 'appearance' | 'navigation' | 'account' | 'privacy';
-export type TextSize = 'S' | 'M' | 'L';
-
-export const TEXT_SIZE_MAP: Record<TextSize, string> = {
-  S: '13px',
-  M: '16px',
-  L: '20px',
-};

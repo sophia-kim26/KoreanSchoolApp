@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { translations, Language } from './translations';
-import { TabType, TextSize } from './TADashboardTypes';
+import { TabType } from './TADashboardTypes';
 
 interface SettingsModalProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
-  textSize: TextSize;
-  setTextSize: (value: TextSize) => void;
   language: Language;
   setLanguage: (value: Language) => void;
   taName: string;
@@ -71,7 +69,6 @@ export function SettingsModal({
         width: 600, maxWidth: '90%',
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
       }}>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
           <button
             onClick={onClose}
@@ -152,7 +149,6 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* Text Size removed for TA side per request */}
             </>
           )}
 
