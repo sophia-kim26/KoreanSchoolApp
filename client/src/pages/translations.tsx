@@ -10,7 +10,7 @@ export const translations = {
       analytics: "Analytics", hoursCompleted: "Hours Completed", hoursByMonth: "Hours by Month",
       appearance: "Appearance", account: "Account", privacy: "Privacy", languagePreferences: "Language Preferences",
       theme: "Theme", textIconSize: "Text/Icon Size", noNotes: "No notes", lightMode: "Light Mode", darkMode: "Dark Mode", 
-      english: "English", korean: "Korean", absent: "Absent"
+      english: "English", korean: "한국어", absent: "Absent"
     },
     ko: {
       assignedClassroom: "교실", firstName: "이름", lastName: "성", koreanName: "한국어 이름",
@@ -21,6 +21,6 @@ export const translations = {
       analytics: "통계", hoursCompleted: "총 시간", hoursByMonth: "월별 시간",
       appearance: "웹사이트 외모", account: "계정", privacy: "개인 정보", languagePreferences: "언어 설정",
       theme: "테마", textIconSize: "텍스트/아이콘 크기", noNotes: "기티사항 없음", lightMode: "라이트 모드", darkMode: "다크 모드",
-      english: "영어", korean: "한국어", absent: "결석"
+      english: "English", korean: "한국어", absent: "결석"
     }
 };

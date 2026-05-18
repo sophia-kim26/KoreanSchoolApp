@@ -167,9 +167,6 @@ export function useShifts(currentUser: CurrentUser | null) {
       // mutate in place so grid.js won't rebuild
       const shift = data.find(s => s.id === shiftId);
       if (shift) shift.notes = notes;
-      // setData(prev =>
-      //   prev.map(shift => (shift.id === shiftId ? { ...shift, notes } : shift))
-      // );
     } catch (err) {
       console.error('Failed to update notes:', err);
       alert('Failed to update notes. Please try again.');
@@ -198,6 +195,13 @@ export function useClock(
   const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<ElapsedTime | null>(null);
 
+  useEffect(() => {
+    if (currentUser) {
+      checkActiveShift(currentUser.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   const checkActiveShift = async (userId: number): Promise<void> => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/active/${userId}`, {
@@ -221,7 +225,6 @@ export function useClock(
   const clockIn = async (): Promise<void> => {
     try {
       const time = new Date();
-      setClockInTime(time);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts`, {
         method: 'POST',
@@ -241,12 +244,18 @@ export function useClock(
       const newShift: Shift = await res.json();
       if (!newShift.id) throw new Error('No shift ID returned from server!');
 
+      // Set state only after confirmed server success
       setClockedIn(true);
       setActiveShiftId(newShift.id);
+      setClockInTime(time);
+
+      // Re-verify with server so local state stays in sync
+      await fetchShifts();
       alert('Successfully clocked in!');
     } catch (err) {
       console.error('Failed to clock in:', err);
-      setClockedIn(false);
+      // Authoritative re-check so buttons reflect true server state
+      if (currentUser) await checkActiveShift(currentUser.id);
       alert((err as Error).message || 'Failed to clock in. Please try again.');
     }
   };
@@ -255,9 +264,17 @@ export function useClock(
     const time = new Date();
     setClockOutTime(time);
 
+    const savedActiveShiftId = activeShiftId;
+    const savedClockInTime = clockInTime;
+
+    if (!savedActiveShiftId) {
+      alert('Error: No active shift found to clock out.');
+      return;
+    }
+
     let elapsedTimeText = '';
-    if (clockInTime) {
-      const diff = time.getTime() - clockInTime.getTime();
+    if (savedClockInTime) {
+      const diff = time.getTime() - savedClockInTime.getTime();
       const totalMinutes = Math.floor(diff / 1000 / 60);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
@@ -265,13 +282,12 @@ export function useClock(
       elapsedTimeText = `${hours}hr${minutes.toString().padStart(2, '0')}min`;
     }
 
-    if (!activeShiftId) {
-      alert('Error: No active shift found to clock out.');
-      return;
-    }
+    setClockedIn(false);
+    setActiveShiftId(null);
+    setClockInTime(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${activeShiftId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${savedActiveShiftId}`, {
         method: 'PUT',
         headers: getTaAuthHeaders(true),
         body: JSON.stringify({ clock_out: time.toISOString(), elapsed_time: elapsedTimeText }),
@@ -281,12 +297,12 @@ export function useClock(
       if (!response.ok) throw new Error(responseData.error || 'Failed to clock out');
 
       await fetchShifts();
-      setClockedIn(false);
-      setActiveShiftId(null);
-      setLastClockInTime(clockInTime);
-      setClockInTime(null);
+      setLastClockInTime(savedClockInTime);
       alert('Successfully clocked out!');
     } catch (err) {
+      setClockedIn(true);
+      setActiveShiftId(savedActiveShiftId);
+      setClockInTime(savedClockInTime);
       console.error('Clock out failed:', err);
       alert((err as Error).message || 'Failed to clock out. Please try again.');
     }
