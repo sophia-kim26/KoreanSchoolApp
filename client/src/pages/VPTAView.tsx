@@ -63,10 +63,66 @@ function VPTAView() {
                 <div style={{ backgroundColor: '#ffffff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                   {monthShifts.map((shift, index) => {
                     const hours = calculateHours(shift.clock_in, shift.clock_out);
+                    const hasNote = shift.notes && shift.notes.trim().length > 0;
                     return (
-                      <div key={shift.id || `${shift.clock_in}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', backgroundColor: '#c5ddf7', borderBottom: index < monthShifts.length - 1 ? '1px solid #a8c9e8' : 'none', color: '#5b7fa8', fontSize: '18px' }}>
+                      <div
+                        key={shift.id || `${shift.clock_in}-${index}`}
+                        style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: '#c5ddf7', borderBottom: index < monthShifts.length - 1 ? '1px solid #a8c9e8' : 'none', color: '#5b7fa8', fontSize: '18px' }}
+                        onMouseEnter={e => { if (hasNote) { const tip = e.currentTarget.querySelector('.shift-tooltip') as HTMLElement; if (tip) tip.style.opacity = '1'; if (tip) tip.style.pointerEvents = 'none'; } }}
+                        onMouseLeave={e => { const tip = e.currentTarget.querySelector('.shift-tooltip') as HTMLElement; if (tip) tip.style.opacity = '0'; }}
+                      >
                         <span>{formatDate(shift.clock_in)}</span>
-                        <span style={{ fontWeight: '400' }}>{shift.clock_out && parseFloat(hours) > 0 ? `${hours} Hours` : shift.clock_out ? '0.00 Hours' : 'In Progress'}</span>
+
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: '400' }}>
+                          {shift.clock_out && parseFloat(hours) > 0 ? `${hours} Hours` : shift.clock_out ? '0.00 Hours' : 'In Progress'}
+                          {hasNote && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              backgroundColor: '#dbeafe', color: '#2563eb',
+                              width: 28, height: 28, borderRadius: '50%',
+                              border: '1px solid #bfdbfe',
+                              flexShrink: 0,
+                            }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                              </svg>
+                            </span>
+                          )}
+                        </span>
+
+                        {hasNote && (
+                          <div
+                            className="shift-tooltip"
+                            style={{
+                              opacity: 0,
+                              transition: 'opacity 0.15s ease',
+                              position: 'absolute',
+                              bottom: 'calc(100% + 10px)',
+                              right: 0,
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: 10,
+                              padding: '14px 16px',
+                              minWidth: 220,
+                              maxWidth: 300,
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                              zIndex: 50,
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                              </svg>
+                              <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#94a3b8' }}>Note</span>
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {shift.notes}
+                            </div>
+                            {/* arrow */}
+                            <div style={{ position: 'absolute', bottom: -7, right: 18, width: 12, height: 12, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderTop: 'none', borderLeft: 'none', transform: 'rotate(45deg)' }} />
+                          </div>
+                        )}
                       </div>
                     );
                   })}

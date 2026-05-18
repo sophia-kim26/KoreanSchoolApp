@@ -3,6 +3,7 @@ export interface Shift {
   ta_id: number;
   clock_in: string;
   clock_out: string | null;
+  notes: string | null;
 }
 
 export interface TA {
