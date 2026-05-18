@@ -20,6 +20,7 @@ export function VPSettingsModal({
   const inputBorder = dm ? '1px solid #4b5563' : '1px solid #d1d5db';
   const tabBg = dm ? '#1e3a5f' : '#bfdbfe';
   const tabColor = dm ? '#93c5fd' : '#1e40af';
+  const nativeName: Record<Language, string> = { en: 'English', ko: '한국어' };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
@@ -51,7 +52,7 @@ export function VPSettingsModal({
                   background: language === lang ? (dm ? '#1e3a5f' : '#bfdbfe') : (dm ? '#273549' : 'white'),
                   color: language === lang ? (dm ? '#93c5fd' : '#1e40af') : (dm ? '#d1d5db' : '#374151'),
                   border: inputBorder, borderRadius: 6, cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-                }}>{lang === 'en' ? 'English' : '한국어'}</button>
+                }}>{nativeName[lang]}</button>
               ))}
             </div>
           </div>
