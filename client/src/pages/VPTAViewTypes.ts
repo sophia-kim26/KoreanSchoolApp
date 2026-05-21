@@ -4,6 +4,7 @@ export interface Shift {
   clock_in: string;
   clock_out: string | null;
   notes: string | null;
+  attendance: string | null;
 }
 
 export interface TA {

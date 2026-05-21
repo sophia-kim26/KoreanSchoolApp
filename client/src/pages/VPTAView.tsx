@@ -74,6 +74,18 @@ function VPTAView() {
                         <span>{formatDate(shift.clock_in)}</span>
 
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: '400' }}>
+                          {shift.attendance && (
+    <span style={{
+      fontSize: '13px',
+      fontWeight: '600',
+      padding: '4px 12px',
+      borderRadius: '20px',
+      backgroundColor: shift.attendance === 'Present' ? '#c4e9d1' : shift.attendance === 'Tardy' ? '#fef3c7' : '#dbeafe',
+      color: shift.attendance === 'Present' ? '#166534' : shift.attendance === 'Tardy' ? '#92400e' : '#1e40af',
+    }}>
+      {shift.attendance}
+    </span>
+  )}
                           {shift.clock_out && parseFloat(hours) > 0 ? `${hours} Hours` : shift.clock_out ? '0.00 Hours' : 'In Progress'}
                           {hasNote && (
                             <span style={{
