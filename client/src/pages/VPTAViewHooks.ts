@@ -302,11 +302,11 @@ export const useVPTAView = () => {
   };
 
   const handleEditParents = (): void => {
-    setEditParentsForm(parents.map(p => ({ ...p })));
-    // Ensure at least 2 parent slots
-    while (editParentsForm.length < 2) {
-      setEditParentsForm(prev => [...prev, { englishName: '', koreanName: '', phone: '', email: '' }]);
+    const initial = parents.map(p => ({ ...p }));
+    while (initial.length < 2) {
+      initial.push({ englishName: '', koreanName: '', phone: '', email: '' });
     }
+    setEditParentsForm(initial);
     setEditingParents(true);
   };
 
