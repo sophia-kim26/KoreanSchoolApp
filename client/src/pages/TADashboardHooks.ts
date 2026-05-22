@@ -1,13 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shift, CurrentUser, ActiveShiftResponse, TextSize, ElapsedTime } from './TADashboardTypes';
+import { Shift, CurrentUser, ActiveShiftResponse, ElapsedTime } from './TADashboardTypes';
 import { getTaAuthHeaders } from './TADashboardUtils';
-
-const TEXT_SIZE_MAP: Record<TextSize, string> = {
-  S: '13px',
-  M: '16px',
-  L: '20px',
-};
 
 // ---------------------------------------------------------------------------
 // useSettings — dark mode, text size, language persistence
@@ -17,9 +11,7 @@ export function useSettings() {
     return localStorage.getItem('ta_dark_mode') === 'true';
   });
 
-  const [textSize, setTextSize] = useState<TextSize>(() => {
-    return (localStorage.getItem('ta_text_size') as TextSize) || 'M';
-  });
+  // text size removed — previously persisted in localStorage
 
   // Persist dark mode + toggle body class
   useEffect(() => {
@@ -67,13 +59,7 @@ export function useSettings() {
     }
   }, [darkMode]);
 
-  // Apply font size CSS variable
-  useEffect(() => {
-    localStorage.setItem('ta_text_size', textSize);
-    document.documentElement.style.setProperty('--ta-font-size', TEXT_SIZE_MAP[textSize]);
-  }, [textSize]);
-
-  return { darkMode, setDarkMode, textSize, setTextSize };
+  return { darkMode, setDarkMode };
 }
 
 // ---------------------------------------------------------------------------

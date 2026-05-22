@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { translations, Language } from './translations';
-import { TabType, TextSize } from './TADashboardTypes';
+import { TabType } from './TADashboardTypes';
 
 interface SettingsModalProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
-  textSize: TextSize;
-  setTextSize: (value: TextSize) => void;
   language: Language;
   setLanguage: (value: Language) => void;
   taName: string;
@@ -71,7 +69,6 @@ export function SettingsModal({
         width: 600, maxWidth: '90%',
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
       }}>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
           <button
             onClick={onClose}
@@ -152,28 +149,6 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* Text Size */}
-              <div>
-                <h3 style={sectionHeadingStyle}>{translations[language].textIconSize}</h3>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {(['S', 'M', 'L'] as TextSize[]).map(size => (
-                    <button key={size} onClick={() => setTextSize(size)} style={{
-                      padding: '10px 20px',
-                      background: textSize === size ? '#1e40af' : (darkMode ? '#273549' : 'white'),
-                      color: textSize === size ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
-                      border: `2px solid ${textSize === size ? '#1e40af' : (darkMode ? '#4b5563' : '#d1d5db')}`,
-                      borderRadius: 6, cursor: 'pointer', fontWeight: '600',
-                      fontSize: size === 'S' ? '12px' : size === 'M' ? '16px' : '20px',
-                      minWidth: 48,
-                    }}>
-                      {size}
-                    </button>
-                  ))}
-                </div>
-                <p style={{ marginTop: 8, fontSize: '12px', color: '#6b7280' }}>
-                  Current: {textSize === 'S' ? 'Small (13px)' : textSize === 'M' ? 'Medium (16px)' : 'Large (20px)'}
-                </p>
-              </div>
             </>
           )}
 
