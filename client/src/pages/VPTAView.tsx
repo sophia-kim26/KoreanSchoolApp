@@ -109,15 +109,22 @@ function VPTAView() {
           </button>
         </div>
         <div style={{ color: '#5b7fa8', fontSize: '15px', lineHeight: 1.8 }}>
-          <div><strong>Email:</strong> {info.email || 'N/A'}</div>
-          <div><strong>Phone:</strong> {info.phone || 'N/A'}</div>
-          <div><strong>High School:</strong> {info.high_school || 'N/A'}</div>
-          <div><strong>Grade:</strong> {info.grade || 'N/A'}</div>
-          <div><strong>Age:</strong> {info.age || 'N/A'}</div>
-          <div><strong>Gender:</strong> {info.gender || 'N/A'}</div>
-          <div><strong>Address:</strong> {info.address || 'N/A'}</div>
-          <div><strong>Emergency Phone:</strong> {info.emergency_phone || 'N/A'}</div>
-          <div><strong>Notes:</strong> {info.notes || 'N/A'}</div>
+          {[
+            { label: 'Email', value: info.email },
+            { label: 'Phone', value: info.phone },
+            { label: 'High School', value: info.high_school },
+            { label: 'Grade', value: info.grade },
+            { label: 'Age', value: info.age },
+            { label: 'Gender', value: info.gender },
+            { label: 'Address', value: info.address },
+            { label: 'Emergency Phone', value: info.emergency_phone },
+            { label: 'Notes', value: info.notes },
+          ].map(field => (
+            <div key={field.label}>
+              <strong>{field.label}:</strong>{' '}
+              <span style={{ color: field.value ? '#5b7fa8' : '#b0b8c0' }}>{field.value || 'N/A'}</span>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -190,17 +197,24 @@ function VPTAView() {
             </tr>
           </thead>
           <tbody>
-            {displayParents.map((parent, index) => (
-              <tr key={index} style={{
-                backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
-                borderBottom: '1px solid #e5e7eb'
-              }}>
-                <td style={{ padding: '10px', color: '#5b7fa8' }}>{parent.koreanName || parent.korean_name || 'N/A'}</td>
-                <td style={{ padding: '10px', color: '#5b7fa8' }}>{parent.englishName || parent.english_name || 'N/A'}</td>
-                <td style={{ padding: '10px', color: '#5b7fa8' }}>{parent.phone || 'N/A'}</td>
-                <td style={{ padding: '10px', color: '#5b7fa8' }}>{parent.email || 'N/A'}</td>
-              </tr>
-            ))}
+            {displayParents.map((parent, index) => {
+              const cells = [
+                parent.koreanName || parent.korean_name,
+                parent.englishName || parent.english_name,
+                parent.phone,
+                parent.email,
+              ];
+              return (
+                <tr key={index} style={{
+                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  {cells.map((val, ci) => (
+                    <td key={ci} style={{ padding: '10px', color: val ? '#5b7fa8' : '#b0b8c0' }}>{val || 'N/A'}</td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

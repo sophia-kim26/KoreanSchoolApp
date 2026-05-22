@@ -48,8 +48,8 @@ router.patch('/:id/classroom', checkJwt, async (req, res, next) => {
 // ✅ PROTECTED — update TA profile fields
 router.patch('/:id', checkJwt, async (req, res, next) => {
   try {
-    const { phone, high_school, grade, age, gender, address, emergency_phone, notes } = req.body;
-    const result = await updateTA(req.params.id, { phone, high_school, grade, age, gender, address, emergency_phone, notes });
+    const { email, phone, high_school, grade, age, gender, address, emergency_phone, notes } = req.body;
+    const result = await updateTA(req.params.id, { email, phone, high_school, grade, age, gender, address, emergency_phone, notes });
     res.json(result);
   } catch (error) {
     next(error);

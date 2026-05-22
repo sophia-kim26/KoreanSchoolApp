@@ -211,10 +211,11 @@ export const getTAById = async (id) => {
 };
 
 export const updateTA = async (id, fields) => {
-  const { phone, high_school, grade, age, gender, address, emergency_phone, notes } = fields;
+  const { email, phone, high_school, grade, age, gender, address, emergency_phone, notes } = fields;
   const result = await sql`
     UPDATE ta_list 
     SET 
+      email = COALESCE(${email}, email),
       phone = COALESCE(${phone}, phone),
       high_school = COALESCE(${high_school}, high_school),
       grade = COALESCE(${grade}, grade),
