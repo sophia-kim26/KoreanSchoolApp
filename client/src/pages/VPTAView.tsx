@@ -322,7 +322,7 @@ function VPTAView() {
 
         {/* Right Column - Chart and Info */}
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '40px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'sticky', top: 20 }}>
+          <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '40px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 30, position: 'relative' }}>
               <svg width="280" height="280" viewBox="0 0 280 280">
                 {totalRelevantDays === 0 ? (
