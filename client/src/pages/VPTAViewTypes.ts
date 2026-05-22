@@ -9,7 +9,27 @@ export interface TA {
   id: number;
   first_name: string;
   last_name: string;
-  session_day: string; // 'Friday' | 'Saturday' | 'Both'
+  email?: string;
+  phone?: string;
+  high_school?: string;
+  grade?: string;
+  age?: string;
+  gender?: string;
+  address?: string;
+  emergency_phone?: string;
+  notes?: string;
+  session_day: string;
+  korean_name?: string;
+}
+
+export interface Parent {
+  id?: number;
+  englishName?: string;
+  english_name?: string;
+  koreanName?: string;
+  korean_name?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface EditedShift {

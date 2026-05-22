@@ -1,6 +1,6 @@
 import express from 'express';
 import { checkJwt, checkAnyJwt } from '../middleware/protect.js';
-import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById } from '../services/taService.js';
+import { getAllTAsWithStatus, deactivateTA, updateClassroom, getTAById, updateTA } from '../services/taService.js';
 
 const router = express.Router();
 
@@ -45,7 +45,15 @@ router.patch('/:id/classroom', checkJwt, async (req, res, next) => {
   }
 });
 
-// ❌ REMOVED — this was a duplicate with a wrong path and used `pool` directly
-// which would crash since pool isn't imported here. The route above handles it.
+// ✅ PROTECTED — update TA profile fields
+router.patch('/:id', checkJwt, async (req, res, next) => {
+  try {
+    const { phone, high_school, grade, age, gender, address, emergency_phone, notes } = req.body;
+    const result = await updateTA(req.params.id, { phone, high_school, grade, age, gender, address, emergency_phone, notes });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;
