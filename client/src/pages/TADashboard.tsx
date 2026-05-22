@@ -62,19 +62,18 @@ function TADashboard({ taId }: TADashboardProps): React.ReactElement {
 
   const gridColumns = useGridColumns({ language, toggleAttendance, handleEditNotes });
 
-  const gridData = useMemo(() =>
-    taData.map(row => [
-      row.id,
-      formatDate(row.clock_in),
-      row.attendance,
-      formatTime(row.clock_in),
-      formatTime(row.clock_out),
-      row.elapsed_time,
-      row.notes,
-    ]),
-    [taData]
-  );
-
+const gridData = useMemo(() =>
+  taData.map(row => [
+    row.id,
+    formatDate(row.clock_in) ?? '',
+    row.attendance ?? 'Present',
+    formatTime(row.clock_in) ?? '',
+    formatTime(row.clock_out) ?? '',
+    row.elapsed_time ?? '',
+    row.notes ?? '',
+  ]),
+  [taData]
+);
   const totalHours = taData.reduce((sum, shift) => {
     if (!shift.clock_in || !shift.clock_out) return sum;
     const hours = (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60);

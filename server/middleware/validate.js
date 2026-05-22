@@ -161,7 +161,8 @@ const shiftUpdateSchema = z.object({
   clock_in: z.string().trim().min(1).optional(),
   clock_out: z.string().trim().min(1).optional(),
   notes: z.string().trim().max(1000).optional(),
-  elapsed_time: z.coerce.number().int().nonnegative().optional(),
+  // elapsed_time: z.coerce.number().int().nonnegative().optional(),
+  elapsed_time: z.string().optional(),
   attendance: z.string().trim().min(1).max(20).optional()
 }).strip().refine((data) => Object.keys(data).length > 0, {
   message: 'At least one field is required'
