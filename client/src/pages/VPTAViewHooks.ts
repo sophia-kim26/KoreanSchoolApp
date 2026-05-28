@@ -374,7 +374,7 @@ export const useVPTAView = () => {
     presentPercentage, absentPercentage, resettingPin, editingMonth,
     editedShifts, newShift, saving, showResetPinModal, newPin, setShowResetPinModal, setNewShift,
     handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours,
-    editingInfo, editingParents, editTAForm, editParentsForm, savingInfo,
+    editingInfo, editingParents, editTAForm, setEditTAForm, editParentsForm, savingInfo,
     handleEditInfo, handleCancelEditInfo, handleSaveInfo,
     handleEditParents, handleCancelEditParents, handleParentFormChange, handleSaveParents
   };

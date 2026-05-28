@@ -11,13 +11,13 @@ const labelStyle: React.CSSProperties = {
 };
 
 function VPTAView() {
-  const {
+const {
     ta_id, navigate, loading, error, taInfo, fullTAInfo, parents,
     shiftsByMonth, totalHours, presentCount, absentCount, totalRelevantDays,
     presentPercentage, absentPercentage, resettingPin, editingMonth,
     editedShifts, newShift, saving, showResetPinModal, newPin, setShowResetPinModal, setNewShift,
     handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours,
-    editingInfo, editingParents, editTAForm, editParentsForm, savingInfo,
+    editingInfo, editingParents, editTAForm, setEditTAForm, editParentsForm, savingInfo,
     handleEditInfo, handleCancelEditInfo, handleSaveInfo,
     handleEditParents, handleCancelEditParents, handleParentFormChange, handleSaveParents
   } = useVPTAView();
