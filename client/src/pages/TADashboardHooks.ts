@@ -142,22 +142,22 @@ export function useShifts(currentUser: CurrentUser | null) {
     }
   };
 
-  const updateNotes = async (shiftId: number, notes: string): Promise<void> => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
-        method: 'PUT',
-        headers: getTaAuthHeaders(true),
-        body: JSON.stringify({ notes }),
-      });
-      if (!res.ok) throw new Error('Failed to update notes');
-      // mutate in place so grid.js won't rebuild
-      const shift = data.find(s => s.id === shiftId);
-      if (shift) shift.notes = notes;
-    } catch (err) {
-      console.error('Failed to update notes:', err);
-      alert('Failed to update notes. Please try again.');
-    }
-  };
+const updateNotes = async (shiftId: number, notes: string): Promise<void> => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/${shiftId}`, {
+      method: 'PUT',
+      headers: getTaAuthHeaders(true),
+      body: JSON.stringify({ notes }),
+    });
+    if (!res.ok) throw new Error('Failed to update notes');
+    setData(prev =>
+      prev.map(shift => (shift.id === shiftId ? { ...shift, notes } : shift))
+    );
+  } catch (err) {
+    console.error('Failed to update notes:', err);
+    alert('Failed to update notes. Please try again.');
+  }
+};
 
   const taData = useMemo(() =>
     currentUser ? data.filter(row => row.ta_id === currentUser.id) : [],
