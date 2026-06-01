@@ -2,13 +2,24 @@ import React from "react";
 import { useVPTAView } from "./VPTAViewHooks";
 import { calculateHours, formatDate } from "./VPTAViewUtils";
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '14px', border: '1px solid #d1d5db', borderRadius: 6, boxSizing: 'border-box', marginTop: 4
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: '13px', color: '#6b7280', fontWeight: 500, marginTop: 10
+};
+
 function VPTAView() {
-  const {
-    ta_id, navigate, loading, error, taInfo, shiftsByMonth, totalHours,
-    presentCount, absentCount, totalRelevantDays, presentPercentage, absentPercentage,
-    resettingPin, editingMonth, editedShifts, newShift, saving, showResetPinModal,
-    newPin, setShowResetPinModal, setNewShift, handleEditMonth, handleCloseEdit,
-    handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours
+const {
+    ta_id, navigate, loading, error, taInfo, fullTAInfo, parents,
+    shiftsByMonth, totalHours, presentCount, absentCount, totalRelevantDays,
+    presentPercentage, absentPercentage, resettingPin, editingMonth,
+    editedShifts, newShift, saving, showResetPinModal, newPin, setShowResetPinModal, setNewShift,
+    handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours,
+    editingInfo, editingParents, editTAForm, setEditTAForm, editParentsForm, savingInfo,
+    handleEditInfo, handleCancelEditInfo, handleSaveInfo,
+    handleEditParents, handleCancelEditParents, handleParentFormChange, handleSaveParents
   } = useVPTAView();
 
   if (loading) {
@@ -30,6 +41,185 @@ function VPTAView() {
       </div>
     );
   }
+
+  const renderTAInfoCard = () => {
+    const info = fullTAInfo || taInfo;
+    if (!info) return null;
+
+    if (editingInfo) {
+      return (
+        <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 style={{ margin: 0, fontSize: '20px', color: '#5b8bb8', fontWeight: 500 }}>TA Profile Info</h3>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <input style={inputStyle} value={editTAForm.email || ''} onChange={e => setEditTAForm(prev => ({ ...prev, email: e.target.value }))} />
+
+              <label style={labelStyle}>Phone</label>
+              <input style={inputStyle} value={editTAForm.phone || ''} onChange={e => setEditTAForm(prev => ({ ...prev, phone: e.target.value }))} />
+
+              <label style={labelStyle}>High School</label>
+              <input style={inputStyle} value={editTAForm.high_school || ''} onChange={e => setEditTAForm(prev => ({ ...prev, high_school: e.target.value }))} />
+
+              <label style={labelStyle}>Grade</label>
+              <input style={inputStyle} value={editTAForm.grade || ''} onChange={e => setEditTAForm(prev => ({ ...prev, grade: e.target.value }))} />
+
+              <label style={labelStyle}>Age</label>
+              <input style={inputStyle} value={editTAForm.age || ''} onChange={e => setEditTAForm(prev => ({ ...prev, age: e.target.value }))} />
+            </div>
+            <div>
+              <label style={labelStyle}>Gender</label>
+              <input style={inputStyle} value={editTAForm.gender || ''} onChange={e => setEditTAForm(prev => ({ ...prev, gender: e.target.value }))} />
+
+              <label style={labelStyle}>Address</label>
+              <input style={inputStyle} value={editTAForm.address || ''} onChange={e => setEditTAForm(prev => ({ ...prev, address: e.target.value }))} />
+
+              <label style={labelStyle}>Emergency Phone</label>
+              <input style={inputStyle} value={editTAForm.emergency_phone || ''} onChange={e => setEditTAForm(prev => ({ ...prev, emergency_phone: e.target.value }))} />
+
+              <label style={labelStyle}>Notes</label>
+              <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={editTAForm.notes || ''} onChange={e => setEditTAForm(prev => ({ ...prev, notes: e.target.value }))} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 25 }}>
+            <button onClick={handleCancelEditInfo} disabled={savingInfo}
+              style={{ padding: '10px 20px', backgroundColor: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, fontSize: '14px', fontWeight: 500, cursor: savingInfo ? 'not-allowed' : 'pointer', opacity: savingInfo ? 0.5 : 1 }}>
+              Cancel
+            </button>
+            <button onClick={handleSaveInfo} disabled={savingInfo}
+              style={{ padding: '10px 20px', backgroundColor: '#5b8bb8', color: 'white', border: 'none', borderRadius: 6, fontSize: '14px', fontWeight: 500, cursor: savingInfo ? 'not-allowed' : 'pointer', opacity: savingInfo ? 0.5 : 1 }}>
+              {savingInfo ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontSize: '20px', color: '#5b8bb8', fontWeight: 500 }}>TA Profile Info</h3>
+          <button onClick={handleEditInfo}
+            style={{ padding: '6px 16px', backgroundColor: '#5b8bb8', color: 'white', border: 'none', borderRadius: 6, fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+            Edit
+          </button>
+        </div>
+        <div style={{ color: '#5b7fa8', fontSize: '15px', lineHeight: 1.8 }}>
+          {[
+            { label: 'Email', value: info.email },
+            { label: 'Phone', value: info.phone },
+            { label: 'High School', value: info.high_school },
+            { label: 'Grade', value: info.grade },
+            { label: 'Age', value: info.age },
+            { label: 'Gender', value: info.gender },
+            { label: 'Address', value: info.address },
+            { label: 'Emergency Phone', value: info.emergency_phone },
+            { label: 'Notes', value: info.notes },
+          ].map(field => (
+            <div key={field.label}>
+              <strong>{field.label}:</strong>{' '}
+              <span style={{ color: field.value ? '#5b7fa8' : '#b0b8c0' }}>{field.value || 'N/A'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderParentInfoCard = () => {
+    if (editingParents) {
+      const formParents = editParentsForm.length >= 2 ? editParentsForm : [
+        { englishName: '', koreanName: '', phone: '', email: '' },
+        { englishName: '', koreanName: '', phone: '', email: '' }
+      ];
+
+      return (
+        <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#5b8bb8', fontWeight: 500 }}>Parent Information</h3>
+          {formParents.map((parent, index) => (
+            <div key={index} style={{ marginBottom: 20, paddingBottom: 20, borderBottom: index < formParents.length - 1 ? '1px solid #e5e7eb' : 'none' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#5b8bb8', marginBottom: 10 }}>Parent {index + 1}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                <div>
+                  <label style={labelStyle}>Korean Name</label>
+                  <input style={inputStyle} value={parent.koreanName || parent.korean_name || ''} onChange={e => handleParentFormChange(index, 'koreanName', e.target.value)} />
+                  <label style={labelStyle}>English Name</label>
+                  <input style={inputStyle} value={parent.englishName || parent.english_name || ''} onChange={e => handleParentFormChange(index, 'englishName', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Phone</label>
+                  <input style={inputStyle} value={parent.phone || ''} onChange={e => handleParentFormChange(index, 'phone', e.target.value)} />
+                  <label style={labelStyle}>Email</label>
+                  <input style={inputStyle} value={parent.email || ''} onChange={e => handleParentFormChange(index, 'email', e.target.value)} />
+                </div>
+              </div>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 10 }}>
+            <button onClick={handleCancelEditParents} disabled={savingInfo}
+              style={{ padding: '10px 20px', backgroundColor: '#e5e7eb', color: '#374151', border: 'none', borderRadius: 6, fontSize: '14px', fontWeight: 500, cursor: savingInfo ? 'not-allowed' : 'pointer', opacity: savingInfo ? 0.5 : 1 }}>
+              Cancel
+            </button>
+            <button onClick={handleSaveParents} disabled={savingInfo}
+              style={{ padding: '10px 20px', backgroundColor: '#5b8bb8', color: 'white', border: 'none', borderRadius: 6, fontSize: '14px', fontWeight: 500, cursor: savingInfo ? 'not-allowed' : 'pointer', opacity: savingInfo ? 0.5 : 1 }}>
+              {savingInfo ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const displayParents = parents.length > 0 ? parents : [
+      { koreanName: 'N/A', englishName: 'N/A', phone: 'N/A', email: 'N/A' },
+      { koreanName: 'N/A', englishName: 'N/A', phone: 'N/A', email: 'N/A' }
+    ];
+
+    return (
+      <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontSize: '20px', color: '#5b8bb8', fontWeight: 500 }}>Parent Information</h3>
+          <button onClick={handleEditParents}
+            style={{ padding: '6px 16px', backgroundColor: '#5b8bb8', color: 'white', border: 'none', borderRadius: 6, fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+            Edit
+          </button>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#5b8dc4', color: 'white' }}>
+              <th style={{ padding: '10px', textAlign: 'left', borderRadius: '8px 0 0 0' }}>Korean Name</th>
+              <th style={{ padding: '10px', textAlign: 'left' }}>English Name</th>
+              <th style={{ padding: '10px', textAlign: 'left' }}>Phone</th>
+              <th style={{ padding: '10px', textAlign: 'left', borderRadius: '0 8px 0 0' }}>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayParents.map((parent, index) => {
+              const cells = [
+                parent.koreanName || parent.korean_name,
+                parent.englishName || parent.english_name,
+                parent.phone,
+                parent.email,
+              ];
+              return (
+                <tr key={index} style={{
+                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  {cells.map((val, ci) => (
+                    <td key={ci} style={{ padding: '10px', color: val ? '#5b7fa8' : '#b0b8c0' }}>{val || 'N/A'}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div style={{ padding: '40px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
@@ -74,6 +264,18 @@ function VPTAView() {
                         <span>{formatDate(shift.clock_in)}</span>
 
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: '400' }}>
+                          {shift.attendance && (
+    <span style={{
+      fontSize: '13px',
+      fontWeight: '600',
+      padding: '4px 12px',
+      borderRadius: '20px',
+      backgroundColor: shift.attendance === 'Present' ? '#c4e9d1' : shift.attendance === 'Tardy' ? '#fef3c7' : '#dbeafe',
+      color: shift.attendance === 'Present' ? '#166534' : shift.attendance === 'Tardy' ? '#92400e' : '#1e40af',
+    }}>
+      {shift.attendance}
+    </span>
+  )}
                           {shift.clock_out && parseFloat(hours) > 0 ? `${hours} Hours` : shift.clock_out ? '0.00 Hours' : 'In Progress'}
                           {hasNote && (
                             <span style={{
@@ -133,8 +335,8 @@ function VPTAView() {
         </div>
 
         {/* Right Column - Chart and Info */}
-        <div style={{ position: 'relative' }}>
-          <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '40px', marginTop: '60px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'sticky', top: 20 }}>
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ backgroundColor: '#f9ebb5', borderRadius: 12, padding: '40px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 30, position: 'relative' }}>
               <svg width="280" height="280" viewBox="0 0 280 280">
                 {totalRelevantDays === 0 ? (
@@ -159,7 +361,6 @@ function VPTAView() {
 
             <div style={{ textAlign: 'center', marginBottom: 25 }}>
               <div style={{ fontSize: '22px', color: '#5b8bb8', fontWeight: '500', marginBottom: 8 }}>{taInfo ? `${taInfo.last_name}, ${taInfo.first_name}` : 'No TA Selected'}</div>
-              <div style={{ fontSize: '16px', color: '#8b9db3' }}>TA ID: {ta_id || 'N/A'}</div>
             </div>
 
             <div style={{ marginBottom: 25 }}>
@@ -183,6 +384,12 @@ function VPTAView() {
               >{resettingPin ? 'Resetting...' : 'Reset PIN'}</button>
             </div>
           </div>
+
+          {/* TA Profile Info Card */}
+          {renderTAInfoCard()}
+
+          {/* Parent Information Card */}
+          {renderParentInfoCard()}
         </div>
       </div>
 

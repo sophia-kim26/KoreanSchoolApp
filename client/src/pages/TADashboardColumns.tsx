@@ -102,9 +102,10 @@ export function useGridColumns({ language, toggleAttendance, handleEditNotes }: 
       width: '120px',
     },
     {
-      name: translations[language].elapsedTime,
-      width: '130px',
-    },
+  name: translations[language].elapsedTime,
+  width: '130px',
+  formatter: (cell: any) => cell ?? '',
+},
     {
       name: translations[language].notes,
       width: '200px',
