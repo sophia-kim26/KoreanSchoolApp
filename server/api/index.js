@@ -26,6 +26,7 @@ app.set('trust proxy', 1);
 
 // 2. CORS — must be before EVERYTHING else, including routes and body parser
 const allowedOrigins = [
+  'https://njks-service-hours.vercel.app',
   'https://korean-school-app-2.vercel.app',
   'http://localhost:5173',
   process.env.FRONTEND_URL, // fallback for other preview deployments

@@ -13,8 +13,9 @@ const ALLOWED_IPS = [
 const ALLOWED_CIDR_RANGES = [
   '168.229.254.0/24',  // BCA BYOD network (covers .0 - .255, includes .66 and .67)
   // '192.168.1.0/24', // add korean school ip address when i actually find out
-  '24.38.110.0/24',    // Korean school network
-  '146.71.0.0/24' // kajeet smartbus
+  '24.38.110.0/24',    // Korean school network friday
+  '146.71.0.0/24', // kajeet smartbus
+  '47.19.134.250', // korean school network saturday (tsguest)
 ];
 
 // check if the user's IP falls within a CIDR range
@@ -161,7 +162,8 @@ const shiftUpdateSchema = z.object({
   clock_in: z.string().trim().min(1).optional(),
   clock_out: z.string().trim().min(1).optional(),
   notes: z.string().trim().max(1000).optional(),
-  elapsed_time: z.coerce.number().int().nonnegative().optional(),
+  // elapsed_time: z.coerce.number().int().nonnegative().optional(),
+  elapsed_time: z.string().optional(),
   attendance: z.string().trim().min(1).max(20).optional()
 }).strip().refine((data) => Object.keys(data).length > 0, {
   message: 'At least one field is required'

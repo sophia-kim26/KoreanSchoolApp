@@ -1,26 +1,35 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Shift, TA, EditedShift, NewShift, RouteParams } from "./VPTAViewTypes";
+import { Shift, TA, Parent, EditedShift, NewShift, RouteParams } from "./VPTAViewTypes";
 import { parseDateLocal, calculateHours, formatDateTimeLocal, localToISO } from "./VPTAViewUtils";
 
 export const useVPTAView = () => {
   const { ta_id } = useParams<RouteParams>();
   const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();
-  
+
   const [allShifts, setAllShifts] = useState<Shift[]>([]);
   const [taInfo, setTaInfo] = useState<TA | null>(null);
+  const [fullTAInfo, setFullTAInfo] = useState<TA | null>(null);
+  const [parents, setParents] = useState<Parent[]>([]);
   const [calendarDates, setCalendarDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [editingMonth, setEditingMonth] = useState<string | null>(null);
   const [editedShifts, setEditedShifts] = useState<Record<number, EditedShift>>({});
   const [saving, setSaving] = useState<boolean>(false);
+
   const [newShift, setNewShift] = useState<NewShift>({ clock_in: '', clock_out: '' });
   const [showResetPinModal, setShowResetPinModal] = useState<boolean>(false);
   const [newPin, setNewPin] = useState<string>('');
   const [resettingPin, setResettingPin] = useState<boolean>(false);
+
+  const [editingInfo, setEditingInfo] = useState<boolean>(false);
+  const [editingParents, setEditingParents] = useState<boolean>(false);
+  const [editTAForm, setEditTAForm] = useState<Partial<TA>>({});
+  const [editParentsForm, setEditParentsForm] = useState<Parent[]>([]);
+  const [savingInfo, setSavingInfo] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -35,6 +44,13 @@ export const useVPTAView = () => {
         const currentTA: TA = await taResponse.json();
         if (!currentTA) throw new Error(`TA with ID ${ta_id} not found`);
         setTaInfo(currentTA);
+        setFullTAInfo(currentTA);
+
+        const parentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${ta_id}`, { headers: authHeaders });
+        if (parentsResponse.ok) {
+          const parentsData: Parent[] = await parentsResponse.json();
+          setParents(Array.isArray(parentsData) ? parentsData : []);
+        }
 
         const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, { headers: authHeaders });
         if (!shiftsResponse.ok) throw new Error(`HTTP error! status: ${shiftsResponse.status}`);
@@ -170,7 +186,7 @@ export const useVPTAView = () => {
         });
         if (!createResponse.ok) throw new Error(`Failed to create shift: ${createResponse.status}`);
       }
-      
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, { headers: { Authorization: `Bearer ${token}` } });
       const data: Shift[] = await response.json();
       setAllShifts(Array.isArray(data) ? data : []);
@@ -201,15 +217,13 @@ export const useVPTAView = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to delete shift');
-      
-      // Remove from editedShifts state
+
       setEditedShifts(prev => {
         const updated = { ...prev };
         delete updated[shiftId];
         return updated;
       });
-      
-      // Refetch all shifts to update display
+
       const shiftsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/shifts/ta/${ta_id}`, { headers: { Authorization: `Bearer ${token}` } });
       const data: Shift[] = await shiftsResponse.json();
       setAllShifts(Array.isArray(data) ? data : []);
@@ -245,11 +259,123 @@ export const useVPTAView = () => {
     alert('PIN copied to clipboard!');
   };
 
+  const handleEditInfo = (): void => {
+    setEditTAForm({
+      phone: fullTAInfo?.phone || '',
+      email: fullTAInfo?.email || '',
+      high_school: fullTAInfo?.high_school || '',
+      grade: fullTAInfo?.grade || '',
+      age: fullTAInfo?.age || '',
+      gender: fullTAInfo?.gender || '',
+      address: fullTAInfo?.address || '',
+      emergency_phone: fullTAInfo?.emergency_phone || '',
+      notes: fullTAInfo?.notes || '',
+    });
+    setEditingInfo(true);
+  };
+
+  const handleCancelEditInfo = (): void => {
+    setEditingInfo(false);
+    setEditTAForm({});
+  };
+
+  const handleSaveInfo = async (): Promise<void> => {
+    try {
+      setSavingInfo(true);
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tas/${ta_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editTAForm)
+      });
+      if (!response.ok) throw new Error('Failed to update TA info');
+      const result = await response.json();
+      setFullTAInfo(result.ta);
+      setTaInfo(prev => prev ? { ...prev, ...result.ta } : result.ta);
+      setEditingInfo(false);
+      setEditTAForm({});
+    } catch (err) {
+      alert('Error saving TA info: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
+  const handleEditParents = (): void => {
+    const initial = parents.map(p => ({ ...p }));
+    while (initial.length < 2) {
+      initial.push({ englishName: '', koreanName: '', phone: '', email: '' });
+    }
+    setEditParentsForm(initial);
+    setEditingParents(true);
+  };
+
+  const handleCancelEditParents = (): void => {
+    setEditingParents(false);
+    setEditParentsForm([]);
+  };
+
+  const handleParentFormChange = (index: number, field: string, value: string): void => {
+    setEditParentsForm(prev => {
+      const updated = [...prev];
+      if (!updated[index]) {
+        updated[index] = { englishName: '', koreanName: '', phone: '', email: '' };
+      }
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleSaveParents = async (): Promise<void> => {
+    try {
+      setSavingInfo(true);
+      const token = await getAccessTokenSilently();
+
+      for (let i = 0; i < editParentsForm.length; i++) {
+        const parent = editParentsForm[i];
+        const existingParent = parents[i];
+
+        const payload = {
+          english_name: parent.englishName || parent.english_name || '',
+          korean_name: parent.koreanName || parent.korean_name || '',
+          phone: parent.phone || '',
+          email: parent.email || ''
+        };
+
+        if (existingParent?.id) {
+          await fetch(`${import.meta.env.VITE_API_URL}/api/parents/${existingParent.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      const parentsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/parents/ta/${ta_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (parentsResponse.ok) {
+        const parentsData: Parent[] = await parentsResponse.json();
+        setParents(Array.isArray(parentsData) ? parentsData : []);
+      }
+
+      setEditingParents(false);
+      setEditParentsForm([]);
+    } catch (err) {
+      alert('Error saving parent info: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
   return {
-    ta_id, navigate, loading, error, taInfo,
+    ta_id, navigate, loading, error, taInfo, fullTAInfo, parents,
     shiftsByMonth, totalHours, presentCount, absentCount, totalRelevantDays,
     presentPercentage, absentPercentage, resettingPin, editingMonth,
     editedShifts, newShift, saving, showResetPinModal, newPin, setShowResetPinModal, setNewShift,
-    handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours
+    handleEditMonth, handleCloseEdit, handleShiftChange, handleSaveChanges, handleDeleteShift, handleResetPin, copyPinToClipboard, calculateEditedHours,
+    editingInfo, editingParents, editTAForm, setEditTAForm, editParentsForm, savingInfo,
+    handleEditInfo, handleCancelEditInfo, handleSaveInfo,
+    handleEditParents, handleCancelEditParents, handleParentFormChange, handleSaveParents
   };
 };

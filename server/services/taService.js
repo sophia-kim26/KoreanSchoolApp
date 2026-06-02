@@ -209,3 +209,28 @@ export const getTAById = async (id) => {
   const result = await sql`SELECT * FROM ta_list WHERE id = ${id}`;
   return result[0] || null;
 };
+
+export const updateTA = async (id, fields) => {
+  const { email, phone, high_school, grade, age, gender, address, emergency_phone, notes } = fields;
+  const result = await sql`
+    UPDATE ta_list 
+    SET 
+      email = COALESCE(${email}, email),
+      phone = COALESCE(${phone}, phone),
+      high_school = COALESCE(${high_school}, high_school),
+      grade = COALESCE(${grade}, grade),
+      age = COALESCE(${age}, age),
+      gender = COALESCE(${gender}, gender),
+      address = COALESCE(${address}, address),
+      emergency_phone = COALESCE(${emergency_phone}, emergency_phone),
+      notes = COALESCE(${notes}, notes)
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  if (result.length === 0) {
+    const error = new Error('TA not found');
+    error.status = 404;
+    throw error;
+  }
+  return { success: true, ta: result[0] };
+};
