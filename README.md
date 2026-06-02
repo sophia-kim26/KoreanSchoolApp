@@ -1,11 +1,103 @@
-For our frontend, we will be using React and Next.js to create the WEB application hosted on Vercel. We will create the charts for the teachers to see using Chart.js and tables using Grid.js. We will use the Auth0 library with OAuth 2.0 to create our sign-in system with Google as our Identity Provider. For our backend, we will use Next.js API routes and MySQL for our database. 
 
-- Product form – we need to create a web application so the TAs and teachers can use this product while school is in session. Having our product be a web application also allows the website to be viewed on multiple devices if necessary. This would also make the application easier for the teachers to access because they won’t have to download things onto their computer.
-- We will be using MySQL to handle the school’s data. Since it will be easy to determine relationships between aspects of our data, MySQL is a fitting choice for our application and will allow us to effortlessly add new TAs to the system. We have existing experience using MySQL and this isn’t a large-scale project, so we don’t need PostgreSQL’s advanced features.
-- We will be using React to use client-side rendering in order to ensure that our application runs smoothly. Additionally, it will allow us to create reusable components to build a more cohesive UI, and its use of a virtual DOM results in faster rendering, allowing updates on the TA side to be seen on the teacher side all at once.
-- We are using Next.js because we would have built-in features and optimizations specifically for web development, for example Server-Side Rendering for dynamic content (for example, when the teacher adds/removes teacher assistants, we want the application to update smoothly)
-- Chart.js is a free and simple library for making HTML-based charts which will be useful since our charts will not be too complicated.
-- Grid.js is a free and open-source library that works with React. We will use this to create the various tables needed in our application (ex. Tables of teacher assistants for the teacher-side and a timesheet of sign-in/out times and number of hours for teacher assistants)
-- For regular design, we will be using CSS.
-- Vercel would allow us to deploy our application automatically from our Git repository and it allows first-party support for Next.js
-- OAuth will be necessary to create a standard and secure log-in system in order to fulfill the client’s need of TAs not being able to clock in for anyone else.
+Production
+- Deployed: https://korean-school-app-2.vercel.app/
+
+Quick install
+1. Install dependencies
+
+```bash
+# from repo root
+cd server && npm install
+cd ../client && npm install
+```
+
+2. Environment variables
+
+- Server (`/server/.env`) — required keys:
+  - `DATABASE_URL` — Neon/Postgres connection string
+  - `AUTH0_DOMAIN` — Auth0 domain (e.g. dev-xxxxx.us.auth0.com)
+  - `AUTH0_AUDIENCE` — Auth0 API identifier (must match client `VITE_AUTH0_AUDIENCE`)
+  - `TA_JWT_SECRET` — secret for TA HS256 tokens (used for TA client tokens)
+  - `EMAIL_USER` — email sender (Gmail address) used by nodemailer
+  - `EMAIL_PASS` — email app password or SMTP password
+  - (optional) `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_BASE_URL` if using server-side Auth0 flows
+
+- Client (`/client/.env`) — required keys for local dev:
+  - `VITE_API_URL` — base API URL (e.g. `http://localhost:3000`)
+  - `VITE_AUTH0_DOMAIN` — same Auth0 domain as above
+  - `VITE_AUTH0_CLIENT_ID` — Auth0 application client id
+  - `VITE_AUTH0_AUDIENCE` — API identifier (same as `AUTH0_AUDIENCE`)
+
+Notes:
+- When deploying to Vercel, set the same environment variables in the Vercel project settings (do not commit `.env` to source control).
+
+Database
+- This project uses Postgres (Neon) via `@neondatabase/serverless`. Create a Postgres database and set `DATABASE_URL` to its connection string.
+- Minimal SQL (example) to create the core tables used by the app. Adjust types and constraints to your needs:
+
+```sql
+CREATE TABLE ta_list (
+  id SERIAL PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  ta_code TEXT,             -- hashed or plain PIN (migration available)
+  is_active BOOLEAN DEFAULT true,
+  session_day TEXT,         -- 'Friday', 'Saturday', 'Both'
+  classroom TEXT
+);
+
+CREATE TABLE shifts (
+  id SERIAL PRIMARY KEY,
+  ta_id INTEGER REFERENCES ta_list(id),
+  clock_in TIMESTAMP WITH TIME ZONE,
+  clock_out TIMESTAMP WITH TIME ZONE,
+  elapsed_time INTEGER,
+  attendance TEXT,
+  notes TEXT,
+  was_manual BOOLEAN DEFAULT false
+);
+
+CREATE TABLE calendar_dates (
+  date DATE PRIMARY KEY
+);
+```
+
+- There is a helper migration script to hash existing 6-digit PINs: `server/services/migrate.js` (run with `node server/services/migrate.js` after `DATABASE_URL` is set).
+
+Auth0 setup
+- Create an Auth0 Application (SPA) and an Auth0 API (identifier used as `AUTH0_AUDIENCE`).
+- In the Auth0 Application settings set Allowed Callback URLs to include your local dev URL (`http://localhost:5173`) and the deployed URL (`https://korean-school-app-2.vercel.app`). Also add the logout URLs.
+- Set the client id and domain in the client's `.env` (`VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_AUDIENCE`).
+- On the server, set `AUTH0_DOMAIN` and `AUTH0_AUDIENCE` so the `protect` middleware can validate VP/admin tokens.
+
+Email (nodemailer)
+- The server uses Gmail via `nodemailer`. Provide `EMAIL_USER` and `EMAIL_PASS` in the server `.env`. For Gmail, create an App Password or configure SMTP credentials.
+
+Running locally
+
+```bash
+# Start server (in one terminal)
+cd server
+npm run dev   # requires nodemon (or use `npm start`)
+
+# Start client (in another terminal)
+cd client
+npm run dev
+```
+
+- The client uses Vite (default port 5173) and expects `VITE_API_URL` to point to the running server.
+
+Useful endpoints
+- `GET /api/friday/get-calendar-dates` — returns `{ dates: ['YYYY-MM-DD', ...] }`.
+- `POST /api/friday/save-calendar-dates` — accepts `{ dates: ['YYYY-MM-DD', ...] }` to replace the saved dates.
+
+Developer notes
+- The "Set Days" calendar in the VP dashboard builds the month grid client-side, formats selected days as `YYYY-MM-DD`, and saves them to the `calendar_dates` table. The saved dates are the canonical source of "real days" used for attendance.
+- Weekday computation is done with JavaScript: parse `YYYY-MM-DD` into `new Date(year, month-1, day)` and call `.getDay()` (0 = Sun … 6 = Sat).
+
+Deployment (Vercel)
+- This project is deployed at: https://korean-school-app-2.vercel.app/
+- When deploying, set environment variables in the Vercel dashboard to match your local `.env` values (especially `DATABASE_URL`, Auth0 keys, and email credentials).
+
+If you want, I can add a checklist for required Auth0 settings and a sample `.env.example` file. 
