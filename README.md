@@ -1,6 +1,7 @@
+Application for the Korean School of New Jersey. It includes a VP dashboard and a TA dashboard.
 
 Production
-- Deployed: https://korean-school-app-2.vercel.app/
+- Deployed: https://njks-service-hours.vercel.app/ 
 
 Quick install
 1. Install dependencies
@@ -29,50 +30,86 @@ cd ../client && npm install
   - `VITE_AUTH0_AUDIENCE` — API identifier (same as `AUTH0_AUDIENCE`)
 
 Notes:
-- When deploying to Vercel, set the same environment variables in the Vercel project settings (do not commit `.env` to source control).
+- When deploying to Vercel, set the same environment variables in the Vercel project settings.
+- See `.env.example` files in `server/` and `client/` directories for reference templates.
 
-Database
-- This project uses Postgres (Neon) via `@neondatabase/serverless`. Create a Postgres database and set `DATABASE_URL` to its connection string.
-- Minimal SQL (example) to create the core tables used by the app. Adjust types and constraints to your needs:
+## External Services Setup
 
-```sql
-CREATE TABLE ta_list (
-  id SERIAL PRIMARY KEY,
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  email TEXT UNIQUE,
-  ta_code TEXT,             -- hashed or plain PIN (migration available)
-  is_active BOOLEAN DEFAULT true,
-  session_day TEXT,         -- 'Friday', 'Saturday', 'Both'
-  classroom TEXT
-);
+This project requires configuration for the following third-party services:
 
-CREATE TABLE shifts (
-  id SERIAL PRIMARY KEY,
-  ta_id INTEGER REFERENCES ta_list(id),
-  clock_in TIMESTAMP WITH TIME ZONE,
-  clock_out TIMESTAMP WITH TIME ZONE,
-  elapsed_time INTEGER,
-  attendance TEXT,
-  notes TEXT,
-  was_manual BOOLEAN DEFAULT false
-);
+### 1. Neon Database (PostgreSQL)
+**Purpose**: Stores all application data (TAs, students, shifts, attendance, etc.)
 
-CREATE TABLE calendar_dates (
-  date DATE PRIMARY KEY
-);
-```
+**Setup**:
+1. Create account at https://console.neon.tech
+2. Create a new project
+3. Copy the connection string from the Neon dashboard
+4. Set `DATABASE_URL` in `server/.env` with this connection string
 
-- There is a helper migration script to hash existing 6-digit PINs: `server/services/migrate.js` (run with `node server/services/migrate.js` after `DATABASE_URL` is set).
+**Format**: `postgresql://user:password@ep-xxxxx.neon.tech/neondb`
 
-Auth0 setup
-- Create an Auth0 Application (SPA) and an Auth0 API (identifier used as `AUTH0_AUDIENCE`).
-- In the Auth0 Application settings set Allowed Callback URLs to include your local dev URL (`http://localhost:5173`) and the deployed URL (`https://korean-school-app-2.vercel.app`). Also add the logout URLs.
-- Set the client id and domain in the client's `.env` (`VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_AUDIENCE`).
-- On the server, set `AUTH0_DOMAIN` and `AUTH0_AUDIENCE` so the `protect` middleware can validate VP/admin tokens.
+### 2. Auth0 (Authentication)
+**Purpose**: Manages user authentication and authorization (VP accounts, TA accounts)
 
-Email (nodemailer)
-- The server uses Gmail via `nodemailer`. Provide `EMAIL_USER` and `EMAIL_PASS` in the server `.env`. For Gmail, create an App Password or configure SMTP credentials.
+**Setup**:
+1. Create account at https://auth0.com
+2. Create a new application:
+   - Go to Applications > Create
+   - Select "Single Page Web Applications" 
+   - Name it "Korean School App"
+3. Configure application settings:
+   - **Allowed Callback URLs**: `http://localhost:5173,http://localhost:5173/callback,https://your-vercel-domain.vercel.app,https://your-vercel-domain.vercel.app/callback`
+   - **Allowed Logout URLs**: `http://localhost:5173,https://your-vercel-domain.vercel.app`
+   - **Allowed Web Origins**: `http://localhost:5173,http://localhost:3000,https://your-vercel-domain.vercel.app`
+4. Create an API:
+   - Go to APIs > Create
+   - Name: "Korean School API"
+   - Identifier: `https://api.example.com` (or any unique identifier)
+5. Collect these values for `.env`:
+   - `AUTH0_DOMAIN`: Domain from Settings tab (e.g., `dev-xxxxx.us.auth0.com`)
+   - `AUTH0_CLIENT_ID`: Client ID from Applications
+   - `AUTH0_AUDIENCE`: Identifier from the API you created
+   - `AUTH0_CLIENT_SECRET`: Client Secret (for server-side flows)
+   - `AUTH0_BASE_URL`: Your app's base URL
+
+### 3. Gmail / Nodemailer (Email Service)
+**Purpose**: Sends TA credential emails and other notifications
+
+**Setup**:
+1. Use a Gmail account (personal or service account)
+2. Enable 2-Factor Authentication on the Gmail account
+3. Generate an App Password:
+   - Go to https://myaccount.google.com/apppasswords
+   - Select "Mail" and "Windows Computer" (or appropriate device type)
+   - Copy the generated password
+4. Set in `server/.env`:
+   - `EMAIL_USER`: Your Gmail address
+   - `EMAIL_PASS`: The app-specific password (not your regular password)
+
+**Note**: Gmail allows max ~500 emails/hour; consider switching to SendGrid for production if higher volume is needed.
+
+### 4. Vercel (Deployment)
+**Purpose**: Hosts both frontend and backend APIs
+
+**Setup**:
+1. Connect your GitHub repo to Vercel: https://vercel.com
+2. For each deployment (client and server):
+   - Set the same environment variables from your local `.env` files
+   - Go to Project Settings > Environment Variables
+   - Add all required variables for both server and client
+3. Deploy:
+   - Server deploys automatically to `/api` routes
+   - Client deploys to main domain
+
+**Note**: Environment variables set in Vercel are separate from local `.env` files.
+
+### Environment Variables Checklist
+Before running locally or deploying, ensure you have:
+- [ ] `DATABASE_URL` from Neon
+- [ ] `AUTH0_DOMAIN`, `AUTH0_AUDIENCE`, `AUTH0_CLIENT_ID` from Auth0
+- [ ] `TA_JWT_SECRET` (generate a random string)
+- [ ] `EMAIL_USER` and `EMAIL_PASS` from Gmail
+- [ ] All client variables (`VITE_*` prefixed)
 
 Running locally
 
@@ -85,19 +122,3 @@ npm run dev   # requires nodemon (or use `npm start`)
 cd client
 npm run dev
 ```
-
-- The client uses Vite (default port 5173) and expects `VITE_API_URL` to point to the running server.
-
-Useful endpoints
-- `GET /api/friday/get-calendar-dates` — returns `{ dates: ['YYYY-MM-DD', ...] }`.
-- `POST /api/friday/save-calendar-dates` — accepts `{ dates: ['YYYY-MM-DD', ...] }` to replace the saved dates.
-
-Developer notes
-- The "Set Days" calendar in the VP dashboard builds the month grid client-side, formats selected days as `YYYY-MM-DD`, and saves them to the `calendar_dates` table. The saved dates are the canonical source of "real days" used for attendance.
-- Weekday computation is done with JavaScript: parse `YYYY-MM-DD` into `new Date(year, month-1, day)` and call `.getDay()` (0 = Sun … 6 = Sat).
-
-Deployment (Vercel)
-- This project is deployed at: https://korean-school-app-2.vercel.app/
-- When deploying, set environment variables in the Vercel dashboard to match your local `.env` values (especially `DATABASE_URL`, Auth0 keys, and email credentials).
-
-If you want, I can add a checklist for required Auth0 settings and a sample `.env.example` file. 
